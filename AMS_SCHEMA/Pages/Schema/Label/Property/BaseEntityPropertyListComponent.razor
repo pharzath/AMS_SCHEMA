@@ -1,0 +1,103 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Class
+@using AMS_SCHEMA.Pages.Schema.Constraint
+@using AMS_SCHEMA.Pages.Schema.EntityBase
+
+
+<MudText Typo="Typo.h6" Color="Color.Warning" Class="my-3">
+    Derived PropertiesDict :
+</MudText>
+<MudDivider />
+
+@foreach (var x in GetDerivedProperties(Label))
+{
+
+    <MudTable Items="x.Value.OrderBy(x => x.Order).ThenBy(x => x.Id)">
+        <ToolBarContent>
+            <MudText Typo="Typo.subtitle2" Color="Color.Info" Class="mx-4">
+                From : @x.Key
+            </MudText>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTd Style="width: 50px"></MudTd>
+            <MudTd Style="width: 200px">Name</MudTd>
+            <MudTd>Neo-Name</MudTd>
+            <MudTd>Disp-Name</MudTd>
+            <MudTd>Validation</MudTd>
+            <MudTd>DisplayName</MudTd>
+            <MudTd></MudTd>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>
+            </MudTd>
+            <MudTd>
+                <MudChip Size="Size.Medium"
+                     Icon="@Utils.GetLabelPropertyIcon(x.Key, context)"
+                     Style="@Utils.GetLabelPropertyBgColor(x.Key, context)">
+                    @context.Name : @context.DataType
+                </MudChip>
+            </MudTd>
+            <MudTd>@context.Name.ToCamelCase()</MudTd>
+            <MudTd>@context.DisplayName</MudTd>
+            <MudTd>@context.ValidationType</MudTd>
+            <MudTd>@context.Description</MudTd>
+            <MudTd>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+@code {
+
+    [Parameter]
+    public AmsNeo4JNodeLabel? Label { get; set; }
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    Dictionary<AmsNeo4JNodeLabel, IEnumerable<AmsNeo4JNodeLabelPropery>> GetDerivedProperties(AmsNeo4JNodeLabel? label)
+    {
+        Dictionary<AmsNeo4JNodeLabel, IEnumerable<AmsNeo4JNodeLabelPropery>> derived = new();
+        var allConst = Label.Constraints;
+        var allIdx = Label.Indices;
+        var lbl = Label.ParentLabel;
+        do
+        {
+            if (lbl == null) break;
+            var properties = GetLabelProperties(lbl);
+            allConst.AddRange(lbl.Constraints);
+            allIdx.AddRange(lbl.Indices);
+            derived.Add(lbl, properties);
+            lbl = GetParent(lbl);
+        }
+        while (lbl != null);
+
+        derived.Add(new AmsNeo4JNodeLabel
+            {
+                Name = "EntityBase",
+                Constraints = allConst,
+                Indices = allIdx
+            }
+            , EntityBaseClassDef.Properties);
+
+        return derived;
+    }
+
+    IEnumerable<AmsNeo4JNodeLabelPropery> GetLabelProperties(AmsNeo4JNodeLabel? label)
+    {
+        if (label.Properties?.Any() ?? false)
+            return label.Properties;
+
+        var properties = DataService.GetLabelProperties(label);
+        return properties;
+    }
+
+    AmsNeo4JNodeLabel? GetParent(AmsNeo4JNodeLabel? label)
+    {
+        return label == null ? null : DataService.GetLabel(label.ParentLabelId);
+    }
+
+}

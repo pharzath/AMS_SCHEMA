@@ -1,0 +1,54 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+@using Olive
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json;
+
+namespace AMS.Model;
+
+/// <summary>
+///  @Relation.GetCypherDefinitionByVars()
+/// </summary>
+[Table("@Relation.Name")]
+public partial class @Relation.GetRelationshiptClassName() : INodeRelation
+{
+    [Key,Column(Order = 1)] 
+    public string @(Relation.GetRelationFromFieldName())Id { get; set; }
+
+    public @(Relation.GetRelationFromFieldName()) @(Relation.GetRelationFromFieldName()) { get; set; }
+
+    [Key,Column(Order = 2)] 
+    public string @(Relation.GetRelationToFieldName())Id { get; set; }
+
+    [ForeignKey("@(Relation.GetRelationToFieldName())Id")]
+    public @(Relation.To.Name) @(Relation.GetRelationToFieldName()) { get; set; }
+
+@foreach (var fld in Relation.RelType.Properties)
+{
+     <text>
+    /// <summary>    
+    /// @fld?.DisplayName @fld?.Description.WithWrappers("-",null)
+    /// </summary>
+    [JsonProperty("@fld.Neo4jName")]
+        public @(fld.DataType.GetColumnDataType())@IsNullable(fld) @fld.Name { get; set; }
+    </text>}
+}
+@code {
+
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeRelation Relation { get; set; }
+    
+    string IsNullable(AmsNeo4JNodeRelationPropery fld)
+    {
+        var x= fld.RelType.Constraints.Any(x => x.Over == fld.Name && x.Type == "IS NOT NULL") 
+            ? "" 
+            : "?";
+        return x;
+    }
+}

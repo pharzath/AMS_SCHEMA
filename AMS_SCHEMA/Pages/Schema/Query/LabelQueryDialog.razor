@@ -1,0 +1,169 @@
+﻿@using AMS.Model.Services
+@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+@using Olive
+<MudDialog>
+    <DialogContent>
+
+        <MudGrid>
+            <MudItem sm="12" md="6">
+                <MudTextField @bind-Value="Query.Name" Label="Name"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudTextField @bind-Value="Query.DisplayName" Label="Display Name"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudTextField @bind-Value="Query.Description" Label="Description" Lines="5"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudAutocomplete @bind-Value="SelectedLabel"
+                                 Clearable="true"
+                                 MaxItems="100"
+                                 SearchFunc="GetLabels"
+                                 Label="Related Label"
+                                 Adornment="Adornment.End"
+                                 AdornmentIcon="@Icons.Filled.Add"
+                                 OnAdornmentClick="AddToSelectedLabels">
+                    <ItemTemplate>
+                        <MudStack Row="true">
+                            <LabelIconComponent Label="@context" Size="Size.Small"></LabelIconComponent>
+                            <MudText Typo="Typo.subtitle2">
+                                @context.Name @context.DisplayName.WithWrappers("(", ")")
+                            </MudText>
+                            <MudSpacer/>
+                            <MudText Typo="Typo.body2">
+                                @context.DisplayName
+                            </MudText>
+                        </MudStack>
+
+                    </ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                @foreach (var lbl in _relatedLabels)
+                {
+                    <MudChip Color="Color.Info" Size="Size.Small" CloseIcon="@Icons.Filled.Close" OnClose="()=> RemoveLabelFromRelatedListClick(lbl)"
+                             OnClick="()=>LabelClicked(lbl)">
+                        <LabelIconComponent Label="@lbl" Size="Size.Small"></LabelIconComponent>
+                        @lbl.Name.ToShortVariableName():@lbl.Name
+                    </MudChip>
+                }
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudTextField @ref="cypherField" 
+                              @bind-Value="Query.CypherQuery" 
+                              OnKeyUp="OnKeyUp"
+                              Label="Cypher" 
+                              Lines="10"></MudTextField>
+            </MudItem>
+        </MudGrid>
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseClick">
+            Close
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAndCloseClick">
+            Save and Close
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
+
+@code {
+    MudTextField<string?>? cypherField;
+    [Inject] DataService DataService { get; set; }
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabelQuery Query
+    {
+        get => _query;
+        set
+        {
+            _query = value;
+            _relatedLabels = GetRelatedLabels(_query.RelatedLabels);
+            SelectedLabel = Query.Label;
+            if(!_relatedLabels.Any())
+                _relatedLabels.Add(SelectedLabel);
+            InitCypherQuery(_query);
+        }
+    }
+
+    void InitCypherQuery(AmsNeo4JNodeLabelQuery query)
+    {
+        if (query.CypherQuery.IsEmpty())
+        {
+            var labelName = query.Label.Name;
+            var varName = labelName.ToShortVariableName();
+            query.CypherQuery = $"MATCH ({varName}:{labelName}) RETURN {varName}";
+        }
+    }
+
+    IEnumerable<AmsNeo4JNodeLabel> _allLabels;
+
+    List<AmsNeo4JNodeLabel> GetRelatedLabels(string? labelsName)
+    {
+        _allLabels = DataService.GetAllLabels().ToList();
+        if (labelsName.IsEmpty())
+            return new List<AmsNeo4JNodeLabel>();
+
+        var labelNames = labelsName!.Split(',', ';', '|');
+        var labels = _allLabels.Where(x=>labelNames.Contains(x.Name));
+        return labels.ToList();
+    }
+
+    List<AmsNeo4JNodeLabel> _relatedLabels = new();
+    AmsNeo4JNodeLabelQuery _query;
+    public AmsNeo4JNodeLabel SelectedLabel { get; set; }
+
+    public string? CypherQuery { get; set; }
+
+    void CloseClick()
+    {
+        DialogInstance.Cancel();
+    }
+
+
+
+    Task<IEnumerable<AmsNeo4JNodeLabel>> GetLabels(string arg)
+    {
+        if (arg.IsEmpty())
+            return Task.FromResult(_allLabels);
+
+        var labels = _allLabels.Where(x=>
+            !x.Name.IsEmpty() && 
+            x.Name.Contains(arg)).AsEnumerable();
+        return Task.FromResult(labels);
+    }
+
+    void AddToSelectedLabels()
+    {
+        _relatedLabels.Add(SelectedLabel);
+    }
+
+    void RemoveLabelFromRelatedListClick(AmsNeo4JNodeLabel lbl)
+    {
+        _relatedLabels.Remove(lbl);
+    }
+
+    void SaveAndCloseClick()
+    {
+        DataService.SaveLabelQuery(Query);
+        DialogInstance.Close(Query);
+    }
+
+    async Task LabelClicked(AmsNeo4JNodeLabel lbl)
+    {
+        
+        await cypherField.FocusAsync();
+    }
+
+    void OnKeyUp(object args)
+    {
+        var x = args;
+    }
+
+}

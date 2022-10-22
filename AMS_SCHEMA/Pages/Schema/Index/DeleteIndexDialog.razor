@@ -1,0 +1,61 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using Olive
+<MudDialog Class="pa-3">
+    <DialogContent>
+        <MudText Typo="Typo.h6">
+            Before continue to delete apply to remove INDEX from Neo4J Database.
+        </MudText>
+        <MudText Typo="Typo.body1">
+            To remove Index from Database execute this Cypher command in the Neo4J shell. Then click Continue to remove it from the Schema Explorer Application too.
+        </MudText>
+        <MudTextField Label="Remove Index Cypher Command" Value="CypherCommand" Lines="10"></MudTextField>
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.TwoTone.Delete" OnClick="ContinueToRemoveIndexClick">
+            Continue
+        </MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.TwoTone.Undo" OnClick="CloseClick">
+            Ignore Removing Index
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [Parameter]
+    public AmsNeo4JNodeIndex Index
+    {
+        get => _index;
+        set
+        {
+            _index = value;
+            var createPhrase = $"CREATE {_index.Type} INDEX ";
+            var s1 = _index.Command.Substring(_index.Command.IndexOf(createPhrase, StringComparison.OrdinalIgnoreCase) + createPhrase.Length);
+            var s2 = s1.Split(new[] { '\r', '\n', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            CypherCommand = $"DROP Index {s2[0].RemoveFrom(" ")} IF EXISTS";
+        }
+    }
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    public string? CypherCommand { get; set; }
+
+    void CloseClick()
+    {
+        DialogInstance.Cancel();
+    }
+
+    void ContinueToRemoveIndexClick()
+    {
+        DataService.DeleteIndex(Index);
+        DialogInstance.Close(DialogResult.Ok(true,typeof(bool)));
+    }
+
+    AmsNeo4JNodeIndex _index;
+}

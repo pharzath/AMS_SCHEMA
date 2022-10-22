@@ -1,0 +1,187 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Class
+@using AMS_SCHEMA.Pages.Schema.Index
+@using AMS_SCHEMA.Pages.Schema.Label
+@using AMS_SCHEMA.Pages.Schema.Constraint
+@using AMS_SCHEMA.Pages.Schema.Department
+@using AMS_SCHEMA.Pages.Schema.Label.Property
+@using AMS_SCHEMA.Pages.Schema.Query
+@using AMS_SCHEMA.Pages.Schema.Relation
+@using Olive
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="3" md="3">
+                <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Edit" OnClick="EditNodeClick">
+                    Edit Node Name
+                </MudButton>
+
+                <MudTreeView Items="RootLabels"
+                             Hover="true"
+                             @bind-SelectedValue="SelectedTreeNodeLabel">
+                    <ItemTemplate>
+                        <MudTreeViewItem Value="@context" Items="@context.Items" @bind-Expanded="@context.IsExpanded">
+                            <Content>
+                                <MudTreeViewItemToggleButton @bind-Expanded="@context.IsExpanded"
+                                                             Visible="@(context.Label.ChildLabels is {Count: >0})" />
+                                <LabelIconComponent Label="@context.Label"></LabelIconComponent>
+                                <MudText>@context.Label.Name</MudText>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.TwoTone.Add" Color="Color.Info" OnClick="()=>AddNewSubLabelClick(context)"></MudIconButton>
+                            </Content>
+                        </MudTreeViewItem>
+                    </ItemTemplate>
+                </MudTreeView>
+
+            </MudItem>
+            <MudItem sm="9" md="9">
+                <LabelListComponent Label="SelectedLabel"></LabelListComponent>
+                @if (!SelectedLabel.Description.IsEmpty())
+                {
+                    <MudPaper Class="ma-2 pa-3"  Elevation="2">
+                        <MudText Typo="Typo.h6" Color="Color.Info" >
+                            @SelectedLabel.Description
+                        </MudText>
+                    </MudPaper>
+                }
+
+                <MudTabs Class="height:100%">
+                    <MudContainer Style="min-height: 400px; max-height: 600px; overflow-y: scroll;">
+                        <MudTabPanel Text="Node, Labels and PropertiesDict" Icon="@Icons.Filled.Workspaces">
+                            <PropertyListComponent Label="SelectedLabel"></PropertyListComponent>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Relation" Icon="@Icons.Filled.CompareArrows" BadgeColor="Color.Secondary">
+                            <RelationListComponent Label="SelectedLabel"></RelationListComponent>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Queries" Icon="@Icons.Filled.QueryBuilder" BadgeColor="Color.Secondary">
+                            <LabelQueryListComponent Label="SelectedLabel"></LabelQueryListComponent>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Constraints" Icon="@Icons.Filled.BackHand" BadgeColor="Color.Info">
+                            <ConstraintListComponent Label="SelectedLabel"></ConstraintListComponent>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Indices" Icon="@Icons.Filled.Bolt" BadgeColor="Color.Warning">
+                            <IndexListComponent Label="SelectedLabel"></IndexListComponent>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Department" Icon="@Icons.Filled.SettingsInputComponent">
+                            <DepartmentListComponent Label="SelectedLabel"></DepartmentListComponent>
+                        </MudTabPanel>
+                    </MudContainer>
+
+                </MudTabs>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAndCloseClick">
+            Save and Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [Inject] DataService DataService { get; set; }
+    [Inject] IDialogService DialogService { get; set; }
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNode Node { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel? SelectedLabel
+    {
+        get => _selectedLabel;
+        set
+        {
+            _selectedLabel = value;
+            _selectedTreeNodeLabel ??= FindNode(RootLabels, _selectedLabel?.Id);
+        }
+    }
+
+    AmsNeo4JNodeLabelTreenNode? _tmp;
+    AmsNeo4JNodeLabelTreenNode? FindNode(HashSet<AmsNeo4JNodeLabelTreenNode> parents, int? id)
+    {
+        _tmp = Enumerable.FirstOrDefault(parents, x => x.Label.Id == id);
+        if (_tmp != null)
+            return _tmp;
+
+        foreach (var parent in parents)
+        {
+            FindNode(parent.Items, id);
+        }
+        return _tmp;
+    }
+
+    async Task EditNodeClick()
+    {
+        var reference = DialogService.Show<NodeDialog>("Node",
+            new DialogParameters()
+                {
+                    ["Node"] = Node
+                },
+            new DialogOptions()
+                {
+                    FullWidth = true,
+                    MaxWidth = MaxWidth.Medium
+                });
+        await reference.Result;
+        StateHasChanged();
+    }
+
+    void SaveAndCloseClick()
+    {
+        DataService.DbContext.SaveChanges();
+        DialogInstance.Close();
+    }
+
+
+
+    Task<HashSet<AmsNeo4JNodeLabelTreenNode>> LoadServerData(AmsNeo4JNodeLabelTreenNode label)
+    {
+        HashSet<AmsNeo4JNodeLabelTreenNode> children = DataService.GetChildLabels(label);
+        return Task.FromResult(children);
+    }
+
+    public HashSet<AmsNeo4JNodeLabelTreenNode> RootLabels
+    {
+        get
+        {
+            var root = Utils.GetNodes(DataService, Node);
+            _selectedLabel ??= root.FirstOrDefault()?.Label;
+            return root;
+        }
+    }
+
+
+    void AddNewSubLabelClick(AmsNeo4JNodeLabelTreenNode context)
+    {
+        var newLabel = AmsNeo4JNodeLabel.CreateNewLabel(context.Label);
+
+        DataService.SaveLabel(newLabel);
+        StateHasChanged();
+    }
+
+
+    public AmsNeo4JNodeLabelTreenNode? SelectedTreeNodeLabel
+    {
+        get => _selectedTreeNodeLabel;
+        set
+        {
+            _selectedTreeNodeLabel = value;
+            SelectedLabel = _selectedTreeNodeLabel?.Label;
+        }
+    }
+
+    AmsNeo4JNodeLabelTreenNode? _selectedTreeNodeLabel;
+    AmsNeo4JNodeLabel? _selectedLabel;
+}
+

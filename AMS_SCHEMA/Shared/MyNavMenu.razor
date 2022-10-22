@@ -1,0 +1,14 @@
+﻿<MudNavMenu>
+    <MudNavLink Icon="@Icons.Filled.Dashboard" Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
+    <MudNavLink Icon="@Icons.Filled.Label" Href="/SchemaListLabels" Match="NavLinkMatch.Prefix">Labels</MudNavLink>
+    <MudNavLink Icon="@Icons.Filled.NewReleases" Href="/SchemaRelationExplorer" Match="NavLinkMatch.Prefix">Relations</MudNavLink>
+    <MudNavGroup Icon="@Icons.Filled.Settings" Title="Settings" Expanded="false">
+        <MudNavLink Icon="@Icons.Filled.Person" Href="/users" Match="NavLinkMatch.Prefix">Users</MudNavLink>
+        <MudNavLink Icon="@Icons.Filled.Security" Href="/security" Match="NavLinkMatch.Prefix">Security</MudNavLink>
+    </MudNavGroup>
+    <MudNavLink Icon="@Icons.Filled.Medication" Href="/about" Match="NavLinkMatch.Prefix">About</MudNavLink>
+</MudNavMenu>
+
+@code {
+
+}

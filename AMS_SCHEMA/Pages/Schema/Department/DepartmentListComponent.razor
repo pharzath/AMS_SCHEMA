@@ -1,0 +1,49 @@
+﻿@using AMS.Model.Services
+@using AMS.Model.Models
+
+<MudSelect Label="Department" @bind-Value="SelectedDepartment" T="AmsmoduleDepartment"
+           Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Add" OnAdornmentClick="AddToDepartmentClick">
+    @foreach (var dep in DataService.GetDepartments())
+    {
+        <MudSelectItem Value="dep">@dep.Title</MudSelectItem>
+    }
+</MudSelect>
+
+<MudTable Items="Departments">
+    <HeaderContent>
+        <MudTd>Department</MudTd>
+        <MudTd></MudTd>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>
+            @context.Department.Title
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteDepartmentFromNode(context)"></MudIconButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+
+    [Inject] DataService DataService { get; set; }
+
+    // [Parameter] public AmsNeo4JNode Node { get; set; }
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    AmsmoduleDepartment SelectedDepartment;
+
+    List<AmsmoduleNodeDepartment> Departments => DataService.GetNodeDepartment(Label.Node);
+
+    void AddToDepartmentClick()
+    {
+        DataService.AddDepartmentToNode(Label.Node,SelectedDepartment);
+    }
+
+    void DeleteDepartmentFromNode(AmsmoduleNodeDepartment context)
+    {
+        DataService.DeleteDepartmentFromNode(context);
+    }
+
+}

@@ -1,0 +1,49 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Class
+@using Microsoft.AspNetCore.Components
+@using Olive
+
+using Neo4jClient;
+using Neo4jClient.DataAnnotations;
+using Neo4jClient.DataAnnotations.Serialization;
+using AMS.Model;
+
+namespace AMS.DataContext;
+
+public partial class @ContextName : AnnotationsContext
+{
+    public @(ContextName)(IGraphClient graphClient, EntityResolver resolver, EntityService entityService)
+    : base(graphClient, resolver, entityService)
+    {
+    }
+
+    public @(ContextName)(IGraphClient graphClient, EntityConverter converter, EntityService entityService)
+    : base(graphClient, converter, entityService)
+    {
+    }
+    @foreach (var node in Nodes)
+    {
+<text>
+    public virtual EntitySet&lt;@node.Label.Name> @node.Label.Name.ToPlural() { get; set; }
+    @foreach (var relTo in DataService.GetLabelRelationFroms(node.Label))
+    {<text>
+    public virtual EntitySet&lt;@relTo.GetRelationshiptClassName()> @relTo.GetRelationshiptClassName().ToPlural() { get; set; }
+</text>}
+    //=====================
+</text>
+  }
+}
+
+@code {
+
+    [Inject] DataService DataService { get; set; }
+
+    [Parameter]
+    public List<AmsNeo4JNode> Nodes { get; set; }
+
+    [Parameter]
+    public string ContextName { get; set; } = "AppContext";
+
+
+}

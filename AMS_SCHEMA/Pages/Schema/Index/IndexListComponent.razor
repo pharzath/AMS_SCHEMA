@@ -1,0 +1,101 @@
+﻿@using AMS.Model.Services
+@using AMS.Model.Models
+@using AMS_SCHEMA.Pages.Schema.Index
+
+<MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="NewNodeIndexClick">
+    New Index
+</MudButton>
+
+<MudTable Items="Label.Indices">
+    <HeaderContent>
+        <MudTd>Label</MudTd>
+        <MudTd>Over</MudTd>
+        <MudTd>Index Type</MudTd>
+        <MudTd></MudTd>
+        <MudTd></MudTd>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>
+            <MudChip Size="Size.Small">
+                <LabelIconComponent Label="@context.Label" Size="Size.Small"></LabelIconComponent>
+                @context.Label.Name
+            </MudChip>
+        </MudTd>
+        <MudTd>
+            <p>@context.Over</p>
+        </MudTd>
+        <MudTd>@context.Type</MudTd>
+        <MudTd>
+            <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.Edit" OnClick="() => EditNodeIndex(context)">
+                Edit
+            </MudButton>
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteIndexClick(context)"></MudIconButton>
+        </MudTd>
+
+    </RowTemplate>
+    <ChildRowContent>
+        <MudTd colspan="5">
+            <MudText Typo="Typo.h6" Color="Color.Warning">
+                @context.Command
+            </MudText>
+        </MudTd>
+    </ChildRowContent>
+</MudTable>
+
+@code {
+    [Inject] DataService DataService { get; set; }
+
+    [Inject] IDialogService DialogService { get; set; }
+
+    // [Parameter]
+    // public AmsNeo4JNode Node { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    //public IEnumerable<AmsNeo4JNodeIndex> NodeIndices => DataService.GetNodeIndices(Node.Labels);
+
+    async Task NewNodeIndexClick()
+    {
+        var index = new AmsNeo4JNodeIndex()
+        {
+
+        };
+        await OpenNodeIndexDialog(index);
+    }
+
+    async Task EditNodeIndex(AmsNeo4JNodeIndex index)
+    {
+        await OpenNodeIndexDialog(index);
+    }
+
+
+    async Task OpenNodeIndexDialog(AmsNeo4JNodeIndex index)
+    {
+        var dialogReference = DialogService.Show<NodeIndexDialog>("index",
+            new DialogParameters()
+                {
+                    ["Label"] = Label,
+                    ["Index"] = index
+                });
+        await dialogReference.Result;
+    }
+
+    async Task DeleteIndexClick(AmsNeo4JNodeIndex index)
+    {
+        var dialogReference = DialogService.Show<DeleteIndexDialog>("Delete index",
+            new DialogParameters
+                {
+                    ["Index"] = index
+                }
+            , new DialogOptions
+                {
+                    FullWidth = true,
+                    MaxWidth = MaxWidth.Medium
+                });
+        var dialogResult = await dialogReference.Result;
+    }
+
+}

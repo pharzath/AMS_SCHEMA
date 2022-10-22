@@ -1,0 +1,96 @@
+﻿@using AMS.Model.Services
+@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS.Model.Models
+@using AMS_SCHEMA.Pages.Schema.Constraint
+<MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="NewNodeConstraintClick">
+    New Constraint
+</MudButton>
+
+<MudTable Items="NodeConstraints">
+    <HeaderContent>
+        <MudTd>Relation Type</MudTd>
+        <MudTd>Over</MudTd>
+        <MudTd>Constraint Type</MudTd>
+        <MudTd></MudTd>
+        <MudTd></MudTd>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>
+            <MudChip Size="Size.Small">@context.RelType.Name</MudChip>
+        </MudTd>
+        <MudTd>
+            <p>@context.Over</p>
+        </MudTd>
+        <MudTd>@context.Type</MudTd>
+        <MudTd>
+            <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.Edit" OnClick="() => EditNodeConstraint(context)">
+                Edit
+            </MudButton>
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteConstraintClick(context)"></MudIconButton>
+        </MudTd>
+
+    </RowTemplate>
+    <ChildRowContent>
+        <MudTd colspan="5">
+            <MudText Typo="Typo.h6" Color="Color.Info">
+                @context.Command
+            </MudText>
+        </MudTd>
+    </ChildRowContent>
+</MudTable>
+
+@code {
+    [Inject] DataService DataService { get; set; }
+
+    [Inject] IDialogService DialogService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeRelationType RelationType { get; set; }
+
+    public IEnumerable<AmsNeo4JNodeConstraint> NodeConstraints => DataService.GetRelationTypeConstraints(RelationType);
+
+    async Task NewNodeConstraintClick()
+    {
+        var constraint = new AmsNeo4JNodeConstraint()
+        {
+
+        };
+        await OpenNodeConstraintDialog(constraint);
+    }
+
+    async Task EditNodeConstraint(AmsNeo4JNodeConstraint constraint)
+    {
+        await OpenNodeConstraintDialog(constraint);
+    }
+
+
+    async Task OpenNodeConstraintDialog(AmsNeo4JNodeConstraint constraint)
+    {
+        var dialogReference = DialogService.Show<RelationTypeConstraintDialog>("Constraint",
+            new DialogParameters()
+                {
+                    ["RelType"] = RelationType,
+                    ["Constraint"] = constraint
+                });
+        await dialogReference.Result;
+    }
+
+    async Task DeleteConstraintClick(AmsNeo4JNodeConstraint constraint)
+    {
+        var dialogReference = DialogService.Show<DeleteConstraintDialog>("Delete Constraint",
+            new DialogParameters
+            {
+                ["Constraint"] = constraint
+            }
+            , new DialogOptions
+            {
+                FullWidth = true,
+                MaxWidth = MaxWidth.Medium
+            });
+        var dialogResult = await dialogReference.Result;
+    }
+
+}

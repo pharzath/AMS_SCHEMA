@@ -1,0 +1,77 @@
+﻿@page "/SchemaRelationExplorer"
+@using AMS_SCHEMA.Class
+
+<MudAppBar>
+    <MudSpacer />
+    <MudTextField Label="Search" @bind-Value="SearchText" DebounceInterval="500" OnDebounceIntervalElapsed="SearchSchema" Clearable="true" Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Search"></MudTextField>
+</MudAppBar>
+
+<h5>AMS NEO4J(DBMS) Relations Schema Definition</h5>
+
+<MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="CreateNewRelationTypeClick">
+    Create New Relation
+</MudButton>
+
+<MudStack Spacing="3">
+    @foreach (var context in _relations)
+    {
+        <MudCard Class="w-100">
+            <MudCardHeader>
+                <MudStack Row="true">
+                    <MudStack Class="m-0" Spacing="0">
+                        <MudChip Color="Color.Info">
+                            <MudText Typo="Typo.h6">@context.Name</MudText>
+                            - @context.DisplayName
+                        </MudChip>
+                    </MudStack>
+                </MudStack>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudDivider DividerType="DividerType.Inset" Light="false" />
+                <MudGrid>
+                    <MudItem sm="12" md="12">
+                        <MudListSubheader>Relations:</MudListSubheader>
+                        @foreach (var from in DataService.GetRelations(context.Name))
+                        {
+                            <MudTooltip Text="@from.Description" Arrow="true" Color="Color.Info" Placement="Placement.Top">
+                                <MudChip Size="Size.Medium" Color="Color.Default" OnClick="() => from.IsEn = !from.IsEn">
+                                    @GetRelationInfoFrom(from)
+                                </MudChip>
+                            </MudTooltip>
+                        }
+                    </MudItem>
+                    <MudItem sm="12" md="12">
+                        <MudPaper Class="m-0" Elevation="0">
+                            <MudChip Variant="Variant.Text" Label="true">PropertiesDict:</MudChip>
+
+                            @foreach (var prop in context.Properties)
+                            {
+                                <MudTooltip Arrow="true" Placement="Placement.Top" Color="Color.Info">
+                                    <ChildContent>
+                                        <MudChip Icon="@Utils.GetRelationTypePropertyIcon(context, prop)" Style="@Utils.GetRelationTypePropertyBgColor(context, prop)" Size="Size.Small">@prop.Name: @prop.DataType</MudChip>
+                                    </ChildContent>
+                                    <TooltipContent>
+                                        @foreach (var tip in GetPropertyTooltipText(context, prop))
+                                        {
+                                            @if (!string.IsNullOrEmpty(tip))
+                                            {
+                                                <MudText Typo="Typo.body1">@tip</MudText>
+                                            }
+                                        }
+                                    </TooltipContent>
+                                </MudTooltip>
+                            }
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.Circle" OnClick="() => EditNodeClick(context)">
+                    Edit
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+
+    }
+</MudStack>
+

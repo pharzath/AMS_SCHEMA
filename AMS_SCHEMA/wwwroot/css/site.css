@@ -1,0 +1,12 @@
+@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+
+.mud-chip,
+td, .mud-typography {
+    font-family: 'Tahoma';
+}
+
+.top-drawer.mud-drawer--open {
+    top: 0 !important;
+    position: fixed !important;
+}
+

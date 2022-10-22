@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.0" />
+    <PackageReference Include="BlazorTemplater" Version="1.5.0" />
+    <PackageReference Include="FluentValidation" Version="11.2.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.9" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="MudBlazor" Version="6.0.16" />
+    <PackageReference Include="Olive" Version="2.1.324" />
+    <PackageReference Include="Toolbelt.Blazor.HotKeys" Version="13.0.0" />
+    <PackageReference Include="Toolbelt.Blazor.LoadingBar" Version="13.1.2" />
+    <PackageReference Include="Toolbelt.Blazor.SpeechSynthesis" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AMS.Model\AMS.Model.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="CodeGenerator\Api\ServiceConstract\" />
+    <Folder Include="Data\" />
+  </ItemGroup>
+
+</Project>

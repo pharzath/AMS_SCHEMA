@@ -1,0 +1,183 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+
+@using Olive
+@using System.Web
+@using AMS.Model.Services
+using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json;
+using QOQNOS.Core;
+
+namespace AMS.Model;
+// #@Label.DisplayName#
+[Table("@Label.Name")]
+public partial class @Label.Name : @GetParentClass()
+{
+#region Neo4J
+
+    public static string L = "@Label.Name";
+    public static string V = "@Label.Name.ToShortVariableName()";
+
+    public static string[] Labels => new[] { @string.Join(", ", GetLabels(Label).Select(x => x.WithWrappers("\"", "\""))) };
+
+    @if (Relations.Any())
+    {
+    <text>
+    public static string[] AllRelations => new[] { @string.Join(", ", Relations.Distinct(x => x.Name).Select(x => x.Name.WithWrappers("\"", "\""))) };
+    </text>
+    }
+    @if (InRelations.Any())
+    {
+    <text>
+    public static string[] InRelations => new[] { @string.Join(", ", InRelations.Distinct(x => x.Name).Select(x => x.Name.WithWrappers("\"", "\""))) };
+    public static Dictionary&lt;string, string> InTypesRelation => new()
+    {@foreach(var rel in InRelations){<text>
+        [nameof(@rel.From.Name)] = "@rel.RelType.Name",</text>
+     }
+};
+    </text>
+    }
+    @if (OutRelations.Any())
+    {
+    <text>
+    public static string[] OutRelations => new[] { @string.Join(", ", OutRelations.Distinct(x => x.Name).Select(x => x.Name.WithWrappers("\"", "\""))) };
+    public static Dictionary&lt;string, string> OutTypesRelation => new()
+    {@foreach(var rel in OutRelations){<text>
+        [nameof(@rel.To.Name)] = "@rel.RelType.Name",</text>
+     }
+};
+    </text>
+    }
+    @foreach (var rel in Relations.Distinct(x=>x.Name))
+    {
+        <text>
+            @foreach (var r in Relations.Where(x => x.Name == rel.Name)
+       .Select(x => $"({x.From.Name.ToShortVariableName()}:{x.From.Name})-[rel:{x.Name}]->({x.To.Name.ToShortVariableName()}:{x.To.Name})"))
+            {
+                <text>
+    // @r
+                </text>
+            }
+
+    public static string @rel.Name.ToPascalCase() = "@rel.Name";
+        </text>
+}
+
+    // Incoming Relations
+@foreach (var r in InRelations.Select(x => $"({x.From.Name.ToShortVariableName()}:{x.From.Name})-[rel:{x.Name}]->({x.To.Name.ToShortVariableName()}:{x.To.Name})"))
+{
+    <text>
+    // @r
+ </text>
+}
+    
+
+    // Constraints
+    public static string[] Constraints =
+    {
+          @foreach (var con in Label.Constraints)
+          {
+<text>
+@@"@con.Command",
+</text>
+          }
+    };
+
+    // Indices
+    public static string[] Indices =
+    {
+@foreach (var con in Label.Indices)
+          {
+
+<text>
+@@"@con.Command",
+</text>
+          }
+    };
+    #endregion
+        @foreach (var fld in Label.Properties.Where(x=>x.Name != "Id"))
+        {
+    <text>
+    /// <summary>
+    /// @fld.DisplayName - @fld.Description.OrEmpty().ReplaceLineEndings(" , ")
+    /// </summary>
+    [JsonProperty("@fld.Neo4jName")]
+    public @(fld.DataType.GetColumnDataType())@IsNullable(fld) @fld.Name { get; set; }
+    </text>}
+
+    // ======= Relations From @Label.Name (outgoing) ========
+
+@{
+    var relationFroms = Relations.Where(x=>x.From.Id == Label.Id);
+}
+    @foreach (var rel in relationFroms)
+    {
+        <text>
+        [Column("@rel.RelType.Name")]
+        [InverseProperty("@rel.GetRelationFrom_InversCollectionName(relationFroms)")]
+        public ICollection&lt;@rel.To.Name> @rel.GetRelationTo_CollectionName(relationFroms) { get; set; }
+        </text>
+    }
+
+    // ======= Relations To @Label.Name (incoming) ========
+@foreach (var rel in InRelations)
+    {
+        <text>
+        // @rel.RelType.Name
+        [InverseProperty("@rel.GetRelationTo_InversCollectionName(InRelations)")]
+        public ICollection&lt;@rel.From.Name> @rel.GetRelationFrom_CollectionName(InRelations) { get; set; }
+        </text>
+    }
+
+}
+
+
+
+@code {
+
+    [Inject]
+    public DataService DataService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> Relations { get; set; }
+
+    List<AmsNeo4JNodeRelation> InRelations => Relations.Where(x => x.To.Id == Label.Id).ToList();
+    List<AmsNeo4JNodeRelation> OutRelations => Relations.Where(x => x.From.Id == Label.Id).ToList();
+
+    // [Parameter]
+    // public List<AmsNeo4JNodeConstraint> Constraints { get; set; }
+
+    string GetParentClass()
+    {
+        if (Label.ParentLabel is {})
+        {
+            return Label.ParentLabel.Name;
+        }
+
+        return $"AbstractEntity<{Label.Name}, Guid>";
+    }
+
+    string IsNullable(AmsNeo4JNodeLabelPropery fld)
+    {
+        return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL")) 
+            ? "" 
+            : "?";
+    }
+
+    string[] GetLabels(AmsNeo4JNodeLabel label)
+    {
+        var lbls = new List<string> { label.Name };
+        var pid = label.ParentLabelId;
+        while (pid is > 0)
+        {
+            var lbl = DataService.GetLabel(pid);
+            lbls.Add(lbl.Name);
+            pid = lbl.ParentLabelId;
+        }
+        lbls.Reverse();
+        return lbls.ToArray();
+    }
+}

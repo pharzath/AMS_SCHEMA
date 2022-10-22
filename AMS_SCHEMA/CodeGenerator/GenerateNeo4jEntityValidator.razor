@@ -1,0 +1,45 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+
+@using Olive
+@using System.Web
+
+using AMS.Model;
+using FluentValidation;
+
+namespace AMS.Validator;
+
+public partial class @(Label.Name)Validator : AbstractValidator&lt;@Label.Name>
+{
+    partial void InitValidator();
+
+    public @(Label.Name)Validator()
+    {
+        @if (Label.Constraints.Any(x => x.Over == "Id" && x.Type == "IS NODE KEY"))
+        {
+            <text>
+            RuleFor(@Label.Name.ToCamelCaseId() => @(Label.Name.ToCamelCaseId()).Id)
+                .NotNull()
+                .NotEmpty();
+            </text>
+        }
+
+        InitValidator();
+    }
+}
+
+@code {
+    
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+    
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> Relations { get; set; }
+    
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> IncommingRelations { get; set; }
+
+    [Parameter]
+    public List<AmsNeo4JNodeConstraint> Constraints { get; set; }
+
+}

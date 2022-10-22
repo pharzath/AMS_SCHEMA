@@ -1,0 +1,168 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Pages.Schema.Constraint
+@using AMS_SCHEMA.Pages.Schema.Index
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 650px;overflow-y: scroll">
+            <MudText Typo="Typo.h5">Warning</MudText>
+            <MudText Typo="Typo.body1">You are going to delete Label: <b>@Label.Name</b> - <i>@Label.DisplayName</i></MudText>
+
+            @foreach (var rel in DataService.GetLabelRelations(Label))
+            {
+                <MudText Class="mud-paper ma-3" Typo="Typo.subtitle1" Color="Color.Primary">
+                    <MudChip Label="true">With Relation:</MudChip>@rel.Name: (@rel.From.Name) -> (@rel.To.Name)
+                </MudText>
+            }
+
+
+
+            @if (Label.Properties != null)
+            {
+                foreach (var prop in Label.Properties)
+                {
+                    <MudText Class="mud-paper ma-3" Typo="@Typo.subtitle1" Color="@Color.Success">
+                        <MudChip Label="@true">With Property:</MudChip>@prop.Name: @prop.DataType (@prop.DisplayName)
+                    </MudText>
+                    <MudDivider/>
+                    foreach (var constr in prop.Constraints)
+                    {
+                        <MudChip Class="ms-10" Label="@true">With CONSTRAINT:</MudChip>
+                        <MudText Class="ms-10" Typo="@Typo.body2" Color="@Color.Info">
+                            @constr.Type Command: @constr.Command
+                        </MudText>
+                    }
+                    <MudDivider/>
+                    foreach (var idx in prop.Indices)
+                    {
+                        <MudChip Class="ms-10" Label="@true">With INDEX: </MudChip>
+                        <MudText Class="ms-10" Typo="@Typo.body2" Color="@Color.Warning">
+                            @idx.Type Command: @idx.Command
+                        </MudText>
+                    }
+                }
+            }
+
+            <MudSpacer></MudSpacer>
+            <MudText Typo="Typo.h6" Class="ma-4" Color="Color.Error">
+                Are you sure to delete this Label with it's related dependencies ?
+            </MudText>
+
+        </MudContainer>
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Error" StartIcon="@Icons.TwoTone.Check" OnClick="YesClick">
+            Yes, I'm sure
+        </MudButton>
+
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="NoClick">
+            No
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    void NoClick()
+    {
+        DialogInstance.Cancel();
+    }
+
+    async Task YesClick()
+    {
+        bool finalResult = true;
+        if (Label?.Properties is { })
+        {
+            var amsNeo4JNodeLabelProperies = Label.Properties.ToArray();
+            foreach (var prop in amsNeo4JNodeLabelProperies)
+            {
+                bool delProp = true;
+                var amsNeo4JNodeConstraints = prop.Constraints.ToArray();
+                foreach (var constr in amsNeo4JNodeConstraints)
+                {
+                    var dialogReference = DialogService.Show<DeleteConstraintDialog>("Delete Constraint",
+                        new DialogParameters
+                        {
+                            ["Constraint"] = constr
+                        }
+                        , new DialogOptions
+                        {
+                            FullWidth = true,
+                            MaxWidth = MaxWidth.Medium
+                        });
+                    var result = await dialogReference.Result;
+                    if (result.Cancelled)
+                    {
+                        DialogInstance.Cancel();
+                        return;
+                    }
+                    var dialogResult = await dialogReference.GetReturnValueAsync<bool>();
+                    if (dialogResult is true)
+                    {
+                        delProp &= dialogResult;
+                    }
+                }
+
+                var amsNeo4JNodeIndices = prop.Indices.ToArray();
+                foreach (var idx in amsNeo4JNodeIndices)
+                {
+                    var dialogReference = DialogService.Show<DeleteIndexDialog>("Delete Index",
+                        new DialogParameters
+                        {
+                            ["Index"] = idx
+                        }
+                        , new DialogOptions
+                        {
+                            FullWidth = true,
+                            MaxWidth = MaxWidth.Medium
+                        });
+                    var result = await dialogReference.Result;
+                    if (result.Cancelled)
+                    {
+                        DialogInstance.Cancel();
+                        return;
+                    }
+                    var dialogResult = await dialogReference.GetReturnValueAsync<bool>();
+                    if (dialogResult is true)
+                    {
+                        delProp &= dialogResult;
+                    }
+                }
+
+                if (delProp)
+                {
+                    DataService.DeleteLabelProperty(prop);
+                }
+                finalResult &= delProp;
+            }
+        }
+
+        if (finalResult)
+        {
+            if (Label?.ChildLabels != null)
+                foreach (var label in Label.ChildLabels)
+                {
+                    label.ParentLabelId = Label.ParentLabelId;
+                }
+            DataService.DeleteLabel(Label);
+            if(Label.ParentLabelId == null && 
+               !DataService.GetSubLabels(Label.Node).Any())
+                DataService.DeleteNode(Label.Node);
+        }
+        DialogInstance.CancelAll();
+        StateHasChanged();
+    }
+
+}

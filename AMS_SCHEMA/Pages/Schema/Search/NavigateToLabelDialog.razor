@@ -1,0 +1,68 @@
+﻿@using AMS.Model.Services
+@using AMS.Model.Models
+@using Olive
+<MudDialog>
+    <DialogContent>
+        <MudAutocomplete @ref="_searchAutoCompleteField"
+                             Label="Search Label"
+                             @bind-Value="SearchText"
+                             Clearable="true"
+                             MaxItems="100"
+                             SearchFunc="GetLabels"
+                             SelectOnClick="true"
+                             SelectValueOnTab="true"
+                             OnKeyPress="Callback">
+                <ItemTemplate>
+                    <MudStack Row="true">
+                        <MudText Color="Color.Warning" Typo="Typo.body1">@context.Name</MudText>
+                        <MudText Typo="Typo.overline" Color="Color.Surface">@context.Node.Name.WithWrappers("(", ")")</MudText>
+                        <MudSpacer/>
+                        <MudText Color="Color.Warning" Typo="Typo.body2">@context.DisplayName</MudText>
+                    </MudStack>
+                </ItemTemplate>
+            </MudAutocomplete>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Surface" StartIcon="@Icons.TwoTone.Close" OnClick="CloseClick">
+            Go To Label
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    MudAutocomplete<AmsNeo4JNodeLabel?>? _searchAutoCompleteField;
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    AmsNeo4JNodeLabel? SearchText;
+    
+    void CloseClick()
+    {
+        DialogInstance.Close(SearchText.Node.Name);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _searchAutoCompleteField.FocusAsync();
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    Task<IEnumerable<AmsNeo4JNodeLabel>> GetLabels(string? arg)
+    {
+        var nodes = DataService.SearchLabels(arg);
+        return Task.FromResult(nodes.AsEnumerable());
+    }
+
+    void Callback(KeyboardEventArgs args)
+    {
+        Console.WriteLine(args.Key);
+    }
+
+}

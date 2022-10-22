@@ -1,0 +1,28 @@
+﻿@inherits MyLayoutBaseComponent
+
+<MudThemeProvider  IsDarkMode="true"/>
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<PageTitle>AMS_SCHEMA</PageTitle>
+
+<MudLayout>
+    <MudDrawer @bind-Open="@_drawerOpen" Variant="DrawerVariant.Mini" OpenMiniOnHover="true" >
+        <MudIconButton Icon="@Icons.TwoTone.Close" Color="Color.Default" OnClick="()=>_drawerOpen = false"></MudIconButton>
+        <MyNavMenu/>
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="pa-5">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = false;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

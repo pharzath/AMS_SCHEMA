@@ -1,0 +1,109 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Class
+@using AMS_SCHEMA.Pages.Schema.Constraint
+
+<MudTable Items="Label.Properties?
+    .OrderBy(x=>x.Order)
+    .ThenBy(x=>x.Id)">
+    <ToolBarContent>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="CreateNewPropertyClick">
+            Create Property For (@Label.Name)
+        </MudButton>
+
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTd Style="width:50px"></MudTd>
+        <MudTd Style="width:200px">Name</MudTd>
+        <MudTd>Neo-Name</MudTd>
+        <MudTd>Disp-Name</MudTd>
+        <MudTd>Validation</MudTd>
+        <MudTd>DisplayName</MudTd>
+        <MudTd></MudTd>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>
+            @if (context.Name != "Id")
+            {
+                <MudIconButton Icon="@Icons.TwoTone.Edit" Color="Color.Success" OnClick="() => EditProperty(context)"></MudIconButton>
+            }
+        </MudTd>
+        <MudTd>
+            <MudChip Size="Size.Large"
+                     Icon="@Utils.GetLabelPropertyIcon(Label, context)"
+                     Style="@Utils.GetLabelPropertyBgColor(Label, context)">
+                @context.Name : @context.DataType
+            </MudChip>
+        </MudTd>
+        <MudTd>@context.Neo4jName</MudTd>
+        <MudTd>@context.DisplayName</MudTd>
+        <MudTd>@context.ValidationType</MudTd>
+        <MudTd>@context.Description</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="() => DeletePropertyClick(context)"></MudIconButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+<BaseEntityPropertyListComponent Label="Label" ></BaseEntityPropertyListComponent>
+
+@code {
+    // [Parameter]
+    // public AmsNeo4JNode Node { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    async Task CreateNewPropertyClick()
+    {
+        var propery = new AmsNeo4JNodeLabelPropery();
+        await OpenPropertyDialog(propery);
+    }
+
+    async Task OpenPropertyDialog(AmsNeo4JNodeLabelPropery propery)
+    {
+        var dialogReference = DialogService.Show<PropertyInfoDialog>("Property Info",
+            new DialogParameters()
+                {
+                    ["Property"] = propery,
+                    ["Label"] = Label
+                },
+            new DialogOptions()
+                {
+                    FullWidth = true
+                });
+        await dialogReference.Result;
+    }
+
+    async Task EditProperty(AmsNeo4JNodeLabelPropery prop)
+    {
+        await OpenPropertyDialog(prop);
+    }
+
+
+    async Task DeletePropertyClick(AmsNeo4JNodeLabelPropery prop)
+    {
+        var delPropDialog = DialogService.Show<DeletePropertyDialog>("Delete Property",
+            new DialogParameters
+                {
+                    ["Property"] = prop
+                }
+            , new DialogOptions
+                {
+                    FullWidth = true,
+                    MaxWidth = MaxWidth.Medium
+                });
+        var delPropResult = await delPropDialog.Result;
+        if (!delPropResult.Cancelled)
+        {
+            await DialogService.ShowMessageBox("Remember", "Remember to Re-Generate Entities related to this Label.");
+            StateHasChanged();
+        }
+    }
+
+}

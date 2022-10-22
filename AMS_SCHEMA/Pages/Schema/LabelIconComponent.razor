@@ -1,0 +1,25 @@
+﻿@using AMS.Model.Models
+@using Olive
+
+@if (!Label.Icon.IsEmpty())
+{
+    <MudIcon Icon="@Label.IconContent" Size="Size" Class="mr-2" />
+}
+else
+{
+    <MudIcon Icon="@DefaultIcon" Size="Size" Class="mr-2" />
+}
+
+
+@code {
+    
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public string? DefaultIcon { get; set; } = Icons.Filled.Label;
+
+    [Parameter]
+    public MudBlazor.Size Size { get; set; } = Size.Medium;
+
+}

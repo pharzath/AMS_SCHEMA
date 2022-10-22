@@ -1,0 +1,102 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+
+@using Olive
+@using System.Web
+@using AMS.Model.Services
+using AMS.Model;
+using AMS.Repository;
+using AMS.Services.Contract;
+using AMS.Services.Interface;
+using ServiceStack;
+using AMS.Services.Contract._@Label.Name;
+
+namespace QOQNOS.Neo4j.TEST.Application.AMS.Services.API;
+
+public partial class @(Label.Name)ServiceApi : Service, I@(Label.Name)ServiceApi
+{
+    readonly @(Label.Name)Repository _@(Label.Name.ToCamelCase())Repository;
+
+    public @(Label.Name)ServiceApi(@(Label.Name)Repository @(Label.Name.ToCamelCase())Repository)
+    {
+        _@(Label.Name.ToCamelCase())Repository = @(Label.Name.ToCamelCase())Repository;
+    }
+
+    public async Task&lt;@(Label.Name)ListRequest.Response> Get(@(Label.Name)ListRequest request)
+    {
+        var @(Label.Name.ToPlural().ToCamelCase()) = await _@(Label.Name.ToCamelCase())Repository.Get_@(Label.Name.ToPlural())_Async();
+        return new @(Label.Name)ListRequest.Response() { Result = @(Label.Name.ToPlural().ToCamelCase()) };
+    }
+
+    public Task Post(@(Label.Name)CreateRequest request)
+    {
+        return _@(Label.Name.ToCamelCase())Repository.CreateNew@(Label.Name)Safe(request.ConvertTo&lt;@(Label.Name)>());
+    }
+
+    public Task Put(@(Label.Name)UpdateRequest request)
+    {
+        return _@(Label.Name.ToCamelCase())Repository.Update@(Label.Name)Full(request.ConvertTo&lt;@(Label.Name)>());
+    }
+
+    public async Task&lt;@(Label.Name)DeleteRequest.Response> Delete(@(Label.Name)DeleteRequest request)
+    {
+        try
+        {
+            await _@(Label.Name.ToCamelCase())Repository.Delete@(Label.Name)_WithInboundLinks(request.@(Label.Name)Id);
+            return new @(Label.Name)DeleteRequest.Response { Result = true };
+        }
+        catch (Exception)
+        {
+            return new @(Label.Name)DeleteRequest.Response { Result = false };
+        }
+    }
+
+//================================================================
+@foreach (var rel in FromRelations)
+{
+    <text>
+        public Task&lt;@(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)JoinRequest.Response> 
+            Post(@(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)JoinRequest request)
+        {
+            throw new NotImplementedException();
+        }
+    </text>
+}
+//================================================================
+}
+
+@code {
+
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> FromRelations { get; set; }
+
+    // [Parameter]
+    // public List&lt;AmsNeo4JNodeConstraint> Constraints { get; set; }
+
+    string GetParentClass()
+    {
+        if (Label.ParentLabel is { })
+        {
+            return Label.ParentLabel.Name;
+        }
+
+        return $"AbstractEntity&lt;{Label.Name}, Guid>";
+    }
+
+    string IsNullable(AmsNeo4JNodeLabelPropery fld)
+    {
+        return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL"))
+            ? ""
+            : "?";
+    }
+    string GetToSafeName(AmsNeo4JNodeRelation rel)
+    {
+        if (rel.From.Name == rel.To.Name)
+            return "Sub" + rel.To.Name;
+        return rel.To.Name;
+    }
+}

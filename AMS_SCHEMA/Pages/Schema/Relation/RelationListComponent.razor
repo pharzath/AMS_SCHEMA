@@ -1,0 +1,115 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using Olive
+
+<MudContainer Style="max-height: 600px;overflow-y: scroll">
+
+    <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="NewNodeRelationClick">
+        New Relation
+    </MudButton>
+
+    <MudTable Items="NodeRelations">
+        <HeaderContent>
+            <MudTd>From</MudTd>
+            <MudTd>Rel</MudTd>
+            <MudTd>To</MudTd>
+            <MudTd></MudTd>
+            <MudTd></MudTd>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                <MudStack Row="false" Spacing="0">
+                    <MudChip Size="Size.Small">
+                        <LabelIconComponent Label="@context.From" Size="Size.Small"></LabelIconComponent>
+                        @context.From?.Name
+                    </MudChip>
+                    <MudText Typo="Typo.overline">@context.From.DisplayName</MudText>
+                </MudStack>
+
+
+            </MudTd>
+            <MudTd>
+                <MudStack Row="false" Spacing="0">
+                    <MudText Typo="Typo.caption">@context.RelType.Name.WithWrappers("[:", "]")</MudText>
+                    <MudText Typo="Typo.caption">@context.RelType.DisplayName.WithWrappers("[:", "]")</MudText>
+                </MudStack>
+
+
+            </MudTd>
+            <MudTd>
+                <MudStack Row="false" Spacing="0">
+                    <MudChip Size="Size.Small">
+                        <LabelIconComponent Label="@context.To" Size="Size.Small"></LabelIconComponent>
+                        @context.To?.Name
+                    </MudChip>
+                    <MudText Typo="Typo.overline">@context.To.DisplayName</MudText>
+                </MudStack>
+
+            </MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.Edit" OnClick="() => EditNodeRelation(context)">
+                    Edit
+                </MudButton>
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteRelationClick(context)"></MudIconButton>
+            </MudTd>
+
+        </RowTemplate>
+    </MudTable>
+</MudContainer>
+
+@code {
+
+    [Inject] DataService DataService { get; set; }
+    public IEnumerable<AmsNeo4JNodeRelation> NodeRelations => DataService.GetLabelRelations(Label);
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    //    [Parameter]
+    //    public AmsNeo4JNode Node { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    async Task NewNodeRelationClick()
+    {
+        var relation = new AmsNeo4JNodeRelation()
+            {
+                From = Label,
+                To = Label,
+            };
+        await OpenNodeRelationDialog(relation);
+    }
+
+    async Task OpenNodeRelationDialog(AmsNeo4JNodeRelation relation)
+    {
+        var dialogReference = DialogService.Show<NodeRelationDialog>("Relation",
+            new DialogParameters()
+                {
+                    ["NodeRelation"] = relation
+                },
+            new DialogOptions()
+                {
+                    FullWidth = true,
+                    MaxWidth = MaxWidth.Large
+                });
+        var dialogReferenceResult = await dialogReference.Result;
+        StateHasChanged();
+    }
+
+    async Task EditNodeRelation(AmsNeo4JNodeRelation relation)
+    {
+        await OpenNodeRelationDialog(relation);
+    }
+
+    async Task DeleteRelationClick(AmsNeo4JNodeRelation context)
+    {
+        var answer = await DialogService.ShowMessageBox("Warnng", "Are you sure to delete this Relation ?", "Yes", "No");
+        if (answer is true)
+            DataService.DeleteRelation(context);
+
+    }
+
+}

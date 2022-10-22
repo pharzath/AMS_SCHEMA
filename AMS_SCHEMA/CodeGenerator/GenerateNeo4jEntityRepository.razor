@@ -1,0 +1,322 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Class
+@using Olive
+
+using Neo4jClient;
+using Neo4jClient.Cypher;
+using Neo4jClient.DataAnnotations;
+using System.Linq.Expressions;
+
+using AMS.DataContext;
+using AMS.Model;
+using AMS.Domain;
+
+namespace AMS.Repository;
+
+// #@Label.DisplayName#
+public partial class @(Label.Name)Repository : NeoRepositoryBase
+{
+    public @(Label.Name)Repository(IGraphClient graphClient)
+        : base(graphClient)
+    {}
+    
+    #region Create - Update - Delete : @(Label.Name.ToPlural())
+
+    public async Task CreateNew@(Label.Name)(@(Label.Name) new@(Label.Name))
+    {
+        await _client.ConnectAsync();
+
+        await _client.Cypher
+            .Create(path => 
+                path.Pattern&lt;@(Label.Name)>("@(Label.Name.ToCamelCase())")@GetExtraLabels(Label)
+                    .Prop(() => new@(Label.Name)))
+            .ExecuteWithoutResultsAsync();
+    }
+
+    public async Task CreateNew@(Label.Name)Safe(@(Label.Name) new@(Label.Name))
+    {
+        await _client.ConnectAsync();
+
+        await _client.Cypher
+            .Merge(path => path.Pattern&lt;@(Label.Name)>("@(Label.Name.ToCamelCase())")@GetExtraLabels(Label)
+                .Constrain(@(Label.Name.ToCamelCase()) => @(Label.Name.ToCamelCase()).Id == new@(Label.Name).Id))
+            .OnCreate()
+            .Set("@(Label.Name.ToCamelCase())" , ()=> new@(Label.Name))
+            .ExecuteWithoutResultsAsync();
+    }
+
+
+    public async Task Update@(Label.Name)Full(@(Label.Name) old@(Label.Name))
+    {
+        await _client.ConnectAsync();
+
+        await _client.Cypher
+            .Match(path => path.Pattern&lt;@(Label.Name)>("@(Label.Name.ToCamelCase())")
+                .Constrain(@(Label.Name.ToCamelCase()) => @(Label.Name.ToCamelCase()).Id == old@(Label.Name).Id))
+            .Set("@(Label.Name.ToCamelCase())" , ()=> old@(Label.Name))
+            .ExecuteWithoutResultsAsync();
+    }
+
+    // (@(Label.Name.ToCamelCase())) => @(Label.Name.ToCamelCase()).XXX == "123" || @(Label.Name.ToCamelCase()).YYY == 10
+    public Task Update@(Label.Name)Prop(@(Label.Name) @(Label.Name.ToCamelCase()), Expression&lt;Func&lt;@(Label.Name), bool>> expression)
+    {
+        return Update@(Label.Name)Prop(@(Label.Name.ToCamelCase()).Id, expression);
+    }
+
+    public async Task Update@(Label.Name)Prop(Guid @(Label.Name)Id, Expression&lt;Func&lt;@(Label.Name), bool>> expression)
+    {
+        await _client.ConnectAsync();
+
+        await _client.Cypher
+            .Match(path => path.Pattern&lt;@(Label.Name)>("@(Label.Name.ToCamelCase())")
+                .Constrain(@(Label.Name.ToCamelCase()) => @(Label.Name.ToCamelCase()).Id == @(Label.Name)Id))
+            .Set(expression)
+            .ExecuteWithoutResultsAsync();
+    }
+
+    public Task Delete@(Label.Name)_NODE(@(Label.Name) @(Label.Name.ToCamelCase()))
+    {
+        return Delete@(Label.Name)_NODE(@(Label.Name.ToCamelCase()).Id);
+    }
+
+    public async Task Delete@(Label.Name)_NODE(Guid @(Label.Name.ToCamelCase())Id)
+    {
+        await _client.ConnectAsync();
+
+        await _client.Cypher
+            .Match(path => path.Pattern&lt;@(Label.Name)>("@(Label.Name.ToCamelCase())")
+                .Constrain(@(Label.Name.ToCamelCase()) => @(Label.Name.ToCamelCase()).Id == @(Label.Name.ToCamelCase())Id))
+            .Delete("@(Label.Name.ToCamelCase())")
+            .ExecuteWithoutResultsAsync();
+    }
+
+    public Task Delete@(Label.Name)_WithInboundLinks(@(Label.Name) @(Label.Name.ToCamelCase()))
+    {
+        return Delete@(Label.Name)_WithInboundLinks(@(Label.Name.ToCamelCase()).Id);
+    }
+
+    public async Task Delete@(Label.Name)_WithInboundLinks(Guid @(Label.Name.ToCamelCase())Id)
+    {
+        await _client.ConnectAsync();
+
+        await _client.Cypher
+            .Match(path => path.Pattern&lt;@(Label.Name)>("@(Label.Name.ToCamelCase())","r",null)
+                .Constrain(@(Label.Name.ToCamelCase()) => @(Label.Name.ToCamelCase()).Id == @(Label.Name.ToCamelCase())Id))
+            .Delete("r, @(Label.Name.ToCamelCase())")
+            .ExecuteWithoutResultsAsync();
+    }
+
+    #endregion
+
+    # region Queries
+
+    // ===================================== GET @(Label.Name.ToPlural()) ===================================================
+    ICypherFluentQuery Query_Get_@(Label.Name.ToPlural())()
+    {
+        return _client.Cypher
+            .Match(p => p.Pattern&lt;@(Label.Name)>("@(Label.Name.ToShortVariableName())"));
+    }
+
+    public async Task&lt;IEnumerable&lt;@(Label.Name)>?> Get_@(Label.Name.ToPlural())_Async()
+    {
+        await _client.ConnectAsync();
+    
+        var query = Query_Get_@(Label.Name.ToPlural())();
+        var result = await query
+            .Return(@(Label.Name.ToShortVariableName()) => @(Label.Name.ToShortVariableName()).As&lt;@(Label.Name)>())
+            .ResultsAsync;
+
+        return result;
+    }
+
+
+    ICypherFluentQuery Query_Get_@(Label.Name)(Guid @(Label.Name.ToCamelCase())Id)
+    {
+        return _client.Cypher
+            .Match(p => 
+                p.Pattern&lt;@(Label.Name)>("@(Label.Name.ToShortVariableName())")
+                 .Constrain(@(Label.Name.ToShortVariableName())=>@(Label.Name.ToShortVariableName()).Id == @(Label.Name.ToCamelCase())Id));
+    }
+
+    public async Task&lt;@(Label.Name)?> Get_@(Label.Name)_Async(Guid @(Label.Name.ToCamelCase())Id)
+    {
+        await _client.ConnectAsync();
+
+        var query = Query_Get_@(Label.Name)(@(Label.Name.ToCamelCase())Id);
+        var result = await query
+            .Return(@(Label.Name.ToShortVariableName()) => @(Label.Name.ToShortVariableName()).As&lt;@(Label.Name)>())
+            .ResultsAsync;
+
+        return result.FirstOrDefault();
+    }
+
+// 1 -> n
+@foreach (var rel in OutgoingRelations)
+{<text>
+    // ===================================@rel.GetCypherDefinition()=======================================
+    public ICypherFluentQuery Query_Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))(Guid @(rel.From.Name.ToCamelCase())Key)
+    {
+        var query = _client.Cypher
+            .Match(p =>
+                p.Pattern&lt;@(rel.From.Name), @(rel.GetRelationshiptClassName()), @(rel.To.Name)>
+                    ("@rel.From.Name.ToShortVariableName()", "@rel.RelType.Name.ToPascalCase().ToShortVariableName()", "@rel.To.Name.ToShortVariableName()")
+                    .Constrain(@rel.From.Name.ToShortVariableName() => @(rel.From.Name.ToShortVariableName()).Id == @(rel.From.Name.ToCamelCase())Key)
+            );
+        return query;
+    }
+
+    public async Task&lt;IEnumerable&lt;@(rel.To.Name)>?> Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))_Async(Guid @(rel.From.Name.ToCamelCase())Key)
+    {
+        await _client.ConnectAsync();
+        
+        var query = Query_Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))(@(rel.From.Name.ToCamelCase())Key);
+        var result = await query
+                        .Return(@(rel.To.Name.ToShortVariableName()) => @(rel.To.Name.ToShortVariableName()).As&lt;@(rel.To.Name)>())
+                        .ResultsAsync;
+
+        return result;
+    }
+    
+    public Task&lt;IEnumerable&lt;@(rel.To.Name)>?> Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))_Async(@(rel.From.Name) @(rel.From.Name.ToCamelCase()))
+    {
+        return Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))_Async(@(rel.From.Name.ToCamelCase()).Id);
+    }
+
+    // ---------------------
+
+    public ICypherFluentQuery Query_Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))(Guid @(rel.To.Name.ToCamelCase())Key)
+    {
+        var query = _client.Cypher
+            .Match(p =>
+                p.Pattern&lt;@(rel.To.Name), @(rel.GetRelationshiptClassName()), @(rel.From.Name)>
+                    ("@rel.To.Name.ToShortVariableName()", "@rel.RelType.Name.ToPascalCase().ToShortVariableName()", "@rel.From.Name.ToShortVariableName()", RelationshipDirection.Incoming)
+                    .Constrain(@rel.To.Name.ToShortVariableName() => @(rel.To.Name.ToShortVariableName()).Id == @(rel.To.Name.ToCamelCase())Key)
+            );
+        return query;
+    }
+
+    public async Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))_Async(Guid @(rel.To.Name.ToCamelCase())Key)
+    {
+        await _client.ConnectAsync();
+
+        var query = Query_Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))(@(rel.To.Name.ToCamelCase())Key);
+        var result = await query
+                        .Return(@(rel.From.Name.ToShortVariableName()) => @(rel.From.Name.ToShortVariableName()).As&lt;@(rel.From.Name)>())
+                        .ResultsAsync;
+
+        return result;
+    }
+    
+    public Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))_Async(@(rel.To.Name) @(rel.To.Name.ToCamelCase()))
+    {
+        return Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))_Async(@(rel.To.Name.ToCamelCase()).Id);
+    }
+
+    // ===================================@rel.GetCypherDefinition()=======================================
+ </text>}
+
+    // 1 &lt;- n
+@foreach (var rel in IncommingRelations.Where(x=>x.From.Name != x.To.Name))
+{<text>
+    // ===================================@rel.GetCypherDefinition()=======================================
+    ICypherFluentQuery Query_Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))(Guid @(rel.To.Name.ToCamelCase())Key)
+    {
+        var query = _client.Cypher
+            .Match(p =>
+                p.Pattern&lt;@(rel.To.Name), @(rel.GetRelationshiptClassName()), @(rel.From.Name)>
+                    ("@rel.To.Name.ToShortVariableName()", "@rel.RelType.Name.ToPascalCase().ToShortVariableName()", "@rel.From.Name.ToShortVariableName()")
+                    .Constrain(@rel.To.Name.ToShortVariableName() => @(rel.To.Name.ToShortVariableName()).Id == @(rel.To.Name.ToCamelCase())Key)
+            );
+        return query;
+    }
+
+    public async Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))_Async(Guid @(rel.To.Name)Key)
+    {
+        await _client.ConnectAsync();
+        
+        var query = Query_Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))(@(rel.To.Name)Key);
+        var result = await query
+                        .Return(@(rel.From.Name.ToShortVariableName()) => @(rel.From.Name.ToShortVariableName()).As&lt;@(rel.From.Name)>())
+                        .ResultsAsync;
+
+        return result;
+    }
+    
+    public Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))_Async(@(rel.To.Name) @(rel.To.Name.ToCamelCase()))
+    {
+        return Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))_Async(@(rel.To.Name.ToCamelCase()).Id);
+    }
+    // ===================================@rel.GetCypherDefinition()=======================================
+ </text>}
+ 
+    #endregion
+
+}
+@code {
+    [Inject]
+    public DataService DataService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+    
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> Relations { get; set; }
+    
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> IncommingRelations { get; set; }
+
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> OutgoingRelations { get; set; }
+
+
+    string GetDestinationLabelPluralName(AmsNeo4JNodeRelation rel)
+    {
+        var name = rel.To.Name;
+        if (rel.To.Name == rel.From.Name)
+        {
+            name = $"Sub{rel.To.Name}";
+        }
+
+        return name.ToPlural();
+    }
+
+    string GetDestinationLabelSingularName(AmsNeo4JNodeRelation rel)
+    {
+        var name = rel.To.Name;
+        if (rel.To.Name == rel.From.Name)
+        {
+            name = $"Sub{rel.To.Name}";
+        }
+
+        return name;
+    }
+
+    string GetSourceLabelPluralName(AmsNeo4JNodeRelation rel)
+    {
+        var name = rel.From.Name;
+        if (rel.To.Name == rel.From.Name)
+        {
+            name = $"Sub{rel.To.Name}";
+        }
+
+        return name.ToPlural();
+    }
+
+    string GetExtraLabels(AmsNeo4JNodeLabel label)
+    {
+        List<string> lbls = new List<string>();
+        var pid = label.ParentLabelId;
+        while (pid is > 0)
+        {
+            var lbl = DataService.GetLabel(pid);
+            lbls.Add(lbl.Name);
+            pid = lbl.ParentLabelId;
+        }
+        if(!lbls.Any())
+            return "";
+        var x = string.Join(',', lbls.Select(z => z.WithWrappers("\"", "\"")));
+        return $".Label(new[] {{{x}}})";
+    }
+
+}

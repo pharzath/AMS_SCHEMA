@@ -1,0 +1,147 @@
+﻿@using AMS.Model.Services
+@using AMS.Model.Models
+@using System.Reflection
+@using System.Collections
+@using Olive
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="12" md="6">
+                <MudAutocomplete Adornment="Adornment.Start"
+                                 AdornmentColor="Color.Info"
+                                 AdornmentIcon="@NodeIcon?.IconContent"
+                                 @bind-Value="NodeIcon"
+                                 MaxItems="100"
+                                 Clearable="true"
+                                 SearchFunc="SearchIcon"
+                                 Label="Select Label Icon">
+                    <ItemTemplate>
+                        <MudIcon Icon="@context?.IconContent" Size="Size.Large"></MudIcon>
+                        <MudText Typo="Typo.caption">@context?.Icon</MudText>
+                    </ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+            
+            <MudItem sm="12" md="6">
+                <MudColorPicker Label="Label Color" @bind-Text="Label.Color" Clearable="true" Editable="true" ColorPickerMode="ColorPickerMode.HEX" ></MudColorPicker>
+                <MudChip Style="@($"background-color: {Label.Color}".OnlyWhen(!Label.Color.IsEmpty()))" Size="Size.Small">
+                    <MudIcon Icon="@Label.IconContent" Class="mr-2"></MudIcon>
+                    @Label.Name - @Label.DisplayName
+                </MudChip>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudTextField @bind-Value="Label.Name" Label="Name" Clearable="true"></MudTextField>
+            </MudItem>
+            
+            <MudItem sm="12" md="6">
+                <MudTextField @bind-Value="Label.DisplayName" Label="Display Name" Clearable="true"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudTextField @bind-Value="Label.Description" Label="Description" Lines="6" Clearable="true"></MudTextField>
+            </MudItem>
+        </MudGrid>
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="()=>DialogInstance.Close()">
+            Close
+        </MudButton>
+
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="SaveAndCloseClick">
+            Save and Close
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
+@code {
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    // [Parameter]
+    // public AmsNeo4JNode Node { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    IEnumerable<IconItem> icons;
+
+    protected override void OnInitialized()
+    {
+        icons = GetConstants(typeof(Icons.Filled)).Select(x=> new IconItem
+        {
+            Icon = x.Name,
+                IconContent = x.GetRawConstantValue() as string
+        });
+        base.OnInitialized();
+    }
+
+    public class IconItem
+    {
+        public string Icon { get; set; }
+        public string? IconContent { get; set; }
+        
+        public override string ToString()
+        {
+            return Icon;
+        }
+    }
+
+    void SaveAndCloseClick()
+    {
+        DataService.SaveLabel(Label);
+        DialogInstance.Close();
+    }
+
+    private FieldInfo[] GetConstants(System.Type type)
+    {
+        ArrayList constants = new ArrayList();
+
+        FieldInfo[] fieldInfos = type.GetFields(
+            // Gets all public and static fields
+            BindingFlags.Public | BindingFlags.Static |
+            // This tells it to get the fields from all base types as well
+            BindingFlags.FlattenHierarchy
+            );
+
+        // Go through the list and only pick out the constants
+        foreach (FieldInfo fi in fieldInfos)
+            // IsLiteral determines if its value is written at
+            //   compile time and not changeable
+            // IsInitOnly determines if the field can be set
+            //   in the body of the constructor
+            // for C# a field which is readonly keyword would have both true
+            //   but a const field would have only IsLiteral equal to true
+            if (fi.IsLiteral && !fi.IsInitOnly)
+                constants.Add(fi);
+
+        // Return an array of FieldInfos
+        return (FieldInfo[])constants.ToArray(typeof(FieldInfo));
+    }
+
+    public IconItem? NodeIcon
+    {
+        get => icons.FirstOrDefault(x => x.Icon == Label.Icon);
+        set
+        {
+            Label.Icon = value?.Icon;
+            Label.IconContent = value?.IconContent;
+        }
+    }
+
+    Task<IEnumerable<IconItem?>> SearchIcon(string arg)
+    {
+        if (arg.IsEmpty())
+            return Task.FromResult(
+                icons.Take(20).AsEnumerable()
+                )!;
+
+        return Task.FromResult(
+            icons.Where(x => x.Icon.Contains(arg, StringComparison.OrdinalIgnoreCase))
+            )!;
+    }
+
+}

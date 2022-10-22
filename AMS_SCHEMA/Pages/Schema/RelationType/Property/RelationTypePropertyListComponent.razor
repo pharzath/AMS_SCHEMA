@@ -1,0 +1,100 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Class
+@using AMS_SCHEMA.Pages.Schema.Constraint
+
+<MudTable Items="RelType.Properties">
+    <ToolBarContent>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="CreateNewPropertyClick">
+            Create Property
+        </MudButton>
+
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTd Style="width:50px"></MudTd>
+        <MudTd Style="width:200px">Name</MudTd>
+        <MudTd>Neo-Name</MudTd>
+        <MudTd>Disp-Name</MudTd>
+        <MudTd>Validation-Type</MudTd>
+        <MudTd>DisplayName</MudTd>
+        <MudTd></MudTd>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>
+                <MudIconButton Icon="@Icons.TwoTone.Edit" Color="Color.Success" OnClick="() => EditProperty(context)"></MudIconButton>
+        </MudTd>
+        <MudTd>
+            <MudChip Size="Size.Large"
+                     Icon="@Utils.GetRelationTypePropertyIcon(RelType, context)"
+                     Style="@Utils.GetRelationTypePropertyBgColor(RelType, context)">
+                @context.Name : @context.DataType
+            </MudChip>
+        </MudTd>
+        <MudTd>@context.Neo4jName</MudTd>
+        <MudTd>@context.DisplayName</MudTd>
+        <MudTd>@context.ValidationType</MudTd>
+        <MudTd>@context.Description</MudTd>
+        <MudTd>
+                <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="() => DeletePropertyClick(context)"></MudIconButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+
+    [Parameter]
+    public AmsNeo4JNodeRelationType RelType { get; set; }
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    async Task CreateNewPropertyClick()
+    {
+        var propery = new AmsNeo4JNodeRelationPropery();
+        await OpenPropertyDialog(propery);
+    }
+
+    async Task OpenPropertyDialog(AmsNeo4JNodeRelationPropery propery)
+    {
+        var dialogReference = DialogService.Show<RelationTypePropertyInfoDialog>("Rel Property Info",
+            new DialogParameters()
+                {
+                    ["RelationType"] = RelType,
+                    ["Property"] = propery
+                },
+            new DialogOptions()
+                {
+                    FullWidth = true
+                });
+        await dialogReference.Result;
+    }
+
+    async Task EditProperty(AmsNeo4JNodeRelationPropery prop)
+    {
+        await OpenPropertyDialog(prop);
+    }
+
+
+    async Task DeletePropertyClick(AmsNeo4JNodeRelationPropery prop)
+    {
+        var delPropDialog = DialogService.Show<RelationTypeDeletePropertyDialog>("Delete Property",
+            new DialogParameters
+                {
+                    ["Property"] = prop
+                }
+            , new DialogOptions
+                {
+                    FullWidth = true,
+                    MaxWidth = MaxWidth.Medium
+                });
+        var delPropResult = await delPropDialog.Result;
+        if (!delPropResult.Cancelled)
+        {
+            await DialogService.ShowMessageBox("Remember", "Remember to Re-Generate Entities and Relations related to this Label.");
+            StateHasChanged();
+        }
+    }
+
+}

@@ -1,0 +1,59 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using System.Xml.Serialization
+@using AMS_SCHEMA.Class
+
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="12" md="6">
+                <MudSelect @bind-Value="Index.RelType" Label="Label">
+                        <MudSelectItem Value="RelationType">@RelationType.Name</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudSelect @bind-Value="Index.Type" Label="RelType">
+                    <MudSelectItem Value="@("")">Btree</MudSelectItem>
+                    <MudSelectItem Value="@("LOOKUP")"></MudSelectItem>
+                    <MudSelectItem Value="@("TEXT")"></MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudAutocomplete @bind-Value="Index.RelOverProp"
+                                 Clearable="true"
+                                 MaxItems="100"
+                                 SearchFunc="GetField"
+                                 Label="Over">
+                    <ItemTemplate>
+                        <MudStack Row="true">
+                            <MudText Typo="Typo.subtitle2">
+                                @context.Name (@context.Neo4jName)
+                            </MudText>
+                            <MudSpacer />
+                            <MudText Typo="Typo.body2">
+                                @context.DisplayName
+                            </MudText>
+                        </MudStack>
+
+                    </ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudSwitch @bind-Checked="IfNotExist" Label="IF NOT EXIST"></MudSwitch>
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudTextField Lines="10" @bind-Value="Index.Command" Label="Command" Adornment="Adornment.Start" AdornmentIcon="@Icons.Filled.GeneratingTokens" OnAdornmentClick="MakeIndexCommand"></MudTextField>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="()=>DialogInstance.Close()">
+            Close
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAndCloseIndexClick">
+            Save and Close
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>

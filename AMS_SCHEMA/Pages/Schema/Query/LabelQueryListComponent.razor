@@ -1,0 +1,119 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using Olive
+
+<MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="NewLabelQueryClick">
+    New Constraint
+</MudButton>
+
+<MudTable Items="LabelQueries">
+    <HeaderContent>
+        <MudTd>Name</MudTd>
+        <MudTd>Disp-Name</MudTd>
+        <MudTd>Related-To</MudTd>
+        <MudTd></MudTd>
+        <MudTd></MudTd>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>
+            <p>@context.Name</p>
+        </MudTd>
+        <MudTd>
+            @context.DisplayName
+        </MudTd>
+        <MudTd>
+            @foreach (var lbl in GetRelatedLabels(context.RelatedLabels))
+            {
+                <MudChip Size="Size.Small">
+                    <LabelIconComponent Label="@lbl" Size="Size.Small"></LabelIconComponent>
+                    @lbl.Name
+                </MudChip>
+            }
+        </MudTd>
+
+        <MudTd>
+            <MudIconButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.Edit" OnClick="() => EditLabelQuery(context)" />
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteLabelQueryClick(context)" />
+        </MudTd>
+
+    </RowTemplate>
+    <ChildRowContent>
+        <MudTd colspan="5">
+            @if (!@context.Description.IsEmpty())
+            {
+                <MudChip Label="true">Description:</MudChip>
+                <MudText Typo="Typo.h6" Color="Color.Info">
+                    @context.Description
+                </MudText>
+
+                <MudDivider Class="my-2"/>
+            }
+
+            <MudChip Label="true">Cypher Query:</MudChip>
+            <MudText Typo="Typo.h6" Color="Color.Info">
+                @((MarkupString)context.CypherQuery.ToHtmlLines())
+            </MudText>
+
+        </MudTd>
+    </ChildRowContent>
+</MudTable>
+
+@code {
+    
+    [Inject] DataService DataService { get; set; }
+
+    [Inject] IDialogService DialogService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    public IEnumerable<AmsNeo4JNodeLabelQuery> LabelQueries => DataService.GetNodeQueries(Label);
+
+    void NewLabelQueryClick()
+    {
+        var query = new AmsNeo4JNodeLabelQuery()
+        {
+            Name = "Query of " + Label.Name,
+            Label = Label
+        };
+        OpenQueryDialog(query);
+    }
+
+    void OpenQueryDialog(AmsNeo4JNodeLabelQuery query)
+    {
+        DialogService.Show<LabelQueryDialog>("Query " + query.Name , 
+            new DialogParameters()
+            {
+                ["Query"] = query
+            },
+            new DialogOptions()
+            {
+                FullWidth = true,
+                MaxWidth = MaxWidth.Large
+            });
+
+    }
+
+    void EditLabelQuery(AmsNeo4JNodeLabelQuery query)
+    {
+        OpenQueryDialog(query);
+    }
+
+    void DeleteLabelQueryClick(AmsNeo4JNodeLabelQuery labelQuery)
+    {
+        throw new NotImplementedException();
+    }
+
+    IEnumerable<AmsNeo4JNodeLabel> GetRelatedLabels(string? labelsName)
+    {
+        if (labelsName.IsEmpty())
+            return Enumerable.Empty<AmsNeo4JNodeLabel>();
+
+        var labelNames = labelsName!.Split(',', ';', '|');
+        var labels = DataService.GetLabelsByNameList(labelNames);
+        return labels;
+    }
+
+}

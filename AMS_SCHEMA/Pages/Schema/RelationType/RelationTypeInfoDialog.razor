@@ -1,0 +1,77 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Pages.Schema.Index
+@using AMS_SCHEMA.Pages.Schema.Label
+@using AMS_SCHEMA.Pages.Schema.Constraint
+@using AMS_SCHEMA.Pages.Schema.Department
+@using AMS_SCHEMA.Pages.Schema.Label.Property
+@using AMS_SCHEMA.Pages.Schema.Relation
+@using AMS_SCHEMA.Pages.Schema.RelationType.Constraint
+@using AMS_SCHEMA.Pages.Schema.RelationType.Index
+@using AMS_SCHEMA.Pages.Schema.RelationType.Property
+
+<MudDialog>
+    <DialogContent>
+        <MudTabs Class="height:100%">
+            <MudContainer Style="min-height: 400px;max-height: 800px;overflow-y: scroll;">
+                <MudTabPanel Text="Node, Labels and PropertiesDict" Icon="@Icons.Filled.Workspaces">
+                    <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Edit" OnClick="EditNodeClick">
+                        Edit Relation Name
+                        
+                    </MudButton>
+                    <RelationTypePropertyListComponent RelType="RelationType"></RelationTypePropertyListComponent>
+                </MudTabPanel>
+
+
+                <MudTabPanel Text="Constraints" Icon="@Icons.Filled.BackHand" BadgeColor="Color.Info">
+                    <RelationTypeConstraintListComponent RelationType="RelationType"></RelationTypeConstraintListComponent>
+                </MudTabPanel>
+
+                <MudTabPanel Text="Indices" Icon="@Icons.Filled.OfflineBolt" BadgeColor="Color.Warning">
+                    <RelationTypeIndexListComponent RelType="RelationType"></RelationTypeIndexListComponent>
+                </MudTabPanel>
+
+            </MudContainer>
+
+        </MudTabs>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAndCloseClick">
+            Save and Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [Inject] DataService DataService { get; set; }
+    [Inject] IDialogService DialogService { get; set; }
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Parameter] public AmsNeo4JNodeRelationType RelationType { get; set; }
+
+    async Task EditNodeClick()
+    {
+        var reference = DialogService.Show<RelationTypeDialog>("Relation Type",
+            new DialogParameters()
+            {
+                ["RelationType"] = RelationType
+            },
+            new DialogOptions()
+            {
+                FullWidth = true,
+                MaxWidth = MaxWidth.Medium
+            });
+        await reference.Result;
+        StateHasChanged();
+    }
+
+    void SaveAndCloseClick()
+    {
+        DataService.DbContext.SaveChanges();
+        DialogInstance.Close();
+    }
+
+}

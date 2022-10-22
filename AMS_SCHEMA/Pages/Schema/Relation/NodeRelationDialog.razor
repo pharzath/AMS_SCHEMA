@@ -1,0 +1,92 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using Olive
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="12" md="4">
+                <MudAutocomplete T="AmsNeo4JNodeLabel" SearchFunc="@PrepareLabel" @bind-Value="NodeRelation.From" Label="From">
+                    <ItemTemplate>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <LabelIconComponent Label="context" />
+                            <MudText Typo="Typo.caption">@context.Name</MudText>
+                            <MudText Typo="Typo.overline">(@context.DisplayName)</MudText>
+                        </MudStack>
+                    </ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+            <MudItem sm="12" md="4">
+                <MudSelect @bind-Value="NodeRelation.RelType" Label="Relation">
+                    @foreach (var rel in DataService.GetRelationTypes())
+                    {
+                        <MudSelectItem Value="rel">
+                            @rel.Name.WithWrappers("[:", "]")
+                            @rel.DisplayName.WithWrappers(" ", "")
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+
+            </MudItem>
+            <MudItem sm="12" md="4">
+                <MudAutocomplete T="AmsNeo4JNodeLabel" SearchFunc="@PrepareLabel" @bind-Value="NodeRelation.To" Label="To">
+                    <ItemTemplate>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <LabelIconComponent Label="context" />
+
+                            <MudText Typo="Typo.caption">@context.Name</MudText>
+                            <MudText Typo="Typo.overline">(@context.DisplayName)</MudText>
+                        </MudStack>
+                    </ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudTextField Lines="10" Label="DisplayName" @bind-Value="NodeRelation.Description"></MudTextField>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="()=>DialogInstance.Close()">
+            Close
+        </MudButton>
+
+        <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAndCloseClick">
+            Save and Close
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
+@code {
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeRelation NodeRelation { get; set; }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+    }
+
+    void SaveAndCloseClick()
+    {
+        
+        NodeRelation.Name = NodeRelation.RelType.Name;
+        DataService.SaveRelation(NodeRelation);
+        DialogInstance.Close();
+    }
+
+    private Task<IEnumerable<AmsNeo4JNodeLabel>> PrepareLabel(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return Task.FromResult(Enumerable.Empty<AmsNeo4JNodeLabel>());
+
+        return Task.FromResult(DataService.DbContext.AmsNeo4JNodeLabels
+            .Where(x => x.Name.Contains(value) || x.DisplayName.Contains(value))
+            .AsEnumerable());
+    }
+
+
+}

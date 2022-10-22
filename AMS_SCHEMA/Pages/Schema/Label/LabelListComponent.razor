@@ -1,0 +1,77 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using Olive
+<MudPaper Class="m-3" Elevation="0">
+    @foreach (var lbl in GetBreadCrumb(Label).Reverse())
+    {
+        <MudChip Style="@($"background-color: {lbl.Color}".OnlyWhen(!lbl.Color.IsEmpty()))" Color="Color.Info" Size="Size.Large" CloseIcon="@Icons.Filled.Close" OnClose="()=>DeleteLabelClick(lbl)">
+            <MudIconButton Icon="@Icons.TwoTone.Edit" Color="Color.Warning" OnClick="() => EditLabelClick(lbl)"></MudIconButton>
+            <LabelIconComponent Label="lbl" DefaultIcon="@Icons.Filled.NewLabel"></LabelIconComponent>
+            @lbl.Name
+        </MudChip>
+    }
+</MudPaper>
+
+@code {
+
+    [Inject] DataService DataService { get; set; }
+
+    // [Parameter]
+    // public AmsNeo4JNode Node { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    IEnumerable<AmsNeo4JNodeLabel> GetBreadCrumb(AmsNeo4JNodeLabel label)
+    {
+        var x = label;
+        @while (x != null)
+        {
+            yield return x;
+            x = x.ParentLabel;
+        }
+    }
+
+
+    async Task OpenLabelDialog(AmsNeo4JNodeLabel label)
+    {
+        var dialogReference = DialogService.Show<NodeLabelDialog>("Label " + label.Name
+            , new DialogParameters()
+                {
+                    ["Label"] = label
+                },
+            new DialogOptions()
+                {
+                    FullWidth = true,
+                    MaxWidth = MaxWidth.Medium
+                });
+        await dialogReference.Result;
+        StateHasChanged();
+    }
+
+    async Task DeleteLabelClick(AmsNeo4JNodeLabel label)
+    {
+        var answer = await DialogService.ShowMessageBox("Warning", "Are you sure to delete this Label ?", "Yes", "No");
+        if (answer is true)
+        {
+            var dialogReference = DialogService.Show<DeleteLabelDialog>("Delete Label"
+                , new DialogParameters()
+                    {
+                        ["Label"] = label
+                    },
+                new DialogOptions()
+                    {
+                        FullWidth = true
+                    });
+        }
+    }
+
+    async Task EditLabelClick(AmsNeo4JNodeLabel label)
+    {
+        await OpenLabelDialog(label);
+    }
+
+}

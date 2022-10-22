@@ -1,0 +1,27 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+@using Olive
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json;
+
+namespace AMS.Model;
+
+/// <summary>
+///  @Relation.GetCypherDefinitionByVars()
+/// </summary>
+public partial class @Relation.GetRelationshiptClassName() : INodeRelation
+{
+
+}
+@code {
+
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeRelation Relation { get; set; }
+    
+}

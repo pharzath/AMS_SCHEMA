@@ -1,0 +1,42 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+
+@using Olive
+@using System.Web
+using Newtonsoft.Json;
+using QOQNOS.Core;
+
+namespace AMS.Model;
+// #@Label.DisplayName#
+public partial class @Label.Name : @GetParentClass()
+{
+    #region Neo4J 
+
+    #endregion
+
+}
+
+
+
+@code {
+    
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+    
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> Relations { get; set; }
+    
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> IncommingRelations { get; set; }
+
+    string GetParentClass()
+    {
+        if (Label.ParentLabel is { })
+        {
+            return Label.ParentLabel.Name;
+        }
+
+        return $"AbstractEntity<{Label.Name}, Guid>";
+    }
+
+}

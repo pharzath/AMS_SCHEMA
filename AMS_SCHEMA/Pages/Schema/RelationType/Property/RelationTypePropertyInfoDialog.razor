@@ -1,0 +1,118 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Class
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="12" md="6">
+                <MudTextField Label="Name" @bind-Value="Property.Name" DebounceInterval="10" OnDebounceIntervalElapsed="UpdateNeoNameField"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudTextField Label="Neo4J Property Name" @bind-Value="Property.Neo4jName"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudTextField Label="Display Name" @bind-Value="Property.DisplayName"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudSelect Label="Data Type" @bind-Value="Property.DataType">
+                    <MudSelectItem Value="@("string")">string</MudSelectItem>
+                    <MudSelectItem Value="@("int")">int</MudSelectItem>
+                    <MudSelectItem Value="@("bool")">bool</MudSelectItem>
+                    <MudSelectItem Value="@("guid")">guid</MudSelectItem>
+                    <MudSelectItem Value="@("DateTime")">DateTime</MudSelectItem>
+                    <MudSelectItem Value="@("float")">float</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudSelect Label="Validation Type" @bind-Value="Property.ValidationType">
+                    <MudSelectItem Value="@("none")">none</MudSelectItem>
+                    <MudSelectItem Value="@("email")">email</MudSelectItem>
+                    <MudSelectItem Value="@("mobile")">mobile</MudSelectItem>
+                    <MudSelectItem Value="@("creditcard")">credit card</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudTextField Label="DisplayName" @bind-Value="Property.Description" Lines="10"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="4">
+                <MudNumericField Label="Order" @bind-Value="Property.Order"></MudNumericField>
+            </MudItem>
+
+        </MudGrid>
+
+        @if (_errors is {})
+        {
+            @foreach (var err in _errors)
+            {
+                <MudAlert Elevation="2" Icon="@Icons.Filled.Warning" ContentAlignment="HorizontalAlignment.Center" Variant="Variant.Filled">
+                    @err
+                </MudAlert>
+            }
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.SaveAlt" OnClick="()=>SaveAndCloseClick(false)">
+            Save and New
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Save" OnClick="()=>SaveAndCloseClick(true)">
+            Save and Close
+        </MudButton>
+
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseClick">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    readonly AmsNeo4JNodeRelationProperyValidator _amsNeo4JNodeRelationProperyValidator = new();
+
+
+    [Parameter]
+    public AmsNeo4JNodeRelationType RelationType { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeRelationPropery Property { get; set; }
+
+    List<string>? _errors;
+
+    void CloseClick()
+    {
+        DialogInstance.Close();
+    }
+
+    void SaveAndCloseClick(bool close = false)
+    {
+        Property.RelationId = RelationType.Id;
+        var validationResult = _amsNeo4JNodeRelationProperyValidator.Validate(Property);
+        if (validationResult.Errors is {Count: > 0})
+        {
+            _errors = validationResult.Errors.Select(x => x.ErrorMessage).ToList();
+        }
+        else
+        {
+            DataService.SaveRelationTypeProperty(Property);
+            
+            if(close)
+                DialogInstance.Close();
+            else
+            {
+                Property = new AmsNeo4JNodeRelationPropery();
+            }
+        }
+
+    }
+
+    void UpdateNeoNameField()
+    {
+        Property.Neo4jName = Property.Name.ToCamelCase();
+    }
+
+}

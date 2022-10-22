@@ -1,0 +1,49 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+
+@using Olive
+@using System.Web
+@using AMS.Model.Services
+using AMS.Services.Contract;
+using AMS.Services.Contract._@Label.Name;
+
+namespace AMS.Services.Interface;
+
+public partial interface I@(Label.Name)ServiceApi
+{
+    Task&lt;@(Label.Name)ListRequest.Response> Get(@(Label.Name)ListRequest request);
+    Task Post(@(Label.Name)CreateRequest request);
+    Task Put(@(Label.Name)UpdateRequest request);
+    Task&lt;@(Label.Name)DeleteRequest.Response> Delete(@(Label.Name)DeleteRequest request);
+}
+
+@code {
+    
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> Relations { get; set; }
+
+    // [Parameter]
+    // public List<AmsNeo4JNodeConstraint> Constraints { get; set; }
+
+    string GetParentClass()
+    {
+        if (Label.ParentLabel is {})
+        {
+            return Label.ParentLabel.Name;
+        }
+
+        return $"AbstractEntity<{Label.Name}, Guid>";
+    }
+
+    string IsNullable(AmsNeo4JNodeLabelPropery fld)
+    {
+        return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL")) 
+            ? "" 
+            : "?";
+    }
+
+}

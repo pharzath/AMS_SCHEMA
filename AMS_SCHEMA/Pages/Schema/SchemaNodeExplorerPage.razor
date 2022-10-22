@@ -1,0 +1,369 @@
+﻿@page "/SchemaListLabels"
+@using AMS_SCHEMA.Class
+@using Olive
+<div>
+
+    <MudDrawerContainer>
+        <MudDrawer @bind-Open="@open"
+                   DisableOverlay="true"
+                   Fixed="true"
+                   Elevation="1"
+                   Variant="@DrawerVariant.Persistent"
+                   ClipMode="DrawerClipMode.Never"
+                   Style="top: 0;bottom: 0;position: fixed;overflow-y: scroll;overflow-x: hidden;">
+            <MudDrawerHeader>
+                <MudIconButton Icon="@Icons.TwoTone.Close" Color="Color.Default" OnClick="()=>open=false"></MudIconButton>
+            </MudDrawerHeader>
+            <MudNavMenu>
+                <MudNavLink Match="NavLinkMatch.All">Store</MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">Library</MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All">Community</MudNavLink>
+            </MudNavMenu>
+        </MudDrawer>
+
+    <MudDrawer @bind-Open="@openTop"
+               Class="top-drawer"
+               DisableOverlay="true"
+               Elevation="1"
+               Anchor="Anchor.Top"
+               Variant="@DrawerVariant.Temporary">
+        <MudNavMenu>
+            <MudStack Row="true" Spacing="0">
+                <MudIconButton Icon="@Icons.TwoTone.Close" Color="Color.Default" OnClick="()=>openTop=false"></MudIconButton>
+                <MudSelect @ref="DepartmentSelectorField" @bind-SelectedValues="SelectedDepartments"
+                           Clearable="true"
+                           Label="Department"
+                           MultiSelection="true">
+                    @foreach (var dep in DataService.GetDepartments())
+                    {
+                        <MudSelectItem Value="dep">@dep.Title</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="bg-opacity-10 bg-info rounded-2 p-1">
+                    <MudText Typo="Typo.body1">Any</MudText>
+                    <MudSwitch @bind-Checked="AndSelectDepartment"></MudSwitch>
+                    <MudText Typo="Typo.body1">All</MudText>
+                </MudStack>
+
+                <MudTextField @ref="SearchTextField" Label="Search" @bind-Value="SearchText" DebounceInterval="500" OnDebounceIntervalElapsed="SearchSchema" Clearable="true" Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Search"></MudTextField>
+
+            </MudStack>
+
+        </MudNavMenu>
+    </MudDrawer>
+
+        <MudDrawer @bind-Open="@openTop2"
+                   Class="top-drawer"
+                   DisableOverlay="true"
+                   Elevation="1"
+                   Anchor="Anchor.Top"
+                   Variant="@DrawerVariant.Temporary">
+            <MudNavMenu>
+                <MudStack Row="false" Spacing="0">
+                    <MudStack Row="true" Spacing="0">
+                        <MudIconButton Icon="@Icons.TwoTone.Close" Color="Color.Default" OnClick="() => openTop2 = false"></MudIconButton>
+                        <MudIconButton Icon="@Icons.TwoTone.CopyAll" Color="Color.Success" OnClick="CopyMatchToclipboardClick"></MudIconButton>
+                        <MudSwitch @bind-Checked="IgnoreRelationNameInMatch" Label="Ignore Relation Name"></MudSwitch>
+                        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.OpenInFull" OnClick="OpenInNeo4jClick">
+                            Open In Neo4J Browser
+                        </MudButton>
+                        <MudSpacer />
+                        <MudButton Icon="@Icons.TwoTone.ChevronLeft" Color="Color.Default" OnClick="HistoryBackClick">Back</MudButton>
+                    </MudStack>
+
+
+                    <MudTextField Value="@MatchValue" Lines="4" Label="MATCH"></MudTextField>
+
+                </MudStack>
+
+            </MudNavMenu>
+        </MudDrawer>
+    
+    <MudPaper>
+    <MudScrollToTop >
+        <MudFab Color="Color.Secondary" Icon="@Icons.Filled.ArrowCircleUp" />
+    </MudScrollToTop>
+            @if (history.Any())
+            {
+                <MudAppBar Bottom="true" Dense="true">
+                    @foreach (var step in history.Reverse())
+                    {
+                        <MudIcon Icon="@Icons.Filled.ArrowRightAlt" Color="Color.Success"></MudIcon>
+                        <MudChip Color="Color.Primary" Size="Size.Small" Label="true">
+                            @step.Node.Name
+                        </MudChip>
+                    }
+                </MudAppBar>
+            }
+
+            <MudIconButton Icon="@Icons.TwoTone.Menu" Color="Color.Default" OnClick="()=>open=true"></MudIconButton>
+            <h5>AMS NEO4J(DBMS) Labels Schema Definition</h5>
+            <MudIconButton Icon="@Icons.TwoTone.Search" Color="Color.Info" OnClick="()=>openTop = true"></MudIconButton>
+            <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="CreateNewNodeClick">
+                Create New Node
+            </MudButton>
+
+            <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Gesture" OnClick="GenerateAll">
+                Generate All Entities
+            </MudButton>
+
+            <MudStack Spacing="3">
+                @foreach (var context in _nodes)
+                {
+                    <MudCard Class="w-100" id="@context.Name">
+                        <MudCardHeader>
+                            <MudStack Row="true">
+                                <MudStack Class="m-0" Spacing="0">
+                                    <MudText Typo="Typo.overline"><i>node:</i> <b>@context.Name - (@context.DisplayName)</b></MudText>
+                                    <MudStack Row="false" Spacing="1">
+                                        @foreach (var label in DataService.GetRootLabels(context))
+                                        {
+                                            <MudChip Color="Color.Info" OnClick="() => LabelClick(label)" Style="@($"background-color: {label.Color}".OnlyWhen(!label.Color.IsEmpty()))">
+                                                <LabelIconComponent Label="label"></LabelIconComponent>
+                                                <MudText Typo="Typo.h6">@label.Name</MudText>
+                                                &nbsp;- @label.DisplayName
+                                            </MudChip>
+                                        }
+                                        <MudPaper Elevation="0">
+                                            @foreach (var label in DataService.GetSubLabels(context))
+                                            {
+                                                <MudChip Color="Color.Primary" Size="Size.Small" OnClick="() => LabelClick(label)" Style="@($"background-color: {label.Color}".OnlyWhen(!label.Color.IsEmpty()))">
+                                                    <LabelIconComponent Label="label" DefaultIcon="@Icons.Filled.NewLabel"></LabelIconComponent>
+                                                    <MudText Typo="Typo.body1">@label.Name</MudText>
+                                                    &nbsp;- @label.DisplayName
+                                                </MudChip>
+                                            }
+                                        </MudPaper>
+
+
+                                    </MudStack>
+
+
+                                </MudStack>
+
+                                <MudSpacer />
+
+                                <MudStack Row="true" Class="m-0" Spacing="0">
+                                    <MudChip Label="true" Variant="Variant.Text">Exist in departments:</MudChip>
+                                    <MudPaper Elevation="0">
+                                        @foreach (var dep in @context.Departments)
+                                        {
+                                            <MudChip Class="category-chip" Size="Size.Small" Color="Color.Dark">@dep.Department.Title</MudChip>
+
+                                        }
+                                    </MudPaper>
+                                </MudStack>
+                            </MudStack>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudGrid>
+                                <MudItem sm="12" md="6">
+                                    @foreach (var label in DataService.GetRootLabels(context))
+                                    {
+                                        var relFroms = DataService.GetLabelRelationFroms(label);
+                                        if (!relFroms.Any()) continue;
+                                        <MudText Typo="Typo.subtitle1">Incoming Relations from @label.Name:</MudText>
+                                        @foreach (var from in relFroms)
+                                        {
+                                            <MudTooltip Text="@from.Description" Arrow="true" Color="Color.Info" Placement="Placement.Top">
+                                                <MudChip Color="Color.Transparent" Label="true" OnClick="() => from.IsEn = !from.IsEn">
+                                                    <MudChip Style="@($"background-color: {from.From.Color}".OnlyWhen(!from.From.Color.IsEmpty()))">
+                                                        <LabelIconComponent Label="from.From"></LabelIconComponent>
+
+                                                        @GetRelationInfoFrom(from)
+                                                    </MudChip>
+                                                    <MudIcon Icon="@Icons.Filled.Remove" />
+                                                    <MudChip Label="true">
+                                                        @GetRelationInfo(from).WithWrappers("[", "]")
+                                                    </MudChip>
+                                                    <MudIcon Icon="@Icons.Filled.ArrowRightAlt" />
+                                                    <MudChip Style="@($"background-color: {from.To.Color}".OnlyWhen(!from.To.Color.IsEmpty()))"
+                                                 Color="Color.Tertiary"
+                                                 OnClick="() => GotoLabelClick(context, from.To, from, RelDirection.Outgoing)">
+                                                        <LabelIconComponent Label="from.To"></LabelIconComponent>
+                                                        @GetRelationInfoTo(from)
+                                                    </MudChip>
+                                                </MudChip>
+                                            </MudTooltip>
+                                        }
+                                    }
+                                    @foreach (var label in DataService.GetSubLabels(context))
+                                    {
+                                        var relFroms = DataService.GetLabelRelationFroms(label);
+                                        if (!relFroms.Any()) continue;
+                                        <MudText Typo="Typo.subtitle2">Incoming Relations from @label.Name:</MudText>
+                                        @foreach (var from in relFroms)
+                                        {
+                                            <MudTooltip Text="@from.Description" Arrow="true" Color="Color.Info" Placement="Placement.Top">
+                                                <MudChip Label="true" Size="Size.Medium" Color="Color.Default" OnClick="() => from.IsEn = !from.IsEn">
+                                                    <MudChip Style="@($"background-color: {from.From.Color}".OnlyWhen(!from.From.Color.IsEmpty()))">
+                                                        <LabelIconComponent Label="from.From"></LabelIconComponent>
+                                                        @GetRelationInfoFrom(from)
+                                                    </MudChip>
+                                                    <MudIcon Icon="@Icons.Filled.Remove" />
+                                                    <MudChip Label="true">
+                                                        @GetRelationInfo(from).WithWrappers("[", "]")
+                                                    </MudChip>
+                                                    <MudIcon Icon="@Icons.Filled.ArrowRightAlt" />
+                                                    <MudChip Style="@($"background-color: {from.To.Color}".OnlyWhen(!from.To.Color.IsEmpty()))" Color="Color.Tertiary"
+                                                 OnClick="() => GotoLabelClick(context, from.To, from, RelDirection.Outgoing)">
+                                                        <LabelIconComponent Label="from.To"></LabelIconComponent>
+                                                        @GetRelationInfoTo(from)
+                                                    </MudChip>
+                                                </MudChip>
+                                            </MudTooltip>
+                                        }
+                                    }
+
+                                </MudItem>
+                                <MudItem sm="12" md="6">
+                                    @foreach (var label in DataService.GetRootLabels(context))
+                                    {
+                                        var relTos = DataService.GetLabelRelationTos(label);
+                                        if (!relTos.Any()) continue;
+                                        <MudText Typo="Typo.subtitle1">Outgoing Relations to @label.Name:</MudText>
+                                        @foreach (var to in relTos)
+                                        {
+                                            <MudTooltip Text="@to.Description" Arrow="true" Color="Color.Info" Placement="Placement.Top">
+                                                <MudChip Label="true" Size="Size.Medium" Color="Color.Default" OnClick="() => to.IsEn = !to.IsEn">
+                                                    <MudChip Style="@($"background-color: {to.From.Color}".OnlyWhen(!to.From.Color.IsEmpty()))" Color="Color.Tertiary"
+                                                 OnClick="() => GotoLabelClick(context, to.From, to, RelDirection.Incoming)">
+                                                        <LabelIconComponent Label="to.From"></LabelIconComponent>
+                                                        @GetRelationInfoFrom(to)
+                                                    </MudChip>
+                                                    <MudIcon Icon="@Icons.Filled.Remove" />
+                                                    <MudChip Label="true">
+                                                        @GetRelationInfo(to).WithWrappers("[", "]")
+                                                    </MudChip>
+                                                    <MudIcon Icon="@Icons.Filled.ArrowRightAlt" />
+                                                    <MudChip Style="@($"background-color: {to.To.Color}".OnlyWhen(!to.To.Color.IsEmpty()))">
+                                                        <LabelIconComponent Label="to.To"></LabelIconComponent>
+                                                        @GetRelationInfoTo(to)
+                                                    </MudChip>
+                                                </MudChip>
+                                            </MudTooltip>
+                                        }
+                                    }
+
+                                    @foreach (var label in DataService.GetSubLabels(context))
+                                    {
+                                        var relTos = DataService.GetLabelRelationTos(label);
+                                        if (!relTos.Any()) continue;
+                                        <MudText Typo="Typo.subtitle2">Outgoing Relations to @label.Name:</MudText>
+                                        @foreach (var to in relTos)
+                                        {
+                                            <MudTooltip Text="@to.Description" Arrow="true" Color="Color.Info" Placement="Placement.Top">
+                                                <MudChip Label="true" Size="Size.Medium" Color="Color.Default" OnClick="() => to.IsEn = !to.IsEn">
+                                                    <MudChip Style="@($"background-color: {to.From.Color}".OnlyWhen(!to.From.Color.IsEmpty()))" Color="Color.Tertiary"
+                                                 OnClick="() => GotoLabelClick(context, to.From, to, RelDirection.Incoming)">
+                                                        <LabelIconComponent Label="to.From"></LabelIconComponent>
+                                                        @GetRelationInfoFrom(to)
+                                                    </MudChip>
+                                                    <MudIcon Icon="@Icons.Filled.Remove" />
+                                                    <MudChip Label="true">
+                                                        @GetRelationInfo(to).WithWrappers("[", "]")
+                                                    </MudChip>
+                                                    <MudIcon Icon="@Icons.Filled.ArrowRightAlt" />
+                                                    <MudChip Style="@($"background-color: {to.To.Color}".OnlyWhen(!to.To.Color.IsEmpty()))">
+                                                        <LabelIconComponent Label="to.To"></LabelIconComponent>
+                                                        @GetRelationInfoTo(to)
+                                                    </MudChip>
+                                                </MudChip>
+                                            </MudTooltip>
+                                        }
+                                    }
+                                </MudItem>
+                                <MudItem sm="12" md="12">
+                                    <MudPaper Class="m-0" Elevation="0">
+                                        @if (!context.Label.Description.IsEmpty())
+                                        {
+                                            <MudChip Variant="Variant.Text" Label="true">Description:</MudChip>
+                                            <MudText Class="ma-1 pa-2" Typo="Typo.subtitle2" Color="Color.Info">
+                                                @context.Label.Description
+                                            </MudText>
+                                        }
+
+                                        <MudChip Variant="Variant.Text" Label="true">Properties:</MudChip>
+                                        <MudStack Spacing="0">
+                                            <MudPaper Elevation="0">
+                                                @foreach (var label in DataService.GetRootLabels(context))
+                                                {
+                                                    <MudChip Style="@($"background-color: {label.Color}".OnlyWhen(!label.Color.IsEmpty()))" Color="Color.Info" Size="Size.Small">
+                                                        <LabelIconComponent Label="label"></LabelIconComponent>
+                                                        @label.Name :
+                                                    </MudChip>
+                                                    @foreach (var prop in label.PropertiesFull.OrderBy(x => x.Order))
+                                                    {
+                                                        <MudTooltip Arrow="true" Placement="Placement.Top" Color="Color.Info">
+                                                            <ChildContent>
+                                                                <MudChip Label="true" Icon="@Utils.GetLabelPropertyIcon(label, prop)" Style="@Utils.GetLabelPropertyBgColor(label, prop)" Size="Size.Small">@prop.Name: @prop.DataType</MudChip>
+                                                            </ChildContent>
+                                                            <TooltipContent>
+                                                                @foreach (var tip in GetPropertyTooltipText(label, prop))
+                                                                {
+                                                                    @if (!string.IsNullOrEmpty(tip))
+                                                                    {
+                                                                        <MudText Typo="Typo.body1">@tip</MudText>
+                                                                    }
+                                                                }
+                                                            </TooltipContent>
+                                                        </MudTooltip>
+                                                    }
+                                                }
+                                            </MudPaper>
+
+                                            <MudPaper Elevation="0">
+                                                @foreach (var label in DataService.GetSubLabels(context))
+                                                {
+                                                    if (label.Properties is not { Count: > 0 }) continue;
+
+                                                    <MudChip Style="@($"background-color: {label.Color}".OnlyWhen(!label.Color.IsEmpty()))" Color="Color.Primary" Size="Size.Small">
+                                                        <LabelIconComponent Label="label" DefaultIcon="@Icons.Filled.NewLabel"></LabelIconComponent>
+                                                        @label.Name :
+                                                    </MudChip>
+
+                                                    @foreach (var prop in label.Properties.OrderBy(x => x.Order))
+                                                    {
+                                                        <MudTooltip Arrow="true" Placement="Placement.Top" Color="Color.Info">
+                                                            <ChildContent>
+                                                                <MudChip Label="true" Icon="@Utils.GetLabelPropertyIcon(label, prop)" Style="@Utils.GetLabelPropertyBgColor(label, prop)" Size="Size.Small">@prop.Name: @prop.DataType</MudChip>
+                                                            </ChildContent>
+                                                            <TooltipContent>
+                                                                @foreach (var tip in GetPropertyTooltipText(label, prop))
+                                                                {
+                                                                    @if (!string.IsNullOrEmpty(tip))
+                                                                    {
+                                                                        <MudText Typo="Typo.body1">@tip</MudText>
+                                                                    }
+                                                                }
+                                                            </TooltipContent>
+                                                        </MudTooltip>
+                                                    }
+                                                }
+                                            </MudPaper>
+
+                                        </MudStack>
+
+
+                                    </MudPaper>
+                                </MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.Circle" OnClick="() => EditNodeClick(context)">
+                                Edit
+                            </MudButton>
+
+                            <MudIconButton Icon="@Icons.TwoTone.GeneratingTokens" Color="Color.Success" OnClick="() => GenerateEntityRelatedFilesClick(context)"></MudIconButton>
+
+                        </MudCardActions>
+                    </MudCard>
+
+                }
+            </MudStack>
+
+        </MudPaper>
+    </MudDrawerContainer>
+
+
+</div>

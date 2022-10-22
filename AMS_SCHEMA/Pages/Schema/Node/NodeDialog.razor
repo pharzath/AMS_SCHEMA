@@ -1,0 +1,45 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="12" md="6">
+                <MudTextField Label="Name" @bind-Value="Node.Name"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudTextField Label="Display Name" @bind-Value="Node.DisplayName"></MudTextField>
+            </MudItem>
+        </MudGrid>        
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAndCloseClick">
+            Save and Close
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseClick">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNode Node { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    void CloseClick()
+    {
+        DialogInstance.Cancel();
+    }
+
+    void SaveAndCloseClick()
+    {
+        DataService.SaveNode(Node);
+        DialogInstance.Close();
+    }
+
+}
