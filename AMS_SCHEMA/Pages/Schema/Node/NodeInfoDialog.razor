@@ -107,6 +107,12 @@
         }
     }
 
+    protected override void OnInitialized()
+    {
+        Console.Clear();
+        base.OnInitialized();
+    }
+
     AmsNeo4JNodeLabelTreenNode? _tmp;
     AmsNeo4JNodeLabelTreenNode? FindNode(HashSet<AmsNeo4JNodeLabelTreenNode> parents, int? id)
     {
@@ -139,7 +145,7 @@
 
     void SaveAndCloseClick()
     {
-        DataService.DbContext.SaveChanges();
+        DataService.SaveNode(Node);
         DialogInstance.Close();
     }
 

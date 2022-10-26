@@ -1,18 +1,27 @@
 ﻿@using AMS.Model.Models
 @using Olive
+@if (ShowParents && Label.ParentLabel != null)
+{
+    <MudIcon Icon="@Label.ParentLabel?.IconContent" Size="Size" Class="mr-1" />
+    <MudText Typo="Typo.caption">:</MudText>
+
+}
 
 @if (!Label.Icon.IsEmpty())
 {
-    <MudIcon Icon="@Label.IconContent" Size="Size" Class="mr-2" />
+    <MudIcon Icon="@Label.IconContent" Size="Size" Class="mx-1" />
 }
 else
 {
-    <MudIcon Icon="@DefaultIcon" Size="Size" Class="mr-2" />
+    <MudIcon Icon="@DefaultIcon" Size="Size" Class="mx-1" />
 }
 
 
 @code {
-    
+
+    [Parameter]
+    public bool ShowParents { get; set; } = true;
+
     [Parameter]
     public AmsNeo4JNodeLabel Label { get; set; }
 
@@ -20,6 +29,6 @@ else
     public string? DefaultIcon { get; set; } = Icons.Filled.Label;
 
     [Parameter]
-    public MudBlazor.Size Size { get; set; } = Size.Medium;
+    public Size Size { get; set; } = Size.Medium;
 
 }

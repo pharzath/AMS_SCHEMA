@@ -5,10 +5,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNode
+    public partial class AmsNeo4JNode : IHaveId<int>
     {
         public List<AmsmoduleNodeDepartment> Departments { get; set; }
         

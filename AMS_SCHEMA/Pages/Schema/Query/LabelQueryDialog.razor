@@ -106,12 +106,11 @@
 
     List<AmsNeo4JNodeLabel> GetRelatedLabels(string? labelsName)
     {
-        _allLabels = DataService.GetAllLabels().ToList();
         if (labelsName.IsEmpty())
             return new List<AmsNeo4JNodeLabel>();
 
         var labelNames = labelsName!.Split(',', ';', '|');
-        var labels = _allLabels.Where(x=>labelNames.Contains(x.Name));
+        var labels = DataService.GetLabels().Where(x=>labelNames.Contains(x.Name));
         return labels.ToList();
     }
 

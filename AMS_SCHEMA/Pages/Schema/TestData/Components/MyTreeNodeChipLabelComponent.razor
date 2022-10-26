@@ -1,0 +1,23 @@
+﻿@using AMS.Model.Models
+<MudChip Label="false" Color="Color.Info" Size="Size.Small">
+    <MudIcon Icon="@Labels.First().IconContent" Color="Color.Default" />
+
+    <MudText Typo="Typo.caption">
+        @Labels.First().Name - @Labels.First().DisplayName
+    </MudText>
+
+    @foreach (var lbl in Labels.Skip(1))
+    {
+        <MudChip Label="false" Color="Color.Primary">
+            <MudIcon Icon="@lbl.IconContent" Color="Color.Default"></MudIcon>
+            @lbl.Name
+        </MudChip>
+
+    }
+</MudChip>
+
+@code {
+
+    [Parameter]
+    public IEnumerable<AmsNeo4JNodeLabel> Labels { get; set; }
+}

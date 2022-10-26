@@ -6,10 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Olive;
+using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeRelationPropery
+    public partial class AmsNeo4JNodeRelationPropery : IHaveId<int>
     {
         [ForeignKey("RelationId")]
         public AmsNeo4JNodeRelationType RelType { get; set; }

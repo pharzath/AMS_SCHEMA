@@ -1,15 +1,15 @@
 ﻿using AMS.Model.Models;
 using AMS_SCHEMA.Class;
 
-namespace AMS_SCHEMA.Pages.Schema.EntityBase
+namespace AMS.Model
 {
     public class EntityBaseClassDef
     {
-        public static Dictionary<string, PropDef> PropertiesDict => new()
+        public static readonly Dictionary<string, PropDef> PropertiesDict = new()
         {
-            ["Id"] = new() { Type = "Guid", Description = "شناسه موجودیت" },
-            ["Name"] = new() { Type = "string", Description = "نام سیستمی" },
             ["Title"] = new() { Type = "string", Description = "عنوان" },
+            ["Name"] = new() { Type = "string", Description = "نام سیستمی" },
+            ["Id"] = new() { Type = "Guid", Description = "شناسه موجودیت" },
             ["DisplayName"] = new() { Type = "string", Description = "توضیحات" },
             ["ClientDomainName"] = new() { Type = "string", Description = "دامنه استفاده کاربر" },
             ["CreatedAt"] = new() { Type = "DateTime", Description = "ایجاد شده در تاریخ" },
@@ -41,7 +41,8 @@ namespace AMS_SCHEMA.Pages.Schema.EntityBase
                     Neo4jName = prop.Key.ToCamelCase(),
                     DataType = prop.Value.Type,
                     DisplayName = prop.Value.Description
-                });
+                })
+                .ToList();
             return props;
 
         }

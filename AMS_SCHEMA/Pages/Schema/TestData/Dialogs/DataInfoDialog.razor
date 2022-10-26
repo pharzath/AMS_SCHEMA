@@ -1,0 +1,90 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Application.ExtensionMethods
+@using AMS_SCHEMA.Pages.Schema.TestData.Components
+@using AMS_SCHEMA.Pages.Schema.TestData.Inputs
+@using Newtonsoft.Json.Linq
+@using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-height: 600px;overflow-y: scroll;">
+
+            <MudGrid Class="mt-1">
+                @foreach (var property in _fullProps)
+                {
+                    @if (property is PropertyFolder folder)
+                    {
+                        <MudItem sm="12" md="12">
+                            <MyTreeNodeChipLabelComponent Labels="DataService.GetParentLabelsAndThis(folder.Label).OrderBy(x => x.ParentLabelId)"></MyTreeNodeChipLabelComponent>
+                        </MudItem>
+                    }
+                    else
+                    {
+                        <MudItem sm="@(property.DataType == "Guid" ? 12 : 6)">
+                            @switch (property.DataType)
+                            {
+                                case "bool":
+                                    <FrzInputProperty Property="@((MyProp<bool?>)property)"></FrzInputProperty>
+                                    break;
+                                case "DateTime":
+                                    <FrzInputProperty Property="@((MyProp<DateTime?>)property)"></FrzInputProperty>
+                                    break;
+                                case "Guid":
+                                    <FrzInputProperty Property="@((MyProp<Guid?>)property)"></FrzInputProperty>
+                                    break;
+                                case "string":
+                                    <FrzInputProperty Property="@((MyProp<string?>)property)"></FrzInputProperty>
+                                    break;
+                                case "int":
+                                    <FrzInputProperty Property="@((MyProp<int?>)property)"></FrzInputProperty>
+                                    break;
+                                default:
+                                    <MudText Typo="@Typo.caption" Color="@Color.Error">There is not control to use for @property.DataType</MudText>
+                                    break;
+
+                            }
+                        </MudItem>
+                    }
+                }
+            </MudGrid>
+        </MudContainer>
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseClick">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    MudDialogInstance DialogInstance { get; set; }
+
+    [Parameter]
+    public MyNode context { get; set; }
+
+    AmsNeo4JNodeLabel Label => context.Labels.OrderBy(x=>x.ParentLabelId).Last();
+
+    [Inject]
+    DataService DataService { get; set; }
+
+    [Inject]
+    GenericRepository GR { get; set; }
+
+    IEnumerable<AmsNeo4JNodeLabelPropery> _fullProps;
+
+    protected override void OnParametersSet()
+    {
+        var jObject = context.Jobj;
+        _fullProps = Label.PropertiesFull(jObject);
+        base.OnParametersSet();
+    }
+
+    void CloseClick()
+    {
+        DialogInstance.Close();
+    }
+
+}

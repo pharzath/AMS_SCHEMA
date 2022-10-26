@@ -7,6 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMS_SCHEMA", "AMS_SCHEMA\AM
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMS.Model", "AMS.Model\AMS.Model.csproj", "{01FAFFCA-CEFA-4B93-93A5-797012CE7764}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QOQNOS.Core", "..\..\..\..\Langram\Microservices\Core\QOQNOS.Core\QOQNOS.Core.csproj", "{06ED8F25-1953-4610-AED8-EEF9B7AD5215}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "QOQNOS.NEO4J.TEST.Shared", "..\..\..\..\Langram\NEO4J\TEST\QOQNOS.NEO4J.TEST.Shared\QOQNOS.NEO4J.TEST.Shared.shproj", "{26A990DC-D630-4D2A-A8A4-6165BC159D32}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMS_SCHEMA.Application", "AMS_SCHEMA.Application\AMS_SCHEMA.Application.csproj", "{849FE1B5-0994-4B31-9416-9F9B31E847A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,11 +27,23 @@ Global
 		{01FAFFCA-CEFA-4B93-93A5-797012CE7764}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01FAFFCA-CEFA-4B93-93A5-797012CE7764}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01FAFFCA-CEFA-4B93-93A5-797012CE7764}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06ED8F25-1953-4610-AED8-EEF9B7AD5215}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06ED8F25-1953-4610-AED8-EEF9B7AD5215}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06ED8F25-1953-4610-AED8-EEF9B7AD5215}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06ED8F25-1953-4610-AED8-EEF9B7AD5215}.Release|Any CPU.Build.0 = Release|Any CPU
+		{849FE1B5-0994-4B31-9416-9F9B31E847A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{849FE1B5-0994-4B31-9416-9F9B31E847A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{849FE1B5-0994-4B31-9416-9F9B31E847A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{849FE1B5-0994-4B31-9416-9F9B31E847A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {15EA7D84-77DF-4361-8B04-24539403EA4D}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		..\..\..\..\Langram\NEO4J\TEST\QOQNOS.NEO4J.TEST.Shared\QOQNOS.NEO4J.TEST.Shared.projitems*{26a990dc-d630-4d2a-a8a4-6165bc159d32}*SharedItemsImports = 13
+		..\..\..\..\Langram\NEO4J\TEST\QOQNOS.NEO4J.TEST.Shared\QOQNOS.NEO4J.TEST.Shared.projitems*{bef4a907-e493-4814-9170-ad3897b12b63}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal

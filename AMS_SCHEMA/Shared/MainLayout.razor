@@ -7,12 +7,21 @@
 <PageTitle>AMS_SCHEMA</PageTitle>
 
 <MudLayout>
-    <MudDrawer @bind-Open="@_drawerOpen" Variant="DrawerVariant.Mini" OpenMiniOnHover="true" >
-        <MudIconButton Icon="@Icons.TwoTone.Close" Color="Color.Default" OnClick="()=>_drawerOpen = false"></MudIconButton>
+    <MudDrawer @bind-Open="@_drawerOpen" Variant="DrawerVariant.Mini">
+        @if (_drawerOpen)
+        {
+            <MudIconButton Icon="@Icons.TwoTone.Close" Color="Color.Default" OnClick="() => _drawerOpen = false"></MudIconButton>
+
+        }
         <MyNavMenu/>
+        <MudSpacer></MudSpacer>
+        @if (!_drawerOpen)
+        {
+            <MudIconButton Icon="@Icons.TwoTone.MenuOpen" Color="Color.Warning" OnClick="() => _drawerOpen = true"></MudIconButton>
+        }
     </MudDrawer>
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="pa-5">
+        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="pa-5">
             @Body
         </MudContainer>
     </MudMainContent>

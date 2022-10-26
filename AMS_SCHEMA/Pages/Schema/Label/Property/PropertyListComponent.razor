@@ -2,6 +2,7 @@
 @using AMS.Model.Services
 @using AMS_SCHEMA.Class
 @using AMS_SCHEMA.Pages.Schema.Constraint
+@using Olive
 
 <MudTable Items="Label.Properties?
     .OrderBy(x=>x.Order)
@@ -18,7 +19,7 @@
         <MudTd>Neo-Name</MudTd>
         <MudTd>Disp-Name</MudTd>
         <MudTd>Validation</MudTd>
-        <MudTd>DisplayName</MudTd>
+        <MudTd>Type</MudTd>
         <MudTd></MudTd>
     </HeaderContent>
     <RowTemplate>
@@ -37,15 +38,36 @@
         </MudTd>
         <MudTd>@context.Neo4jName</MudTd>
         <MudTd>@context.DisplayName</MudTd>
-        <MudTd>@context.ValidationType</MudTd>
-        <MudTd>@context.Description</MudTd>
+        <MudTd>
+            @context.DataType
+            @if (!string.IsNullOrEmpty(context.ValidationType) && context.ValidationType != "none")
+            {
+                <MudChip Label="false">
+                    Val-Type: <MudText Typo="Typo.caption" Color="Color.Primary">
+                        @context.ValidationType
+                    </MudText>
+                </MudChip>
+
+            }
+        </MudTd>
         <MudTd>
             <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="() => DeletePropertyClick(context)"></MudIconButton>
         </MudTd>
     </RowTemplate>
+    <ChildRowContent>
+        @if (!context.Description.IsEmpty())
+        {
+            <MudTd colspan="2"></MudTd>
+            <MudTd colspan="5">
+                <MudText Typo="Typo.caption" Color="Color.Info">
+                    @context.Description
+                </MudText>
+            </MudTd>
+        }
+    </ChildRowContent>
 </MudTable>
 
-<BaseEntityPropertyListComponent Label="Label" ></BaseEntityPropertyListComponent>
+<BaseEntityPropertyListComponent Label="Label"></BaseEntityPropertyListComponent>
 
 @code {
     // [Parameter]

@@ -1,0 +1,69 @@
+﻿@typeparam T
+@using AMS.Model.Models
+@using AMS_SCHEMA.Application.ExtensionMethods
+
+@switch (Property.DataType)
+{
+    case "bool":
+        <MudSwitch @bind-Checked="@Property.Value" Label="@Property.DisplayName"></MudSwitch>
+        break;
+    case "DateTime":
+        <MudDatePicker @bind-Date="@tempDate" Label="@Property.DisplayName" Clearable="true" Editable="true"></MudDatePicker>
+        @if (Property.Value != null)
+        {
+            <MudTimePicker @bind-Time="@tempTime" Label="At Time"></MudTimePicker>
+        }
+        break;
+    case "Guid":
+        <MudTextField @bind-Value="@Property.Value" Label="@Property.DisplayName" Adornment="@(Property.Value == null ? Adornment.None : Adornment.End)" AdornmentColor="Color.Info" AdornmentIcon="@Icons.TwoTone.CopyAll" OnAdornmentClick="CopyToClipboardClick" />
+        break;
+    case "string":
+        <MudTextField @bind-Value="@Property.Value" Label="@Property.DisplayName" />
+        break;
+    case "int":
+        <MudNumericField @bind-Value="@Property.Value" Label="@Property.DisplayName" />
+        break;
+}
+
+@code {
+
+    [Inject] IJsApiService JsApiService { get; set; }
+
+    [Parameter]
+    public MyProp<T?> Property { get; set; }
+
+    DateTime? tempDate
+    {
+        get => Property.Value == null ? null : Convert.ToDateTime(Property.Value);
+        set
+        {
+            if (Convert.ToDateTime(Property.Value) == value) return;
+
+            var val = value;
+            if (_tempTime != null && val != null)
+                val = value?.Add(_tempTime ?? TimeSpan.Zero);
+            
+
+            Property.Value = (T?)(object?)val;
+        }
+    }
+
+    TimeSpan? _tempTime;
+    TimeSpan? tempTime
+    {
+        get => _tempTime = Property.Value == null ? null : Convert.ToDateTime(Property.Value).TimeOfDay;
+        set
+        {
+            if (value == Convert.ToDateTime(Property.Value).TimeOfDay) return;
+
+            Property.Value = (T?)(object?)Convert.ToDateTime(Property.Value).Date.Add(value ?? TimeSpan.Zero);
+            _tempTime = value ?? TimeSpan.Zero;
+        }
+    }
+
+    async Task CopyToClipboardClick()
+    {
+        await JsApiService.CopyToClipboardAsync(Property.Value?.ToString());
+    }
+
+}

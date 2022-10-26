@@ -1,4 +1,5 @@
-﻿using System;
+﻿using QOQNOS.Core;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeConstraint
+    public partial class AmsNeo4JNodeConstraint : IHaveId<int>
     {
         public AmsNeo4JNodeLabel Label { get; set; }
 

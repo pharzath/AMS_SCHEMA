@@ -1,0 +1,71 @@
+﻿@using Olive
+@typeparam T
+@if (Visible)
+{
+    <MudStack Row="true" Spacing="1" Style="width:120px;" AlignItems="AlignItems.Center">
+        <MudTextField @bind-Value="Value" Variant="Variant.Text" IconSize="Size.Small" FullWidth="true" Adornment="Adornment.End" AdornmentColor="Color.Success" AdornmentIcon="@Icons.Filled.Check" OnAdornmentClick="SaveClick"></MudTextField>
+        <MudIconButton Size="Size.Small" Icon="@Icons.TwoTone.Cancel" Color="Color.Error" OnClick="CancelClickClick"></MudIconButton>
+    </MudStack>
+}
+
+@code {
+
+    [Parameter]
+    public string Label { get; set; }
+
+    [Parameter]
+    public T Value
+    {
+        get => _value;
+        set
+        {
+            if (_value.Equals(value)) return;
+
+            _value = value;
+            ValueChanged.InvokeAsync(_value);
+        }
+    }
+
+    [Parameter]
+    public Action? OnSaved { get; set; }
+
+    [Parameter]
+    public EventCallback<T> ValueChanged { get; set; }
+
+    [Parameter]
+    public bool Visible
+    {
+        get => _visible;
+        set
+        {
+            if (_visible == value) return;
+            _visible = value;
+            VisibleChanged.InvokeAsync(_visible);
+        }
+    }
+
+    [Parameter]
+    public EventCallback<bool> VisibleChanged { get; set; }
+
+    T _origValue;
+    protected override void OnParametersSet()
+    {
+        _origValue = Value;
+        base.OnParametersSet();
+    }
+
+    void SaveClick()
+    {
+        Visible = false;
+        OnSaved?.Invoke();
+    }
+
+    void CancelClickClick()
+    {
+        Visible = false;
+        Value = _origValue;
+    }
+
+    T _value;
+    bool _visible;
+}

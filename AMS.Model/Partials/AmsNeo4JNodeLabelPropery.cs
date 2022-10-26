@@ -6,10 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentValidation;
 using Olive;
+using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeLabelPropery
+    public partial class AmsNeo4JNodeLabelPropery : IHaveId<int>
     {
         [ForeignKey("LabelId")]
         public AmsNeo4JNodeLabel Label { get; set; }

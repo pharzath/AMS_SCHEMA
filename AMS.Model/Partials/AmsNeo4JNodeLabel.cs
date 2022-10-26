@@ -1,16 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using AMS_SCHEMA.Pages.Schema.EntityBase;
-using Microsoft.Data.SqlClient.DataClassification;
 using Olive;
+using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeLabel
+    public partial class AmsNeo4JNodeLabel : IHaveId<int>
     {
         [ForeignKey("NodeId")]
         public AmsNeo4JNode Node { get; set; }
 
         public AmsNeo4JNodeLabel? ParentLabel { get; set; }
+
+        [ForeignKey("ParentLabelId")]
+
         public List<AmsNeo4JNodeLabel>? ChildLabels { get; set; }
 
         [ForeignKey("LabelFk")]
@@ -21,19 +23,6 @@ namespace AMS.Model.Models
 
         public List<AmsNeo4JNodeLabelPropery>? Properties { get; set; }
         
-        [NotMapped]
-        public List<AmsNeo4JNodeLabelPropery> PropertiesFull {
-            get
-            {
-                if (ParentLabelId != null) 
-                    return Properties;
-
-                var x = Properties.OrEmpty().ToList();
-                x.AddRange(EntityBaseClassDef.GetProperties(this));
-                return x;
-            }
-        }
-
         public override string ToString()
         {
             return Name;
@@ -59,8 +48,8 @@ namespace AMS.Model.Models
 
             var entityid = "Id";
             var neoName = "entityId";
-            var propery = AmsNeo4JNodeLabelPropery.CreateNewPropery(label, entityid, neoName, "Guid", "none");
-            label.Properties.Add(propery);
+            //var propery = AmsNeo4JNodeLabelPropery.CreateNewPropery(label, entityid, neoName, "Guid", "none");
+            //label.Properties.Add(propery);
             var constraint = new AmsNeo4JNodeConstraint()
             {
                 Label = label,

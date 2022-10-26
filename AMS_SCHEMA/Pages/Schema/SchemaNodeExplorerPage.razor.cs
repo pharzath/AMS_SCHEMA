@@ -19,6 +19,8 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Olive;
 using static AMS_SCHEMA.Pages.Schema.SchemaNodeExplorerPage;
 using System.Net;
+using AMS_SCHEMA.Pages.Schema.TestData;
+using Neo4jClient.DataAnnotations.Cypher.Functions;
 
 namespace AMS_SCHEMA.Pages.Schema;
 
@@ -103,44 +105,51 @@ public partial class SchemaNodeExplorerPage : IDisposable
         return Task.CompletedTask;
     }
 
-    string MatchValue => GetQueryFromHistory();
+    string xMatchValue => GetQueryFromHistory();
 
 
     bool IgnoreRelationNameInMatch = false;
     async Task CopyMatchToclipboardClick()
     {
-        await JsApiService.CopyToClipboardAsync(MatchValue);
+        await JsApiService.CopyToClipboardAsync(xMatchValue);
     }
 
     async Task OpenInNeo4jClick()
     {
-        var urlEncode = WebUtility.UrlEncode(MatchValue);
+        var urlEncode = WebUtility.UrlEncode(xMatchValue);
         var href = "neo4j-desktop://graphapps/neo4j-browser?cmd=edit&arg=" + urlEncode;
         await JsApiService.Open(href, "_blank");
     }
 
-    readonly LinkedList<HistoryNode> _historyNodes = new ();
+    readonly LinkedList<HistoryNode> _historyNodes = new();
+
+    string hKey = "";
+    string hValue = "";
 
     string GetQueryFromHistory()
     {
         var vars = new List<string>();
-        var sb = new StringBuilder("MATCH ");
+        var sb = new List<string>(){"MATCH "} ;// new StringBuilder("MATCH ");
         var node = _historyNodes.First;
         var v = "b";
-        var i = 0;
+
+        
+        if (hKey == _historyNodes.Count.ToString())
+            return hValue;
+
         while (node != null)
         {
-            i++;
+
             var hn = node.Value;
             var a = hn.Relation.From!;
             var b = hn.Relation.To!;
             if (hn.Dir == RelDirection.Incoming)
             {
-                (a,b) = (b,a);
+                (a, b) = (b, a);
             }
             var prev = node.Previous?.Value;
 
-            string? va=null;
+            string? va = null;
             if (prev == null)
             {
                 va = a.Name?.ToShortVariableName();
@@ -148,61 +157,97 @@ public partial class SchemaNodeExplorerPage : IDisposable
             }
 
             var vr = "";//GetVarName(vars, node.Value.Relation.Name?.ToShortVariableName()); 
-            var vb = GetVarName(vars, b.Name.ToShortVariableName()); 
-            
+            var vb = GetVarName(vars, b.Name.ToShortVariableName());
+
             var an = a.Name.WithWrappers($"({va}:", ")");
             var r = hn.Relation.Name.WithWrappers($"[{vr}:", "]");
             var bn = b.Name.WithWrappers($"({vb}:", ")");
             if (prev == null)
             {
-                sb.Append(an);
-                sb.Append(GetDash(hn.Dir,1));
-                //sb.Append("<-");
-                sb.Append(r.OnlyWhen(!IgnoreRelationNameInMatch));
-                //sb.Append("-");
-                sb.Append(GetDash(hn.Dir, 2));
-                sb.Append(bn);
+                sb.Add(an);
+                sb.Add(GetDash(hn.Dir, 1));
+                //sb.Add("<-");
+                sb.Add(r.OnlyWhen(!IgnoreRelationNameInMatch));
+                //sb.Add("-");
+                sb.Add(GetDash(hn.Dir, 2));
+                sb.Add(bn);
                 hn.Res = b;
             }
             else
             {
                 if (prev.Res.Id == a.Id)
                 {
-                    sb.Append(GetDash(hn.Dir, 1));
-                    sb.Append(r.OnlyWhen(!IgnoreRelationNameInMatch));
-                    sb.Append(GetDash(hn.Dir, 2));
-                    sb.Append(bn);
+                    sb.Add(GetDash(hn.Dir, 1));
+                    sb.Add(r.OnlyWhen(!IgnoreRelationNameInMatch));
+                    sb.Add(GetDash(hn.Dir, 2));
+                    sb.Add(bn);
                     hn.Res = b;
 
                 }
                 else if (prev.Res.Id == b.Id)
                 {
-                    sb.Append(GetDash(hn.Dir, 1));
-                    sb.Append(r.OnlyWhen(!IgnoreRelationNameInMatch));
-                    sb.Append(GetDash(hn.Dir, 2));
-                    sb.Append(an);
+                    sb.Add(GetDash(hn.Dir, 1));
+                    sb.Add(r.OnlyWhen(!IgnoreRelationNameInMatch));
+                    sb.Add(GetDash(hn.Dir, 2));
+                    sb.Add(an);
                     hn.Res = a;
                 }
                 else
                 {
-                    sb.AppendLine("");
-                    sb.AppendLine("     ERROR    ");
-                    sb.AppendLine($"Expected relation from {prev.Relation.From.Name} or {prev.Relation.To.Name} ");
-                    sb.AppendLine($"But are from : {a.Name} and {b.Name} !");
+                    var labels = DataService.GetParentLabels(prev.Res);
+                    if (prev.Res.ChildLabels != null) 
+                        labels.AddRange(prev.Res.ChildLabels);
+
+                    if (labels.Any(x => x.Name == a.Name))
+                    {
+                        sb.RemoveAt(sb.Count - 1);
+                        var bnx = $"({vb}:{prev.Res.Name}:{a.Name})";
+                        sb.Add(bnx);
+
+                        sb.Add(GetDash(hn.Dir, 1));
+                        sb.Add(r.OnlyWhen(!IgnoreRelationNameInMatch));
+                        sb.Add(GetDash(hn.Dir, 2));
+                        sb.Add(bn);
+
+                        hn.Res = b;
+                    }
+                    else if (labels.Any(x => x.Name == b.Name))
+                    {
+                        sb.RemoveAt(sb.Count - 1);
+                        var bnx = $"({vb}:{prev.Res.Name}:{b.Name})";
+                        sb.Add(bnx);
+
+                        sb.Add(GetDash(hn.Dir, 1));
+                        sb.Add(r.OnlyWhen(!IgnoreRelationNameInMatch));
+                        sb.Add(GetDash(hn.Dir, 2));
+                        sb.Add(an);
+
+                        hn.Res = a;
+                    }
+                    else
+                    {
+                        sb.Add("");
+                        sb.Add("     ERROR    ");
+                        sb.Add($"Expected relation from {prev.Relation.From.Name} or {prev.Relation.To.Name} ");
+                        sb.Add($"But are from : {a.Name} and {b.Name} !");
+                        hn.Res = b;
+                    }
                 }
             }
-            
+
             node = node.Next;
         }
 
-        sb.AppendLine();
-        sb.AppendLine("RETURN " + string.Join(", " ,vars));
-        return sb.ToString();
+        sb.Add("\r\n");
+        sb.Add("RETURN " + string.Join(", ", vars));
+        hKey = _historyNodes.Count.ToString();
+        hValue = string.Concat(sb);
+        return hValue;
     }
 
     string? GetVarName(List<string> vars, string? v)
     {
-        if(v == null)
+        if (v == null)
             return null;
 
         var x = 0;
@@ -421,10 +466,20 @@ public partial class SchemaNodeExplorerPage : IDisposable
 
     public class HistoryNode
     {
+        AmsNeo4JNodeLabel _res;
         public AmsNeo4JNode Node { get; set; }
         public AmsNeo4JNodeRelation Relation { get; set; }
         public RelDirection Dir { get; set; }
-        public AmsNeo4JNodeLabel Res { get; set; }
+
+        public AmsNeo4JNodeLabel Res
+        {
+            get => _res;
+            set
+            {
+                _res = value;
+                Console.WriteLine(_res.Name);
+            }
+        }
     }
 
     public enum RelDirection
@@ -439,7 +494,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
     bool openTop = false;
     bool openTop2 = false;
 
-    async Task GotoLabelClick(AmsNeo4JNode fromNode, AmsNeo4JNodeLabel to, AmsNeo4JNodeRelation rel , RelDirection dir)
+    async Task GotoLabelClick(AmsNeo4JNode fromNode, AmsNeo4JNodeLabel to, AmsNeo4JNodeRelation rel, RelDirection dir)
     {
         var item = new HistoryNode()
         {
@@ -448,10 +503,8 @@ public partial class SchemaNodeExplorerPage : IDisposable
             Dir = dir
         };
         history.Push(item);
+        
         _historyNodes.AddLast(item);
-        
-        
-        var linkedListNode = _historyNodes.Last?.Previous;
 
         await BrowserService.GotoSection(to.Node.Name);
         openTop2 = history.Any();
@@ -462,7 +515,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
     void GenerateAll()
     {
         CodeGenerator.GenerateAll(_nodes);
-        Snackbar.Add("Generate completed " ,Severity.Success);
+        Snackbar.Add("Generate completed ", Severity.Success);
     }
 
     void GenerateEntityRelatedFilesClick(AmsNeo4JNode context)
@@ -471,4 +524,31 @@ public partial class SchemaNodeExplorerPage : IDisposable
         Snackbar.Add("Generate completed ", Severity.Success);
     }
 
+    async Task OpenDataSampleDialogClick(AmsNeo4JNodeLabel context)
+    {
+        var reference = DialogService.Show<NodeSampleDataDialog>("Sample Data",
+            new DialogParameters()
+            {
+                ["Label"] = context
+            },
+            new DialogOptions()
+            {
+                FullWidth = true,
+                MaxWidth = MaxWidth.Large
+            });
+        await reference.Result;
+    }
+
+    void ClearCachClick()
+    {
+        DataService.ClearCach();
+    }
+
+    string GetReferenceLabelColor(AmsNeo4JNodeLabel label)
+    {
+        var referenceLabelColor = $"background-color: {label.Color}".OnlyWhen(!label.Color.IsEmpty());
+        if (referenceLabelColor.IsEmpty())
+            referenceLabelColor = "background: " + (label.ParentLabelId == null ?  Colors.Indigo.Lighten1 : Colors.DeepPurple.Lighten3);
+        return referenceLabelColor;
+    }
 }

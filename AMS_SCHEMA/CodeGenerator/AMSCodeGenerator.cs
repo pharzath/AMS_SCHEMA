@@ -1,6 +1,7 @@
 ﻿using System.Web;
 using AMS.Model.Models;
 using AMS.Model.Services;
+using AMS_SCHEMA.Application.ExtensionMethods;
 using AMS_SCHEMA.CodeGenerator.Api.Service;
 using BlazorTemplater;
 

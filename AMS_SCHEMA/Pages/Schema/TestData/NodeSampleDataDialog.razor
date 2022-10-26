@@ -1,0 +1,78 @@
+﻿@using AMS_SCHEMA.Pages.Schema.TestData.Components
+@using AMS.Model.Models
+@using Neo4jClient
+@using QOQNOS.Core
+@using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic
+<MudDialog>
+
+    <DialogContent>
+        <MudContainer Style="max-height: 600px; height: 600px; overflow-y: scroll">
+            @foreach (var context in _nodes)
+            {
+                <MyTreeNodeComponent context="context" />
+            }
+
+            @foreach (var alert in _aletrs)
+            {
+                <MudAlert Variant="Variant.Filled" Severity="Severity.Warning">
+                    <MudText Typo="Typo.h6">
+                        @alert
+                    </MudText>
+                </MudAlert>
+            }
+
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseClick">
+            Close
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Inject] MyCustomTreeService CustomTreeService { get; set; }
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    List<MyNode> _nodes = new List<MyNode>();
+
+    List<string> _aletrs = new List<string>();
+    protected override async Task OnInitializedAsync()
+    {
+
+        var res = await CustomTreeService.GetAllDataByLabel(Label);
+        if (!res.Any())
+        {
+            _aletrs.Add("There is not any associated record with this label in the Neo4J DB.");
+            return;
+        }
+
+        var labels = CustomTreeService
+            .GetLabelHirarchy(Label)
+            //.Select(x=>x.Name)
+            .ToArray();
+
+        _nodes.AddRange(res.Select(obj => CustomTreeService.CreateNode(
+            null,
+            new GenericRepository.NodeRelation
+            {
+                Labels = labels,
+                JObj = obj,
+                Json = obj.ToString()
+            },
+            RelationshipDirection.Automatic))!);
+        await base.OnInitializedAsync();
+    }
+
+    void CloseClick()
+    {
+        DialogInstance.Close();
+    }
+
+}

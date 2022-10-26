@@ -1,0 +1,84 @@
+﻿@using Neo4jClient
+@using Olive
+
+<MudStack Row="true" Style="@($"opacity:{context.Style.Opacity};width:100%")" Spacing="0" AlignItems="AlignItems.Center">
+    <MudToggleIconButton Icon="@Icons.Filled.ChevronRight" @bind-Toggled="@context.IsExpanded"
+                         ToggledIcon="@Icons.Filled.ArrowCircleDown" />
+
+
+
+    <MudMenu Icon="@Icons.Filled.Menu" Size="Size.Small">
+        <MudMenuItem OnClick="() => EditNodeClick(context)">Edit Node</MudMenuItem>
+        <MudMenuItem OnClick="() => AddNewRelatedNodeClick(context)">Add New Related Node</MudMenuItem>
+        <MudMenuItem OnClick="() => UpdateOrdersClick(context)">Reset Node Orders</MudMenuItem>
+    </MudMenu>
+
+    <MudChip Label="true" OnClick="()=>OpenChild(context)">
+        <MudIcon Icon="@GetRelIcon(context)" Color="Color.Surface"></MudIcon>
+        <MudStack Row="false" Spacing="0" Reverse="context.Direction == RelationshipDirection.Incoming" Style="min-width: 80px">
+            <span style="font-size: 9px">@context.ParentNode?.LabelsText</span>
+            <span style="font-size: 10px">@context.RelType.WithWrappers("[", "]")</span>
+        </MudStack>
+    </MudChip>
+
+    <MyTreeNodeChipLabelComponent Labels="context.Labels"></MyTreeNodeChipLabelComponent>
+
+
+    <MudStack Row="true" Spacing="2" Reverse="context.Direction == RelationshipDirection.Outgoing" Class="ml-3">
+        <MudText Typo="Typo.caption">
+            @context.ParentNode?.Entity.Title
+        </MudText>
+        <MudText Typo="Typo.caption">
+            @context.Relation.DisplayName
+        </MudText>
+        <MudText Typo="Typo.subtitle2" Color="Color.Info">
+            @context.Entity.Title
+        </MudText>
+    </MudStack>
+
+    <MudSpacer />
+
+    @if (context.ParentNode != null)
+    {
+
+        <div>
+            @if (context.Order is > 0)
+            {
+                <MudChip Class="updown-chip" Label="true" Variant="Variant.Text" Icon="@Icons.TwoTone.ArrowCircleUp" Color="Color.Default" OnClick="() => MoveNodeClick(context,-1)"></MudChip>
+            }
+            else
+            {
+                <MudChip Class="updown-chip" Label="true" Variant="Variant.Text" Icon="@Icons.TwoTone.RemoveCircle" Color="Color.Default"></MudChip>
+            }
+            <MudChip Label="false" Size="@(context.EditingOrder ? Size.Large:Size.Small)" Variant="Variant.Outlined" OnClick="()=>context.EditingOrder = true">
+                @if (!context.EditingOrder)
+                {
+                    @context.Order
+                }
+                <NodeOrderInlineEditComponent @bind-Value="context.Order" @bind-Visible="context.EditingOrder" OnSaved="()=>UpdateNodeOrderSaved(context)" />
+            </MudChip>
+
+            @if (context.ParentNode != null && context.Order < context.ParentNode.Nodes.Count - 1)
+            {
+                <MudChip Class="updown-chip" Label="true" Variant="Variant.Text" Icon="@Icons.TwoTone.ArrowCircleDown" Color="Color.Default" OnClick="() => MoveNodeClick(context,1)"></MudChip>
+            }
+            else
+            {
+                <MudChip Class="updown-chip" Label="true" Variant="Variant.Text" Icon="@Icons.TwoTone.RemoveCircle" Color="Color.Default"></MudChip>
+            }
+        </div>
+    }
+
+
+</MudStack>
+
+@if (context.IsExpanded)
+{
+    <div style="padding-left: @(NodeIndent)px;">
+        @foreach (var x in context.Nodes.OrderBy(x => x.Order))
+        {
+            <MyTreeNodeComponent context="x" ParentComponent="this"></MyTreeNodeComponent>
+        }
+    </div>
+}
+

@@ -3,6 +3,7 @@
 @using AMS_SCHEMA.Class
 @using AMS_SCHEMA.Pages.Schema.Constraint
 @using AMS_SCHEMA.Pages.Schema.EntityBase
+@using Olive
 
 
 <MudText Typo="Typo.h6" Color="Color.Warning" Class="my-3">
@@ -24,8 +25,7 @@
             <MudTd Style="width: 200px">Name</MudTd>
             <MudTd>Neo-Name</MudTd>
             <MudTd>Disp-Name</MudTd>
-            <MudTd>Validation</MudTd>
-            <MudTd>DisplayName</MudTd>
+            <MudTd>Type</MudTd>
             <MudTd></MudTd>
         </HeaderContent>
 
@@ -41,11 +41,34 @@
             </MudTd>
             <MudTd>@context.Name.ToCamelCase()</MudTd>
             <MudTd>@context.DisplayName</MudTd>
-            <MudTd>@context.ValidationType</MudTd>
-            <MudTd>@context.Description</MudTd>
+            <MudTd>
+                @context.DataType
+                @if (!string.IsNullOrEmpty(context.ValidationType) && context.ValidationType != "none")
+                {
+                    <MudChip Label="false">
+                        Val-Type: <MudText Typo="Typo.caption" Color="Color.Primary">
+                            @context.ValidationType
+                        </MudText>
+                    </MudChip>
+
+                }
+            </MudTd>
             <MudTd>
             </MudTd>
         </RowTemplate>
+        <ChildRowContent>
+            @if (!context.Description.IsEmpty())
+            {
+                <MudTd colspan="2">
+                </MudTd>
+                <MudTd colspan="5">
+                    <MudText Typo="Typo.caption" Color="Color.Info">
+                        @context.Description
+                    </MudText>
+                </MudTd>
+            }
+        </ChildRowContent>
+
     </MudTable>
 }
 @code {
