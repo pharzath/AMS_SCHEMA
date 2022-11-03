@@ -12,7 +12,7 @@ namespace AMS.Model;
 /// <summary>
 ///  @Relation.GetCypherDefinitionByVars()
 /// </summary>
-[Table("@Relation.Name")]
+[Table("@Relation.RelType.Name")]
 public partial class @Relation.GetRelationshiptClassName() : INodeRelation
 {
     [Key,Column(Order = 1)] 
@@ -45,7 +45,7 @@ public partial class @Relation.GetRelationshiptClassName() : INodeRelation
     [Parameter]
     public AmsNeo4JNodeRelation Relation { get; set; }
     
-    string IsNullable(AmsNeo4JNodeRelationPropery fld)
+    string IsNullable(AmsNeo4JNodeRelationProperty fld)
     {
         var x= fld.RelType.Constraints.Any(x => x.Over == fld.Name && x.Type == "IS NOT NULL") 
             ? "" 

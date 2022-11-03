@@ -5,16 +5,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace AMS.Model.Models
 {
     public partial class AmsNeo4JNodeRelationType : IHaveId<int>
     {
-        public List<AmsNeo4JNodeRelationPropery> Properties { get; set; }
-        
+        [JsonIgnore]
+        public List<AmsNeo4JNodeRelationProperty> Properties { get; set; }
+
+        [JsonIgnore]
         [ForeignKey("RelTypeFk")]
         public List<AmsNeo4JNodeConstraint> Constraints { get; set; }
 
+        [JsonIgnore]
         [ForeignKey("RelTypeId")]
         public List<AmsNeo4JNodeIndex> Indices { get; set; }
 

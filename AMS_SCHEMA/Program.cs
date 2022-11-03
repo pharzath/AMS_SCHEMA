@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using MudBlazor.Services;
 using Neo4jClient;
 using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic;
@@ -46,7 +47,11 @@ builder.Services.AddScoped<IGraphClient>(s =>
 
 builder.Services.AddDbContext<MyDbContext>(options =>
 {
-    options.ConfigureWarnings(configurationBuilder => configurationBuilder.Ignore(CoreEventId.NavigationBaseIncludeIgnored));
+    options.EnableSensitiveDataLogging();
+    options.ConfigureWarnings(configurationBuilder =>
+    {
+        configurationBuilder.Ignore(CoreEventId.NavigationBaseIncludeIgnored);
+    });
 
     //options.UseSqlServer(builder.Configuration["ConnectionString"]);
 });

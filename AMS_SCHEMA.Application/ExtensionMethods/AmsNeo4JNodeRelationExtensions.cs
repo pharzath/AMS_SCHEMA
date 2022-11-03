@@ -15,12 +15,12 @@ namespace AMS_SCHEMA.Application.ExtensionMethods
     {
         public static string GetRelationshiptClassName(this AmsNeo4JNodeRelation rel)
         {
-            return $"{rel.GetRelationFromFieldName()}{rel.Name.ToPascalCase()}{rel.GetRelationToFieldName()}Relationship";
+            return $"{rel.GetRelationFromFieldName()}{rel.RelType.Name.ToPascalCase()}{rel.GetRelationToFieldName()}Relationship";
         }
 
         public static string GetRelationFileName(this AmsNeo4JNodeRelation rel)
         {
-            return $"{rel.From.Name}.{rel.Name.ToPascalCase()}.{rel.To.Name}.Relationship";
+            return $"{rel.From.Name}.{rel.RelType.Name.ToPascalCase()}.{rel.To.Name}.Relationship";
         }
 
         public static string GetRelationTo_InversCollectionName(this AmsNeo4JNodeRelation rel, IEnumerable<AmsNeo4JNodeRelation> tos)
@@ -46,7 +46,7 @@ namespace AMS_SCHEMA.Application.ExtensionMethods
             var x = (rel.From?.Name == rel.To?.Name ?
             "Sub" + rel.To?.Name :
             rel.To?.Name)!;
-            var pascalCase = rel.Name?.ToPascalCase();
+            var pascalCase = rel.RelType.Name?.ToPascalCase();
             var plural = x.ToPlural();
             if (x.Equals("Person", StringComparison.OrdinalIgnoreCase))
                 plural = x;

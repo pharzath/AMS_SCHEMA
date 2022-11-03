@@ -110,7 +110,7 @@
             return new List<AmsNeo4JNodeLabel>();
 
         var labelNames = labelsName!.Split(',', ';', '|');
-        var labels = DataService.GetLabels().Where(x=>labelNames.Contains(x.Name));
+        var labels = DataService.GetLabels(labelNames);
         return labels.ToList();
     }
 

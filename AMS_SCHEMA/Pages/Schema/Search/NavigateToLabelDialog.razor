@@ -1,21 +1,23 @@
-﻿@using AMS.Model.Services
+﻿@implements IDisposable
+@using AMS.Model.Services
 @using AMS.Model.Models
 @using Olive
+@using Toolbelt.Blazor.HotKeys
 <MudDialog>
     <DialogContent>
         <MudAutocomplete @ref="_searchAutoCompleteField"
+                             AutoFocus="true"
                              Label="Search Label"
                              @bind-Value="SearchText"
                              Clearable="true"
                              MaxItems="100"
                              SearchFunc="GetLabels"
                              SelectOnClick="true"
-                             SelectValueOnTab="true"
-                             OnKeyPress="Callback">
+                             SelectValueOnTab="true">
                 <ItemTemplate>
                     <MudStack Row="true">
                         <MudText Color="Color.Warning" Typo="Typo.body1">@context.Name</MudText>
-                        <MudText Typo="Typo.overline" Color="Color.Surface">@context.Node.Name.WithWrappers("(", ")")</MudText>
+                        @* <MudText Typo="Typo.overline" Color="Color.Surface">@context.Name.WithWrappers("(", ")")</MudText> *@
                         <MudSpacer/>
                         <MudText Color="Color.Warning" Typo="Typo.body2">@context.DisplayName</MudText>
                     </MudStack>
@@ -31,6 +33,9 @@
 
 @code {
 
+    [Inject] HotKeys HotKeys { get; set; }
+    HotKeysContext HotKeysContext;
+
     MudAutocomplete<AmsNeo4JNodeLabel?>? _searchAutoCompleteField;
 
     [CascadingParameter]
@@ -42,16 +47,34 @@
     
     void CloseClick()
     {
-        DialogInstance.Close(SearchText.Node.Name);
+        if(SearchText == null) 
+            return;
+        DialogInstance.Close(SearchText?.Node.Name);
+    }
+
+    protected override void OnInitialized()
+    {
+        this.HotKeysContext = this.HotKeys.CreateContext()
+            .Add(ModKeys.Ctrl,
+                Keys.Enter,
+                SearchDone,
+                "Search done",Exclude.InputNonText);
+
+        base.OnInitialized();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await _searchAutoCompleteField.FocusAsync();
+    //await _searchAutoCompleteField.FocusAsync();
         }
         await base.OnAfterRenderAsync(firstRender);
+    }
+
+    void SearchDone()
+    {
+        CloseClick();
     }
 
     Task<IEnumerable<AmsNeo4JNodeLabel>> GetLabels(string? arg)
@@ -60,9 +83,9 @@
         return Task.FromResult(nodes.AsEnumerable());
     }
 
-    void Callback(KeyboardEventArgs args)
+    public void Dispose()
     {
-        Console.WriteLine(args.Key);
+        HotKeysContext.Dispose();
     }
 
 }

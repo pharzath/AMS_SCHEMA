@@ -13,7 +13,7 @@ public partial class SchemaRelationExplorerPage
     [Inject] DataService DataService { get; set; }
 
     List<AmsNeo4JNodeRelationType> _relations;
-    IEnumerable<AmsmoduleDepartment> _selectedDepartments;
+    IEnumerable<AmsNeo4JDepartment> _selectedDepartments;
     bool _andSelectDepartment;
 
     protected override void OnInitialized()
@@ -25,7 +25,7 @@ public partial class SchemaRelationExplorerPage
     string GetRelationInfoFrom(AmsNeo4JNodeRelation relation)
     {
         if (relation.IsEn)
-            return $"{relation.From.Name}-[{relation.Name}]->{relation.To.Name}";
+            return $"{relation.From.Name}-[{relation.RelType.Name}]->{relation.To.Name}";
 
         return $"{relation.From.Node.DisplayName}-[{relation.RelType.DisplayName}]->{relation.To.Node.DisplayName}";
     }
@@ -33,7 +33,7 @@ public partial class SchemaRelationExplorerPage
     string GetRelationInfoTo(AmsNeo4JNodeRelation relation)
     {
         if (relation.IsEn)
-            return $"{relation.From.Name}-[{relation.Name}]->{relation.To.Name}";
+            return $"{relation.From.Name}-[{relation.RelType.Name}]->{relation.To.Name}";
 
         return $"{relation.From.Node.DisplayName}-[{relation.RelType.DisplayName}]->{relation.To.Node.DisplayName}";
     }
@@ -71,7 +71,7 @@ public partial class SchemaRelationExplorerPage
             .ToList();
     }
 
-    public IEnumerable<AmsmoduleDepartment> SelectedDepartments
+    public IEnumerable<AmsNeo4JDepartment> SelectedDepartments
     {
         get => _selectedDepartments;
         set
@@ -91,7 +91,7 @@ public partial class SchemaRelationExplorerPage
         }
     }
 
-    List<string> GetPropertyTooltipText(AmsNeo4JNodeRelationType amsNeo4JNode, AmsNeo4JNodeRelationPropery prop)
+    List<string> GetPropertyTooltipText(AmsNeo4JNodeRelationType amsNeo4JNode, AmsNeo4JNodeRelationProperty prop)
     {
         var tooltip = new List<string>
         {

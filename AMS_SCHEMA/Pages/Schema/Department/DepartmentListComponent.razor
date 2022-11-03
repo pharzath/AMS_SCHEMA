@@ -1,7 +1,7 @@
 ﻿@using AMS.Model.Services
 @using AMS.Model.Models
 
-<MudSelect Label="Department" @bind-Value="SelectedDepartment" T="AmsmoduleDepartment"
+<MudSelect Label="Department" @bind-Value="SelectedDepartment" T="AmsNeo4JDepartment"
            Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Add" OnAdornmentClick="AddToDepartmentClick">
     @foreach (var dep in DataService.GetDepartments())
     {
@@ -32,16 +32,16 @@
     [Parameter]
     public AmsNeo4JNodeLabel Label { get; set; }
 
-    AmsmoduleDepartment SelectedDepartment;
+    AmsNeo4JDepartment SelectedDepartment;
 
-    List<AmsmoduleNodeDepartment> Departments => DataService.GetNodeDepartment(Label.Node);
+    List<AmsNeo4JNodeDepartment> Departments => DataService.GetNodeDepartment(Label.Node);
 
     void AddToDepartmentClick()
     {
         DataService.AddDepartmentToNode(Label.Node,SelectedDepartment);
     }
 
-    void DeleteDepartmentFromNode(AmsmoduleNodeDepartment context)
+    void DeleteDepartmentFromNode(AmsNeo4JNodeDepartment context)
     {
         DataService.DeleteDepartmentFromNode(context);
     }

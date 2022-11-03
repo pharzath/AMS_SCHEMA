@@ -15,10 +15,10 @@ namespace AMS_SCHEMA.Application.ExtensionMethods
 {
     public static class AmsNeo4JNodeLabelExtensions
     {
-        public static IEnumerable<AmsNeo4JNodeLabelPropery> PropertiesFull(this AmsNeo4JNodeLabel label,
+        public static IEnumerable<AmsNeo4JNodeLabelProperty> PropertiesFull(this AmsNeo4JNodeLabel label,
             JObject? jObject = null)
         {
-            var lst = new List<AmsNeo4JNodeLabelPropery>();
+            var lst = new List<AmsNeo4JNodeLabelProperty>();
             var lbl = label;
             while (lbl is { })
             {
@@ -39,7 +39,7 @@ namespace AMS_SCHEMA.Application.ExtensionMethods
             return lst;
         }
 
-        static void AddProps(ICollection<AmsNeo4JNodeLabelPropery> lst, IEnumerable<AmsNeo4JNodeLabelPropery>? props, JObject? jObject)
+        static void AddProps(ICollection<AmsNeo4JNodeLabelProperty> lst, IEnumerable<AmsNeo4JNodeLabelProperty>? props, JObject? jObject)
         {
             if (props == null) return;
 
@@ -74,8 +74,14 @@ namespace AMS_SCHEMA.Application.ExtensionMethods
                         case "Guid":
                             {
                                 var convertTo1 = prop.ConvertTo<MyProp<Guid?>>();
-                                if (Guid.TryParse(jToken?.Value<string>(), out var guid))
-                                    convertTo1.Value = guid;
+                                if (jToken != null)
+                                    convertTo1.Value = jToken.Type switch
+                                    {
+                                        JTokenType.String when Guid.TryParse(jToken?.Value<string>(), out var guid) =>
+                                            guid,
+                                        JTokenType.Guid => jToken?.Value<Guid>(),
+                                        _ => convertTo1.Value
+                                    };
                                 lst.Add(convertTo1);
                                 break;
                             }
@@ -98,7 +104,7 @@ namespace AMS_SCHEMA.Application.ExtensionMethods
         }
     }
 
-    public class PropertyFolder : AmsNeo4JNodeLabelPropery
+    public class PropertyFolder : AmsNeo4JNodeLabelProperty
     {
         public AmsNeo4JNodeLabel Label { get; set; }
 
@@ -108,7 +114,7 @@ namespace AMS_SCHEMA.Application.ExtensionMethods
         }
     }
 
-    public class MyProp<T> : AmsNeo4JNodeLabelPropery
+    public class MyProp<T> : AmsNeo4JNodeLabelProperty
     {
         [NotMapped]
         public T Value { get; set; }

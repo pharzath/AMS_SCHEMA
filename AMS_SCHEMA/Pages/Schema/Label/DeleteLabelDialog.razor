@@ -11,7 +11,7 @@
             @foreach (var rel in DataService.GetLabelRelations(Label))
             {
                 <MudText Class="mud-paper ma-3" Typo="Typo.subtitle1" Color="Color.Primary">
-                    <MudChip Label="true">With Relation:</MudChip>@rel.Name: (@rel.From.Name) -> (@rel.To.Name)
+                    <MudChip Label="true">With Relation:</MudChip>@rel.RelType.Name: (@rel.From.Name) -> (@rel.To.Name)
                 </MudText>
             }
 
@@ -85,8 +85,8 @@
         bool finalResult = true;
         if (Label?.Properties is { })
         {
-            var amsNeo4JNodeLabelProperies = Label.Properties.ToArray();
-            foreach (var prop in amsNeo4JNodeLabelProperies)
+            var amsNeo4JNodeLabelProperties = Label.Properties.ToArray();
+            foreach (var prop in amsNeo4JNodeLabelProperties)
             {
                 bool delProp = true;
                 var amsNeo4JNodeConstraints = prop.Constraints.ToArray();

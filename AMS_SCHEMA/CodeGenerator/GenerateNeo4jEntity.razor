@@ -24,13 +24,13 @@ public partial class @Label.Name : @GetParentClass()
     @if (Relations.Any())
     {
     <text>
-    public static string[] AllRelations => new[] { @string.Join(", ", Relations.Distinct(x => x.Name).Select(x => x.Name.WithWrappers("\"", "\""))) };
+    public static string[] AllRelations => new[] { @string.Join(", ", Relations.Distinct(x => x.RelType.Name).Select(x => x.RelType.Name.WithWrappers("\"", "\""))) };
     </text>
     }
     @if (InRelations.Any())
     {
     <text>
-    public static string[] InRelations => new[] { @string.Join(", ", InRelations.Distinct(x => x.Name).Select(x => x.Name.WithWrappers("\"", "\""))) };
+        public static string[] InRelations => new[] { @string.Join(", ", InRelations.Distinct(x => x.RelType.Name).Select(x => x.RelType.Name.WithWrappers("\"", "\""))) };
     public static Dictionary&lt;string, string> InTypesRelation => new()
     {@foreach(var rel in InRelations){<text>
         [nameof(@rel.From.Name)] = "@rel.RelType.Name",</text>
@@ -41,7 +41,7 @@ public partial class @Label.Name : @GetParentClass()
     @if (OutRelations.Any())
     {
     <text>
-    public static string[] OutRelations => new[] { @string.Join(", ", OutRelations.Distinct(x => x.Name).Select(x => x.Name.WithWrappers("\"", "\""))) };
+        public static string[] OutRelations => new[] { @string.Join(", ", OutRelations.Distinct(x => x.RelType.Name).Select(x => x.RelType.Name.WithWrappers("\"", "\""))) };
     public static Dictionary&lt;string, string> OutTypesRelation => new()
     {@foreach(var rel in OutRelations){<text>
         [nameof(@rel.To.Name)] = "@rel.RelType.Name",</text>
@@ -49,23 +49,23 @@ public partial class @Label.Name : @GetParentClass()
 };
     </text>
     }
-    @foreach (var rel in Relations.Distinct(x=>x.Name))
+@foreach (var rel in Relations.Distinct(x => x.RelType.Name))
     {
         <text>
-            @foreach (var r in Relations.Where(x => x.Name == rel.Name)
-       .Select(x => $"({x.From.Name.ToShortVariableName()}:{x.From.Name})-[rel:{x.Name}]->({x.To.Name.ToShortVariableName()}:{x.To.Name})"))
+        @foreach (var r in Relations.Where(x => x.RelType.Name == rel.RelType.Name)
+       .Select(x => $"({x.From.Name.ToShortVariableName()}:{x.From.Name})-[rel:{x.RelType.Name}]->({x.To.Name.ToShortVariableName()}:{x.To.Name})"))
             {
                 <text>
     // @r
                 </text>
             }
 
-    public static string @rel.Name.ToPascalCase() = "@rel.Name";
+        public static string @rel.RelType.Name.ToPascalCase() = "@rel.RelType.Name";
         </text>
 }
 
     // Incoming Relations
-@foreach (var r in InRelations.Select(x => $"({x.From.Name.ToShortVariableName()}:{x.From.Name})-[rel:{x.Name}]->({x.To.Name.ToShortVariableName()}:{x.To.Name})"))
+@foreach (var r in InRelations.Select(x => $"({x.From.Name.ToShortVariableName()}:{x.From.Name})-[rel:{x.RelType.Name}]->({x.To.Name.ToShortVariableName()}:{x.To.Name})"))
 {
     <text>
     // @r
@@ -161,7 +161,7 @@ public partial class @Label.Name : @GetParentClass()
         return $"AbstractEntity<{Label.Name}, Guid>";
     }
 
-    string IsNullable(AmsNeo4JNodeLabelPropery fld)
+    string IsNullable(AmsNeo4JNodeLabelProperty fld)
     {
         return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL")) 
             ? "" 

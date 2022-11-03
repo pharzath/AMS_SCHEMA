@@ -5,14 +5,19 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
     public partial class AmsNeo4JNode : IHaveId<int>
     {
-        public List<AmsmoduleNodeDepartment> Departments { get; set; }
-        
+        [JsonIgnore]
+
+        public List<AmsNeo4JNodeDepartment> Departments { get; set; }
+
+        [JsonIgnore]
+
         [ForeignKey("LabelId")]
         public AmsNeo4JNodeLabel Label { get; set; }
         /*[NotMapped]

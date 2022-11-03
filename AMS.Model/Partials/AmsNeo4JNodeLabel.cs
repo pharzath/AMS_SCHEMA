@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using Newtonsoft.Json;
 using Olive;
 using QOQNOS.Core;
 
@@ -6,22 +7,27 @@ namespace AMS.Model.Models
 {
     public partial class AmsNeo4JNodeLabel : IHaveId<int>
     {
+        [JsonIgnore]
         [ForeignKey("NodeId")]
         public AmsNeo4JNode Node { get; set; }
 
+        [JsonIgnore]
         public AmsNeo4JNodeLabel? ParentLabel { get; set; }
 
+        [JsonIgnore]
         [ForeignKey("ParentLabelId")]
-
         public List<AmsNeo4JNodeLabel>? ChildLabels { get; set; }
 
+        [JsonIgnore]
         [ForeignKey("LabelFk")]
         public List<AmsNeo4JNodeConstraint> Constraints { get; set; }
 
+        [JsonIgnore]
         [ForeignKey("LabelId")]
         public List<AmsNeo4JNodeIndex> Indices { get; set; }
 
-        public List<AmsNeo4JNodeLabelPropery>? Properties { get; set; }
+        [JsonIgnore]
+        public List<AmsNeo4JNodeLabelProperty>? Properties { get; set; }
         
         public override string ToString()
         {
@@ -48,7 +54,7 @@ namespace AMS.Model.Models
 
             var entityid = "Id";
             var neoName = "entityId";
-            //var propery = AmsNeo4JNodeLabelPropery.CreateNewPropery(label, entityid, neoName, "Guid", "none");
+            //var propery = AmsNeo4JNodeLabelProperty.CreateNewProperty(label, entityid, neoName, "Guid", "none");
             //label.Properties.Add(propery);
             var constraint = new AmsNeo4JNodeConstraint()
             {
@@ -73,6 +79,8 @@ REQUIRE a.{neoName} IS NODE KEY "
             newLabel.ParentLabelId = label.Id;
             return newLabel;
         }
+
+
     }
 
     public partial class AmsNeo4JNodeLabelTreenNode 

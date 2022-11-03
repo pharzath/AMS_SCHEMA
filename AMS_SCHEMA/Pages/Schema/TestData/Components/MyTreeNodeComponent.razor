@@ -8,9 +8,11 @@
 
 
     <MudMenu Icon="@Icons.Filled.Menu" Size="Size.Small">
-        <MudMenuItem OnClick="() => EditNodeClick(context)">Edit Node</MudMenuItem>
-        <MudMenuItem OnClick="() => AddNewRelatedNodeClick(context)">Add New Related Node</MudMenuItem>
-        <MudMenuItem OnClick="() => UpdateOrdersClick(context)">Reset Node Orders</MudMenuItem>
+        <MudMenuItem Icon="@Icons.TwoTone.Edit" OnClick="EditNodeClick">Edit Node</MudMenuItem>
+        <MudMenuItem Icon="@Icons.TwoTone.Add" OnClick="AddNewRelatedNodeClick">Add New Related Node</MudMenuItem>
+        <MudMenuItem Icon="@Icons.TwoTone.Delete" IconColor="Color.Error" OnClick="DeleteNodeAndRelatedDataNodes">Delete Node</MudMenuItem>
+        <MudDivider />
+        <MudMenuItem OnClick="UpdateOrdersClick">Reset Node Orders</MudMenuItem>
     </MudMenu>
 
     <MudChip Label="true" OnClick="()=>OpenChild(context)">

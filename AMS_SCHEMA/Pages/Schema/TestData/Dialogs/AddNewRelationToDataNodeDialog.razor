@@ -1,0 +1,192 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS_SCHEMA.Application.ExtensionMethods
+@using Microsoft.AspNetCore.Components
+@using Neo4jClient
+@using Newtonsoft.Json.Linq
+@using Olive
+@using QOQNOS.Core
+@using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic
+<MudDialog>
+    <DialogContent>
+
+        <MudGrid>
+            <MudItem sm="12" md="6">
+                <MudSelect Label="By Label" @bind-Value="SelectedLabel">
+
+                    @foreach (var lbl in DataService.GetParentLabelsAndThis(Label))
+                    {
+                        <MudSelectItem Value="lbl">
+                            <MudStack Row="true" Spacing="1">
+                                <LabelIconComponent Label="lbl" />
+                                <MudText Typo="Typo.body1">@lbl.Name - @lbl.DisplayName</MudText>
+                            </MudStack>
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudAutocomplete T="AmsNeo4JNodeRelation"
+                                 SearchFunc="@PrepareRelation"
+                                 @bind-Value="SelectedRelation"
+                                 Label="Relation">
+                    <ItemTemplate>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudChip Label="false" Color="@(context.From.Id == SelectedLabel.Id ?Color.Warning:Color.Default)"
+                                     Size="Size.Small">
+                                <LabelIconComponent Label="context.From" Size="Size.Small" />
+                                @context.From.Name
+                            </MudChip>
+                            <MudText Typo="Typo.body2">-</MudText>
+                            <MudChip Label="true" Size="Size.Small">
+                                @context.RelType.Name.WithWrappers("[","]")
+                            </MudChip>
+                            <MudText Typo="Typo.body2">-&gt;</MudText>
+                            <MudChip Label="false" Size="Size.Small" Color="@(context.To.Id == SelectedLabel.Id ?Color.Warning:Color.Default)">
+                                <LabelIconComponent Label="context.To" Size="Size.Small" />
+                                @context.To.Name
+                            </MudChip>
+                        </MudStack>
+                    </ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.SaveAs" OnClick="CreateNewEntityClick">
+                    <MudText Typo="Typo.body1">
+                        Join to New Entity
+                    </MudText>
+                </MudButton>
+            </MudItem>
+            <MudItem sm="12" md="6">
+
+                <MudAutocomplete T="EntityBase"
+                                 SearchFunc="@PrepareExistingEntities"
+                                 @bind-Value="ExistingEntity"
+                                 Label="Existing Data Node">
+                    <ItemTemplate>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body1">@context.Title</MudText>
+                        </MudStack>
+                    </ItemTemplate>
+                </MudAutocomplete>
+
+
+                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.SaveAs" OnClick="JoinToExistingEntityClick">
+                    <MudText Typo="Typo.body1">
+                        Join to Existing Entity
+                    </MudText>
+                </MudButton>
+
+            </MudItem>
+        </MudGrid>
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseClick">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [Inject] DataService DataService { get; set; }
+    [Inject] GenericRepository GR { get; set; }
+    
+    [CascadingParameter] MudDialogInstance DialogInstance { get; set; }
+
+
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label
+    {
+        get => _label;
+        set
+        {
+            _label = value;
+            SelectedLabel = _label;
+        }
+    }
+    AmsNeo4JNodeLabel _label;
+
+    [Parameter]
+    public EntityBase Entity { get; set; }
+
+    public string? Title { get; set; }
+
+    public AmsNeo4JNodeLabel SelectedLabel { get; set; }
+    public AmsNeo4JNodeRelation SelectedRelation { get; set; }
+
+    private Task<IEnumerable<AmsNeo4JNodeRelation>> PrepareRelation(string value)
+    {
+        if (string.IsNullOrEmpty(value) || value.Contains("->"))
+            return Task.FromResult(DataService.GetRelations()
+                .Where(x => x.From.Id == SelectedLabel.Id || x.ToFk == SelectedLabel.Id));
+
+        return Task.FromResult(DataService.GetRelations()
+            .Where(x => (x.From.Id == SelectedLabel.Id || x.ToFk == SelectedLabel.Id) &&
+                        (x.From.Name.ToLower().Contains(value) || x.From.DisplayName.Contains(value) ||
+                         x.RelType.Name.ToLower().Contains(value) || x.RelType.DisplayName.Contains(value) ||
+                         x.To.Name.ToLower().Contains(value) || x.To.DisplayName.Contains(value))
+            )
+            .AsEnumerable());
+    }
+
+
+    void CloseClick()
+    {
+        DialogInstance.Close();
+    }
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+
+    async Task CreateNewEntityClick()
+    {
+        var newEntityLabel = SelectedRelation.GetOtherSideLabel(SelectedLabel);
+        var dialogReference = DialogService.Show<DataInfoDialog>($"Label Info {Label.Name} - New Entity",
+            new DialogParameters()
+                {
+                    ["Label"] = newEntityLabel,
+                    ["Entity"] = new EntityBase()
+                },
+            new DialogOptions()
+                {
+                    MaxWidth = MaxWidth.Small,
+                    FullWidth = true
+                });
+
+        var result = await dialogReference.Result;
+        if (!result.Cancelled)
+        {
+            var jObject = (JObject)result.Data;
+            var aId = Entity.Id;
+            var bId = jObject["id"]!.Value<Guid>();
+            await GR.Join(aId, bId , SelectedRelation.RelType.Name ,SelectedRelation.ToFk == Label.Id ? RelationshipDirection.Outgoing : RelationshipDirection.Incoming);
+            CloseClick();
+        }
+    }
+
+    [Inject] ISnackbar Snackbar { get; set; }
+
+    async Task JoinToExistingEntityClick()
+    {
+        var aId = Entity.Id;
+        var bId = ExistingEntity.Id;
+        await GR.Join(aId, bId , SelectedRelation.RelType.Name ,SelectedRelation.ToFk == Label.Id ? RelationshipDirection.Outgoing : RelationshipDirection.Incoming);
+        CloseClick();
+        Snackbar.Add("Join to existing entity completed successfully", Severity.Info);
+    }
+
+    public EntityBase ExistingEntity { get; set; }
+
+    async Task<IEnumerable<EntityBase>> PrepareExistingEntities(string arg)
+    {
+        var labelNames = DataService.GetParentLabelsAndThis(SelectedRelation.GetOtherSideLabel(Label)).Select(x => x.Name);
+        var allEntityByLabelsTitle = await GR.GetAllEntityByLabelsTitle(labelNames, arg).ToList();
+        Console.WriteLine(allEntityByLabelsTitle.Count);
+        return allEntityByLabelsTitle;
+    }
+
+}

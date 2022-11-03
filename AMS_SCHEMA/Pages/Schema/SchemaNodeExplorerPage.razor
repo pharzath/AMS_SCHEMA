@@ -7,19 +7,42 @@
     <MudDrawerContainer>
         <MudDrawer @bind-Open="@open"
                    DisableOverlay="true"
+                   Anchor="Anchor.Start"
                    Fixed="true"
                    Elevation="1"
-                   Variant="@DrawerVariant.Persistent"
+                   Variant="@DrawerVariant.Mini"
                    ClipMode="DrawerClipMode.Never"
-                   Style="top: 0;bottom: 0;position: fixed;overflow-y: scroll;overflow-x: hidden;">
-            <MudDrawerHeader>
-                <MudIconButton Icon="@Icons.TwoTone.Close" Color="Color.Default" OnClick="()=>open=false"></MudIconButton>
-            </MudDrawerHeader>
-            <MudNavMenu>
-                <MudNavLink Match="NavLinkMatch.All">Store</MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All">Library</MudNavLink>
-                <MudNavLink Match="NavLinkMatch.All">Community</MudNavLink>
-            </MudNavMenu>
+                   Style="top: 0; bottom: 0; position: fixed; overflow-y: scroll; overflow-x: hidden;">
+            @if (open)
+            {
+                <MudIconButton Icon="@Icons.TwoTone.Close" Color="Color.Default" OnClick="() => open = false"></MudIconButton>
+            }
+            else
+            {
+                <MudChip Label="false" Style="opacity: 0;">
+                    
+                </MudChip>
+            }
+            <MudIconButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Success" Icon="@Icons.TwoTone.AddCircle" OnClick="NewProjectClick">
+            </MudIconButton>
+            <MudList Clickable="true" @bind-SelectedValue="SelectedProjectObject" Dense="true">
+                @if (_projects != null)
+                {
+                    @foreach (var prj in _projects)
+                    {
+                        <MudListItem Value="prj">
+                            @prj.Name @prj.DisplayName.WithWrappers("(", ")")
+                            <MudSpacer/>
+                            @if (open)
+                            {
+                                <MudIconButton Icon="@Icons.TwoTone.Edit" Color="Color.Info" OnClick="() => EditProjectClick(prj)"></MudIconButton>
+                            }
+                        </MudListItem>
+                    }
+                }
+            </MudList>
+            <MudSpacer />
+            <MudIconButton Icon="@Icons.TwoTone.MenuOpen" Color="Color.Warning" OnClick="() => open = true"></MudIconButton>
         </MudDrawer>
 
         <MudDrawer @bind-Open="@openTop"
@@ -182,7 +205,7 @@
                                         {
                                             <MudTooltip Text="@from.Description" Arrow="true" Color="Color.Info" Placement="Placement.Top">
                                                 <MudChip Color="Color.Transparent" Label="true" OnClick="() => from.IsEn = !from.IsEn">
-                                                    <MudChip >
+                                                    <MudChip>
                                                         <LabelIconComponent Label="from.From"></LabelIconComponent>
 
                                                         @GetRelationInfoFrom(from)
@@ -193,8 +216,8 @@
                                                     </MudChip>
                                                     <MudIcon Icon="@Icons.Filled.ArrowRightAlt" />
                                                     <MudChip Style="@GetReferenceLabelColor(from.To)"
-                                                        Color="Color.Tertiary"
-                                                        OnClick="() => GotoLabelClick(context, from.To, from, RelDirection.Outgoing)">
+                                                 Color="Color.Tertiary"
+                                                 OnClick="() => GotoLabelClick(context, from.To, from, RelDirection.Outgoing)">
                                                         <LabelIconComponent Label="from.To"></LabelIconComponent>
                                                         @GetRelationInfoTo(from)
                                                     </MudChip>
@@ -216,7 +239,7 @@
                                         {
                                             <MudTooltip Text="@from.Description" Arrow="true" Color="Color.Info" Placement="Placement.Top">
                                                 <MudChip Label="true" Size="Size.Medium" Color="Color.Default" OnClick="() => from.IsEn = !from.IsEn">
-                                                    <MudChip >
+                                                    <MudChip>
                                                         <LabelIconComponent Label="from.From"></LabelIconComponent>
                                                         @GetRelationInfoFrom(from)
                                                     </MudChip>
@@ -226,7 +249,7 @@
                                                     </MudChip>
                                                     <MudIcon Icon="@Icons.Filled.ArrowRightAlt" />
                                                     <MudChip Style="@GetReferenceLabelColor(from.To)" Color="Color.Tertiary"
-                                                        OnClick="() => GotoLabelClick(context, from.To, from, RelDirection.Outgoing)">
+                                                 OnClick="() => GotoLabelClick(context, from.To, from, RelDirection.Outgoing)">
                                                         <LabelIconComponent Label="from.To"></LabelIconComponent>
                                                         @GetRelationInfoTo(from)
                                                     </MudChip>

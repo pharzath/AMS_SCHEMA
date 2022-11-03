@@ -21,6 +21,7 @@ namespace AMS.Model.Services
     {
         readonly MyCachProvider _cachProvider;
         public MyDbContext DbContext { get; }
+        public AmsNeo4JProject? SelectedProject { get; set; }
 
         public DataService(MyDbContext dbContext,
                            MyCachProvider cachProvider)
@@ -53,22 +54,13 @@ namespace AMS.Model.Services
 
         public List<AmsNeo4JNodeRelation> GetLabelRelations(IEnumerable<AmsNeo4JNodeLabel> lables)
         {
-            var cachKey = _cachProvider.CreateCachKey<AmsNeo4JNodeLabel>(nameof(GetLabelRelations)
-                , typeof(AmsNeo4JNodeLabel)
-                , typeof(AmsNeo4JNodeLabelPropery)
-                , typeof(AmsNeo4JNodeRelationType)
-                , typeof(AmsNeo4JNodeRelationPropery)
-                );
-            return _cachProvider.GetOrCreate(cachKey, _ =>
-            {
-                var ids = lables.Select(x => x.Id);
-                var relations = GetRelations().Where(x => ids.Contains(x.FromFk.Value) || ids.Contains(x.ToFk.Value));
+            var ids = lables.Select(x => x.Id);
+            var relations = GetRelations()
+                .Where(x => ids.Contains(x.FromFk.Value) || ids.Contains(x.ToFk.Value));
 
+            var amsNeo4JNodeRelations = relations.ToList();
+            return amsNeo4JNodeRelations;
 
-                var amsNeo4JNodeRelations = relations.ToList();
-                return amsNeo4JNodeRelations;
-
-            });
         }
 
         IQueryable<AmsNeo4JNodeRelation> AmsNeo4JNodeRelations(IEnumerable<int> ids)
@@ -175,6 +167,7 @@ namespace AMS.Model.Services
 
         public void SaveLabel(AmsNeo4JNodeLabel label)
         {
+            if (label.Node.Name.StartsWith("New")) label.Node.Name = label.Name;
             DbContext.AmsNeo4JNodeLabels.Update(label);
             DbContext.SaveChanges();
             _cachProvider.ExpireCachKeys(label);
@@ -201,11 +194,11 @@ namespace AMS.Model.Services
         }
 
         public List<AmsNeo4JNode> GetNodes(string? search = null,
-            IEnumerable<AmsmoduleDepartment>? amsmoduleDepartments = null,
+            IEnumerable<AmsNeo4JDepartment>? amsmoduleDepartments = null,
             bool? andSelectDepartment = null)
         {
             var nodes = _cachProvider.GetOrCreate(
-                _cachProvider.CreateCachKey<AmsNeo4JNodeLabel>(nameof(GetNodes)),
+                _cachProvider.CreateCachKey<AmsNeo4JNode>(nameof(GetNodes)),
                 _ =>
                 {
                     return DbContext.AmsNeo4JNodes
@@ -224,6 +217,7 @@ namespace AMS.Model.Services
                             .Include(x => x.Label)
                             .ThenInclude(x => x.Indices)
 
+                            .Where(x => SelectedProject == null || x.ProjectFk == SelectedProject.Id)
                             .ToList()
                         ;
                 });
@@ -233,14 +227,16 @@ namespace AMS.Model.Services
             if (!string.IsNullOrEmpty(search))
             {
                 var nodeIds = GetLabels()
-                    .Where(x => x.Name.Contains(search) || x.DisplayName.Contains(search))
-                    .Select(x => x.Node.Id).ToList();
+                    .Where(x => x.Name.ToLower().Contains(search.OrEmpty().ToLower()) || x.DisplayName.Contains(search))
+                    .Select(x => x.Node.Id)
+                    .ToList();
 
                 nodes = nodes.Where(x =>
                                          nodeIds.Contains(x.Id) ||
                                          x.Name.Contains(search) ||
-                                         x.DisplayName.Contains(search)
-                ).ToList();
+                                         x.DisplayName.OrEmpty().Contains(search)
+                )
+                    .ToList();
 
 
             }
@@ -286,22 +282,31 @@ namespace AMS.Model.Services
             var relations = DbContext.AmsNeo4JNodeRelations.Where(x => x.FromFk == lbl.Id || x.ToFk == lbl.Id);
             var constraints = DbContext.AmsNeo4JNodeConstraints.Where(x => x.Label.Id == lbl.Id);
 
-            foreach (var relation in relations)
+            using var transaction = DbContext.Database.BeginTransaction();
+            try
             {
-                DbContext.Remove(relation);
-                _cachProvider.ExpireCachKeys(relation);
-            }
+                foreach (var relation in relations)
+                {
+                    DeleteRelation(relation);
+                }
 
-            foreach (var constraint in constraints)
+                foreach (var constraint in constraints)
+                {
+                    DeleteConstraint(constraint);
+                }
+
+                DbContext.AmsNeo4JNodeLabels.Remove(lbl);
+
+                DbContext.SaveChanges();
+
+                _cachProvider.ExpireCachKeys(lbl);
+
+                transaction.Commit();
+            }
+            catch (Exception e)
             {
-                DbContext.Remove(constraint);
-                _cachProvider.ExpireCachKeys(constraint);
+                transaction.Rollback();
             }
-
-            DbContext.AmsNeo4JNodeLabels.Remove(lbl);
-
-            DbContext.SaveChanges();
-            _cachProvider.ExpireCachKeys(lbl);
         }
 
         public void DeleteRelation(AmsNeo4JNodeRelation relation)
@@ -311,11 +316,11 @@ namespace AMS.Model.Services
             _cachProvider.ExpireCachKeys(relation);
         }
 
-        public List<AmsmoduleNodeDepartment> GetNodeDepartment(AmsNeo4JNode node)
+        public List<AmsNeo4JNodeDepartment> GetNodeDepartment(AmsNeo4JNode node)
         {
             var list = _cachProvider.GetOrCreate(_cachProvider.CreateCachKey(nameof(GetNodeDepartment), node), _ =>
             {
-                return DbContext.AmsmoduleNodeDepartments
+                return DbContext.AmsNeo4JNodeDepartments
                     .Include(x => x.Department)
                     .Where(x => x.NodeId == node.Id)
                     .ToList();
@@ -324,17 +329,17 @@ namespace AMS.Model.Services
             return list;
         }
 
-        public List<AmsmoduleDepartment> GetDepartments()
+        public List<AmsNeo4JDepartment> GetDepartments()
         {
             var list = _cachProvider.GetOrCreate(
-                _cachProvider.CreateCachKey<AmsmoduleDepartment>(nameof(GetDepartments)), _ =>
-                    DbContext.AmsmoduleDepartments.ToList());
+                _cachProvider.CreateCachKey<AmsNeo4JDepartment>(nameof(GetDepartments),SelectedProject?.Id ?? 0), _ =>
+                    DbContext.AmsNeo4JDepartments.Where(x=>SelectedProject == null || SelectedProject.Id == x.ProjectFk).ToList());
             return list;
         }
 
-        public void AddDepartmentToNode(AmsNeo4JNode node, AmsmoduleDepartment amsmoduleDepartment)
+        public void AddDepartmentToNode(AmsNeo4JNode node, AmsNeo4JDepartment amsmoduleDepartment)
         {
-            DbContext.AmsmoduleNodeDepartments.Update(new AmsmoduleNodeDepartment()
+            DbContext.AmsNeo4JNodeDepartments.Update(new AmsNeo4JNodeDepartment()
             {
                 NodeId = node.Id,
                 DepartmentId = amsmoduleDepartment.DepartmentId
@@ -344,14 +349,14 @@ namespace AMS.Model.Services
             _cachProvider.ExpireCachKeys(amsmoduleDepartment);
         }
 
-        public void DeleteDepartmentFromNode(AmsmoduleNodeDepartment context)
+        public void DeleteDepartmentFromNode(AmsNeo4JNodeDepartment context)
         {
-            DbContext.AmsmoduleNodeDepartments.Remove(context);
+            DbContext.AmsNeo4JNodeDepartments.Remove(context);
             DbContext.SaveChanges();
             _cachProvider.ExpireCachKeys(context);
         }
 
-        public void SaveLabelProperty(AmsNeo4JNodeLabelPropery prop)
+        public void SaveLabelProperty(AmsNeo4JNodeLabelProperty prop)
         {
             DbContext.Update(prop);
             DbContext.SaveChanges();
@@ -365,9 +370,9 @@ namespace AMS.Model.Services
             _cachProvider.ExpireCachKeys(constraint);
         }
 
-        public void DeleteLabelProperty(AmsNeo4JNodeLabelPropery prop)
+        public void DeleteLabelProperty(AmsNeo4JNodeLabelProperty prop)
         {
-            DbContext.AmsNeo4JNodeLabelProperies.Remove(prop);
+            DbContext.AmsNeo4JNodeLabelProperties.Remove(prop);
             DbContext.SaveChanges();
             _cachProvider.ExpireCachKeys(prop);
         }
@@ -405,6 +410,7 @@ namespace AMS.Model.Services
 
         public void SaveNode(AmsNeo4JNode node)
         {
+            node.ProjectFk = SelectedProject?.Id ?? 1;
             DbContext.AmsNeo4JNodes.Update(node);
             DbContext.SaveChanges();
             _cachProvider.ExpireCachKeys(node);
@@ -419,24 +425,29 @@ namespace AMS.Model.Services
 
         public List<AmsNeo4JNodeRelation> GetRelations()
         {
-            var list = _cachProvider.GetOrCreate(_cachProvider.CreateCachKey<AmsNeo4JNodeRelation>(nameof(GetRelations)), _ =>
+            var list = _cachProvider.GetOrCreate(_cachProvider.CreateCachKey<AmsNeo4JNodeRelation>(nameof(GetRelations), typeof(AmsNeo4JNodeLabel)), _ =>
             {
                 return DbContext
                         .AmsNeo4JNodeRelations
                         .Include(x => x.From.Node)
                         .ThenInclude(x => x.Label.ParentLabel)
-                        .ThenInclude(x => x.ParentLabel)
+
                         .Include(x => x.From.Node)
                         .ThenInclude(x => x.Label)
                         .ThenInclude(x => x.ChildLabels)
+
                         .Include(x => x.RelType)
                         .ThenInclude(x => x.Properties)
+
                         .Include(x => x.To.Node)
                         .ThenInclude(x => x.Label)
                         .ThenInclude(x => x.ParentLabel)
+
                         .Include(x => x.To.Node)
                         .ThenInclude(x => x.Label)
                         .ThenInclude(x => x.ChildLabels)
+
+                        .Where(x => SelectedProject == null || x.From.Node.ProjectFk == SelectedProject.Id || x.To.Node.ProjectFk == SelectedProject.Id)
                         .ToList()
                     ;
             });
@@ -447,7 +458,7 @@ namespace AMS.Model.Services
         public List<AmsNeo4JNodeRelation> GetRelations(string? relationName)
         {
             return GetRelations()
-                .Where(x => x.Name == relationName)
+                .Where(x => x.RelType.Name == relationName)
                 .ToList();
         }
 
@@ -458,17 +469,17 @@ namespace AMS.Model.Services
             _cachProvider.ExpireCachKeys(relationType);
         }
 
-        public void SaveRelationTypeProperty(AmsNeo4JNodeRelationPropery property)
+        public void SaveRelationTypeProperty(AmsNeo4JNodeRelationProperty property)
         {
-            DbContext.AmsNeo4JNodeRelationProperies.Update(property);
+            DbContext.AmsNeo4JNodeRelationProperties.Update(property);
             DbContext.SaveChanges();
             _cachProvider.ExpireCachKeys(property);
 
         }
 
-        public void DeleteRelationTypeProperty(AmsNeo4JNodeRelationPropery property)
+        public void DeleteRelationTypeProperty(AmsNeo4JNodeRelationProperty property)
         {
-            DbContext.AmsNeo4JNodeRelationProperies.Remove(property);
+            DbContext.AmsNeo4JNodeRelationProperties.Remove(property);
             DbContext.SaveChanges();
             _cachProvider.ExpireCachKeys(property);
         }
@@ -538,11 +549,11 @@ namespace AMS.Model.Services
         public List<AmsNeo4JNodeLabel> GetLabels()
         {
             var list = _cachProvider.GetOrCreate(
-                _cachProvider.CreateCachKey<AmsNeo4JNodeLabel>(nameof(GetParentLabelsAndThis)),
+                _cachProvider.CreateCachKey<AmsNeo4JNodeLabel>(nameof(GetLabels), SelectedProject?.Id ?? 0),
                 _ =>
                 {
                     return DbContext.AmsNeo4JNodeLabels
-                        
+
                         .Include(x => x.Node)
                         .ThenInclude(x => x.Departments)
 
@@ -556,7 +567,9 @@ namespace AMS.Model.Services
 
                         .Include(x => x.Indices)
 
-                        .OrderBy(x=>x.ParentLabelId)
+                        .Where(x => SelectedProject == null || x.Node.ProjectFk == SelectedProject.Id)
+
+                        .OrderBy(x => x.ParentLabelId)
 
                         .ToList();
 
@@ -576,7 +589,7 @@ namespace AMS.Model.Services
         public List<AmsNeo4JNodeLabel> SearchLabels(string? search)
         {
             return GetLabels()
-                .Where(x => x.Name.Contains(search) || x.DisplayName.Contains(search))
+                .Where(x => x.Name.ToLower().Contains(search.ToLower()) || x.DisplayName.OrEmpty().Contains(search))
                 .ToList();
         }
 
@@ -595,14 +608,15 @@ namespace AMS.Model.Services
             return label;
         }
 
-        public List<AmsNeo4JNodeLabelPropery> GetLabelProperties(int labelId)
+        public List<AmsNeo4JNodeLabelProperty> GetLabelProperties(int labelId)
         {
             var properies = _cachProvider.GetOrCreate(
-                _cachProvider.CreateCachKey<AmsNeo4JNodeLabelPropery>(nameof(GetLabelProperties), labelId),
+                _cachProvider.CreateCachKey<AmsNeo4JNodeLabelProperty>(nameof(GetLabelProperties), labelId),
                 _ =>
                 {
-                    return DbContext.AmsNeo4JNodeLabelProperies
+                    return DbContext.AmsNeo4JNodeLabelProperties
                         .Where(x => x.LabelId == labelId)
+
                         .ToList();
                 });
 
@@ -610,7 +624,7 @@ namespace AMS.Model.Services
             return properies;
         }
 
-        public List<AmsNeo4JNodeLabelPropery> GetLabelProperties(AmsNeo4JNodeLabel label)
+        public List<AmsNeo4JNodeLabelProperty> GetLabelProperties(AmsNeo4JNodeLabel label)
         {
             return GetLabelProperties(label.Id);
         }
@@ -648,56 +662,74 @@ namespace AMS.Model.Services
         {
             return GetLabels()
                     .Where(x => labelNames.Contains(x.Name))
-                    .OrderBy(x=>x.ParentLabelId)
+                    .OrderBy(x => x.ParentLabelId)
                     .ToList();
         }
 
         public void ClearCach()
         {
             _cachProvider.Clear();
+            Console.Clear();
         }
-    }
 
-    public class CachKey : IEquatable<CachKey>
-    {
-        public Type Type { get; set; }
-        public int? Id { get; set; }
-        public string? Name { get; set; }
-        public Type[]? RelatedTypes { get; set; }
-        public CachKey[]? RelatedKeys { get; set; }
-
-        public CachKey()
+        public void DeleteLabelRequire(AmsNeo4JNodeLabelRequiredRelation context)
         {
-
+            DbContext.AmsNeo4JNodeLabelRequiredRelations.Remove(context);
+            DbContext.SaveChanges();
+            _cachProvider.ExpireCachKeys(context);
         }
-        public CachKey(string? name)
+
+        public List<AmsNeo4JNodeLabelRequiredRelation> GetLabelRequires()
         {
-            Name = name;
+            return _cachProvider.GetOrCreate(_cachProvider.CreateCachKey<AmsNeo4JNodeLabelRequiredRelation>(nameof(GetLabelRequires)),
+                _ =>
+                {
+                    var list = DbContext.AmsNeo4JNodeLabelRequiredRelations
+                        .Include(x => x.Label)
+                        .ThenInclude(x => x.ParentLabel)
+                        .ThenInclude(x => x.Properties!)
+                        .Include(x => x.Relation)
+                        .ThenInclude(x => x.From)
+                        .Include(x => x.Relation)
+                        .ThenInclude(x => x.To)
+                        .Include(x => x.Relation)
+                        .ThenInclude(x => x.RelType)
+                        .ToList();
+                    return list;
+
+                });
         }
 
-
-        public bool Equals(CachKey? other)
+        public List<AmsNeo4JNodeLabelRequiredRelation> GetLabelRequires(AmsNeo4JNodeLabel label)
         {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Type == other.Type &&
-                   Id == other.Id &&
-                   Name == other.Name &&
-                   (RelatedTypes != null && other.RelatedTypes != null && RelatedTypes.Equals(other.RelatedTypes)) &&
-                   (RelatedKeys != null && other.RelatedKeys != null && RelatedKeys.Equals(other.RelatedKeys));
+            return GetLabelRequires()
+                .Where(x => x.LabelFk == label.Id)
+                .ToList();
         }
 
-        public override bool Equals(object? obj)
+        public void SaveLabelRequire(AmsNeo4JNodeLabelRequiredRelation require)
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((CachKey)obj);
+            DbContext.AmsNeo4JNodeLabelRequiredRelations.Update(require);
+            DbContext.SaveChanges();
+            _cachProvider.Clear();
         }
 
-        public override int GetHashCode()
+        public List<AmsNeo4JProject> GetProjects()
         {
-            return HashCode.Combine(Type, Id, Name, RelatedTypes, RelatedKeys);
+            return _cachProvider.GetOrCreate(_cachProvider.CreateCachKey<AmsNeo4JProject>(nameof(GetProjects)), _ =>
+                {
+
+                    var list = DbContext.AmsNeo4JProjects.ToList();
+                    return list;
+                });
         }
+
+        public void SaveProject(AmsNeo4JProject project)
+        {
+            DbContext.AmsNeo4JProjects.Update(project);
+            DbContext.SaveChanges();
+            _cachProvider.ExpireCachKeys(project);
+        }
+
     }
 }

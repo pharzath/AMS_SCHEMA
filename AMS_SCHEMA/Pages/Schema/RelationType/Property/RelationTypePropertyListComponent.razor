@@ -52,11 +52,11 @@
 
     async Task CreateNewPropertyClick()
     {
-        var propery = new AmsNeo4JNodeRelationPropery();
+        var propery = new AmsNeo4JNodeRelationProperty();
         await OpenPropertyDialog(propery);
     }
 
-    async Task OpenPropertyDialog(AmsNeo4JNodeRelationPropery propery)
+    async Task OpenPropertyDialog(AmsNeo4JNodeRelationProperty propery)
     {
         var dialogReference = DialogService.Show<RelationTypePropertyInfoDialog>("Rel Property Info",
             new DialogParameters()
@@ -71,13 +71,13 @@
         await dialogReference.Result;
     }
 
-    async Task EditProperty(AmsNeo4JNodeRelationPropery prop)
+    async Task EditProperty(AmsNeo4JNodeRelationProperty prop)
     {
         await OpenPropertyDialog(prop);
     }
 
 
-    async Task DeletePropertyClick(AmsNeo4JNodeRelationPropery prop)
+    async Task DeletePropertyClick(AmsNeo4JNodeRelationProperty prop)
     {
         var delPropDialog = DialogService.Show<RelationTypeDeletePropertyDialog>("Delete Property",
             new DialogParameters

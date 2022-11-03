@@ -7,7 +7,7 @@ namespace AMS_SCHEMA.Class
 {
     public class Utils
     {
-        public static string GetRelationTypePropertyIcon(AmsNeo4JNodeRelationType relType, AmsNeo4JNodeRelationPropery prop)
+        public static string GetRelationTypePropertyIcon(AmsNeo4JNodeRelationType relType, AmsNeo4JNodeRelationProperty prop)
         {
             string icon = "";
             var constraint = Enumerable.FirstOrDefault(relType.Constraints, x => x.Over == prop.Name);
@@ -39,7 +39,7 @@ namespace AMS_SCHEMA.Class
 
             return icon;
         }
-        public static string GetRelationTypePropertyBgColor(AmsNeo4JNodeRelationType relType, AmsNeo4JNodeRelationPropery prop)
+        public static string GetRelationTypePropertyBgColor(AmsNeo4JNodeRelationType relType, AmsNeo4JNodeRelationProperty prop)
         {
             var style = "";
             /*
@@ -67,7 +67,7 @@ namespace AMS_SCHEMA.Class
             }
             return style;
         }
-        public static string GetLabelPropertyIcon(AmsNeo4JNodeLabel? label, AmsNeo4JNodeLabelPropery prop)
+        public static string GetLabelPropertyIcon(AmsNeo4JNodeLabel? label, AmsNeo4JNodeLabelProperty prop)
         {
             var icon = "";
 
@@ -105,7 +105,7 @@ namespace AMS_SCHEMA.Class
         }
 
 
-        public static string GetLabelPropertyBgColor(AmsNeo4JNodeLabel? label, AmsNeo4JNodeLabelPropery prop )
+        public static string GetLabelPropertyBgColor(AmsNeo4JNodeLabel? label, AmsNeo4JNodeLabelProperty prop )
         {
             var style = "";
             /*

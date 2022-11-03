@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QOQNOS.Core", "..\..\..\..\
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "QOQNOS.NEO4J.TEST.Shared", "..\..\..\..\Langram\NEO4J\TEST\QOQNOS.NEO4J.TEST.Shared\QOQNOS.NEO4J.TEST.Shared.shproj", "{26A990DC-D630-4D2A-A8A4-6165BC159D32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AMS_SCHEMA.Application", "AMS_SCHEMA.Application\AMS_SCHEMA.Application.csproj", "{849FE1B5-0994-4B31-9416-9F9B31E847A5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMS_SCHEMA.Application", "AMS_SCHEMA.Application\AMS_SCHEMA.Application.csproj", "{849FE1B5-0994-4B31-9416-9F9B31E847A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

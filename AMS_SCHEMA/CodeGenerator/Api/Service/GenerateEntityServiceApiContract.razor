@@ -111,7 +111,7 @@ public class @(rel.To.Name)@(rel.From.Name.ToPlural())_By@(rel.RelType.Name.ToPa
         return $"AbstractEntity&lt;{Label.Name}, Guid>";
     }
 
-    string IsNullable(AmsNeo4JNodeLabelPropery fld)
+    string IsNullable(AmsNeo4JNodeLabelProperty fld)
     {
         return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL")) 
             ? "" 

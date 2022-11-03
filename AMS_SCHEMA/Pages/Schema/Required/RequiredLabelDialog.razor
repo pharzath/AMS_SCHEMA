@@ -1,0 +1,101 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using Olive
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="12" md="12">
+                <MudText Typo="Typo.h6" Color="Color.Warning">
+                    @Require.Label.Name
+                </MudText>
+
+            </MudItem>
+            <MudItem sm="12" md="9">
+                <MudAutocomplete T="AmsNeo4JNodeRelation" 
+                                 SearchFunc="@PrepareRelation" 
+                                 @bind-Value="Require.Relation"
+                                 Label="Relation">
+                    <ItemTemplate>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudChip Label="false" Color="@(context.From.Id == Require.Label.Id ?Color.Warning:Color.Default)"
+                                     Size="Size.Small">
+                                <LabelIconComponent Label="context.From" Size="Size.Small" />
+                                @context.From.Name
+                            </MudChip>
+                            <MudText Typo="Typo.body2">-</MudText>
+                            <MudChip Label="true" Size="Size.Small">
+                                @context.RelType.Name.WithWrappers("[","]")
+                            </MudChip>
+                            <MudText Typo="Typo.body2">-&gt;</MudText>
+                            <MudChip Label="false" Size="Size.Small" Color="@(context.To.Id == Require.Label.Id ?Color.Warning:Color.Default)">
+                                <LabelIconComponent Label="context.To" Size="Size.Small" />
+                                @context.To.Name
+                            </MudChip>
+                        </MudStack>
+                    </ItemTemplate>
+                </MudAutocomplete>
+            </MudItem>
+            <MudItem sm="12" md="3">
+                <MudNumericField @bind-Value="Require.ReqCount" Label="Count"></MudNumericField>
+            </MudItem>
+            <MudItem sm="12" md="6" Class="align-content-center">
+                <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                    <MudText Typo="Typo.body1" Inline="true">Entity can be exist</MudText>
+                    <MudSwitch @bind-Checked="Require.IsForceToCreateNew" Label="Force create new Entity"></MudSwitch>
+                </MudStack>
+
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudTextField Lines="10" Label="Description" @bind-Value="Require.Description"></MudTextField>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="()=>DialogInstance.Close()">
+            Close
+        </MudButton>
+
+        <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAndCloseClick">
+            Save and Close
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
+@code {
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Inject] DataService DataService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabelRequiredRelation Require
+    {
+        get => _require;
+        set => _require = value;
+    }
+
+    void SaveAndCloseClick()
+    {
+        DataService.SaveLabelRequire(Require);
+        DialogInstance.Close();
+    }
+
+    private Task<IEnumerable<AmsNeo4JNodeRelation>> PrepareRelation(string value)
+    {
+        if (string.IsNullOrEmpty(value) || value.Contains("->"))
+            return Task.FromResult(DataService.GetRelations()
+                .Where(x => x.From.Id == Require.Label.Id || x.ToFk == Require.Label.Id));
+
+        return Task.FromResult(DataService.GetRelations()
+            .Where(x => (x.From.Id == Require.Label.Id || x.ToFk == Require.Label.Id) &&
+                        (x.From.Name.ToLower().Contains(value) || x.From.DisplayName.Contains(value) ||
+                         x.RelType.Name.ToLower().Contains(value) || x.RelType.DisplayName.Contains(value) ||
+                         x.To.Name.ToLower().Contains(value) || x.To.DisplayName.Contains(value))
+                )
+            .AsEnumerable());
+    }
+
+
+    AmsNeo4JNodeLabelRequiredRelation _require;
+}

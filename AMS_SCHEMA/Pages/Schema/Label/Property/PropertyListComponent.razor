@@ -83,11 +83,11 @@
 
     async Task CreateNewPropertyClick()
     {
-        var propery = new AmsNeo4JNodeLabelPropery();
+        var propery = new AmsNeo4JNodeLabelProperty();
         await OpenPropertyDialog(propery);
     }
 
-    async Task OpenPropertyDialog(AmsNeo4JNodeLabelPropery propery)
+    async Task OpenPropertyDialog(AmsNeo4JNodeLabelProperty propery)
     {
         var dialogReference = DialogService.Show<PropertyInfoDialog>("Property Info",
             new DialogParameters()
@@ -102,13 +102,13 @@
         await dialogReference.Result;
     }
 
-    async Task EditProperty(AmsNeo4JNodeLabelPropery prop)
+    async Task EditProperty(AmsNeo4JNodeLabelProperty prop)
     {
         await OpenPropertyDialog(prop);
     }
 
 
-    async Task DeletePropertyClick(AmsNeo4JNodeLabelPropery prop)
+    async Task DeletePropertyClick(AmsNeo4JNodeLabelProperty prop)
     {
         var delPropDialog = DialogService.Show<DeletePropertyDialog>("Delete Property",
             new DialogParameters

@@ -2,8 +2,9 @@
 @using AMS.Model.Services
 @using AMS_SCHEMA.Class
 @using AMS_SCHEMA.Pages.Schema.Constraint
-@using AMS_SCHEMA.Pages.Schema.EntityBase
+
 @using Olive
+@using AMS.Model
 
 
 <MudText Typo="Typo.h6" Color="Color.Warning" Class="my-3">
@@ -81,22 +82,21 @@
 
     [Inject] DataService DataService { get; set; }
 
-    Dictionary<AmsNeo4JNodeLabel, IEnumerable<AmsNeo4JNodeLabelPropery>> GetDerivedProperties(AmsNeo4JNodeLabel? label)
+    Dictionary<AmsNeo4JNodeLabel, IEnumerable<AmsNeo4JNodeLabelProperty>> GetDerivedProperties(AmsNeo4JNodeLabel? label)
     {
-        Dictionary<AmsNeo4JNodeLabel, IEnumerable<AmsNeo4JNodeLabelPropery>> derived = new();
+        Dictionary<AmsNeo4JNodeLabel, IEnumerable<AmsNeo4JNodeLabelProperty>> derived = new();
         var allConst = Label.Constraints;
         var allIdx = Label.Indices;
         var lbl = Label.ParentLabel;
-        do
+        while (lbl != null)
         {
-            if (lbl == null) break;
             var properties = GetLabelProperties(lbl);
             allConst.AddRange(lbl.Constraints);
             allIdx.AddRange(lbl.Indices);
             derived.Add(lbl, properties);
             lbl = GetParent(lbl);
         }
-        while (lbl != null);
+        
 
         derived.Add(new AmsNeo4JNodeLabel
             {
@@ -109,7 +109,7 @@
         return derived;
     }
 
-    IEnumerable<AmsNeo4JNodeLabelPropery> GetLabelProperties(AmsNeo4JNodeLabel? label)
+    IEnumerable<AmsNeo4JNodeLabelProperty> GetLabelProperties(AmsNeo4JNodeLabel? label)
     {
         if (label.Properties?.Any() ?? false)
             return label.Properties;

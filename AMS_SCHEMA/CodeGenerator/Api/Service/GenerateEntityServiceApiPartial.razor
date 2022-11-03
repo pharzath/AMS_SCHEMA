@@ -39,7 +39,7 @@ public partial class @(Label.Name)ServiceApi : Service, I@(Label.Name)ServiceApi
         return $"AbstractEntity<{Label.Name}, Guid>";
     }
 
-    string IsNullable(AmsNeo4JNodeLabelPropery fld)
+    string IsNullable(AmsNeo4JNodeLabelProperty fld)
     {
         return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL")) 
             ? "" 

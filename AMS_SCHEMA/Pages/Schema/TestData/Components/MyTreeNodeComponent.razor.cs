@@ -1,31 +1,33 @@
 ﻿using AMS.Model.Models;
 using AMS.Model.Services;
+using AMS_SCHEMA.Application.ExtensionMethods;
 using AMS_SCHEMA.Pages.Schema.Node;
 using AMS_SCHEMA.Pages.Schema.Relation;
 using AMS_SCHEMA.Pages.Schema.TestData.Dialogs;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using Neo4jClient;
+using Newtonsoft.Json.Linq;
+using QOQNOS.Core;
+using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic;
 
 namespace AMS_SCHEMA.Pages.Schema.TestData.Components
 {
     public partial class MyTreeNodeComponent
     {
         [Inject] ISnackbar Snackbar { get; set; }
+        
         [Parameter]
-        public MyTreeNodeComponent ParentComponent { get; set; }
+        public MyTreeNodeComponent? ParentComponent { get; set; }
 
-        [Parameter]
-        public int NodeIndent { get; set; } = 20;
+        [Parameter] public int NodeIndent { get; set; } = 20;
 
         [Inject] MyCustomTreeService CustomTreeService { get; set; }
         [Inject] DataService DataService { get; set; }
 
-        readonly HashSet<MyNode> _nodes = new HashSet<MyNode>();
+        [Parameter] public MyNode context { get; set; }
 
-
-        [Parameter]
-        public MyNode context { get; set; }
+        [Inject] GenericRepository GR { get; set; }
 
         public void RefreshState()
         {
@@ -47,14 +49,14 @@ namespace AMS_SCHEMA.Pages.Schema.TestData.Components
             ParentComponent.RefreshState();
         }
 
-        async Task UpdateOrdersClick(MyNode node)
+        async Task UpdateOrdersClick()
         {
-            await CustomTreeService.UpdateOrders(node);
+            await CustomTreeService.UpdateOrders(context);
             RefreshState();
 
         }
 
-        async Task OpenChild(MyNode node)
+        public async Task OpenChild(MyNode node)
         {
             node.Nodes.Clear();
             node.Nodes = await CustomTreeService.GetChildNodes(node);
@@ -65,19 +67,29 @@ namespace AMS_SCHEMA.Pages.Schema.TestData.Components
         [Inject]
         public IDialogService DialogService { get; set; }
 
-        async Task EditNodeClick(MyNode myNode)
+        async Task EditNodeClick()
         {
-            var dialogReference = DialogService.Show<DataInfoDialog>($"Label Info {myNode.LabelsText} - ({context.Entity.Title})",
+            var label = context.Labels.Last();
+
+            var dialogReference = DialogService.Show<DataInfoDialog>($"Label Info {context.LabelsText} - ({context.Entity.Title})",
                 new DialogParameters()
                 {
-                    ["context"] = myNode
+                    ["Label"] = label,
+                    ["Entity"] = context.Entity
                 },
                 new DialogOptions()
                 {
                     MaxWidth = MaxWidth.Small,
                     FullWidth = true
                 });
-            await dialogReference.Result;
+
+            var result = await dialogReference.Result;
+            if (result.Cancelled is false)
+            {
+                context.Jobj = (JObject)result.Data;
+                context.Entity = context.Jobj.ToObject<EntityBase>()!;
+                StateHasChanged();
+            }
         }
 
         async Task UpdateNodeOrderSaved(MyNode myNode)
@@ -86,21 +98,39 @@ namespace AMS_SCHEMA.Pages.Schema.TestData.Components
             Snackbar.Add("Node order updated successfully.");
         }
 
-        async Task AddNewRelatedNodeClick(MyNode myNode)
+        async Task AddNewRelatedNodeClick()
         {
-            var res = DialogService.Show<NodeRelationDialog>("Label : " + myNode.LabelsText + " - " + myNode.Entity.Title,
-                new DialogParameters()
+            var res = DialogService.Show<AddNewRelationToDataNodeDialog>("Label : " + context.LabelsText + " - " + context.Entity.Title,
+                new DialogParameters
                 {
-                    ["context"] = myNode
+                    ["Label"] = context.Labels.Last(),
+                    ["Entity"] = context.Entity
                 },
-                new DialogOptions()
+                new DialogOptions
                 {
                     FullWidth = true,
-                    MaxWidth = MaxWidth.Large
+                    MaxWidth = MaxWidth.Medium
                 });
             await res.Result;
-            await OpenChild(myNode);
-            //ParentComponent.RefreshState();
+
+            await OpenChild(context);
+            
+        }
+
+        async Task DeleteNodeAndRelatedDataNodes()
+        {
+            var delete = await DialogService.ShowMessageBox("Delete Data Node","Are you sure to delete this Data node record?","Yes","No");
+            if (delete is true)
+            {
+                await GR.DeleteEntityWithIdAndAllRelations(context.Entity.Id);
+                if (context.ParentNode != null)
+                {
+                    await ParentComponent?.OpenChild(context.ParentNode)!;
+                    ParentComponent.StateHasChanged();
+                }
+                Snackbar.Add("Data Node deleted successfully");
+                
+            }
         }
     }
 }

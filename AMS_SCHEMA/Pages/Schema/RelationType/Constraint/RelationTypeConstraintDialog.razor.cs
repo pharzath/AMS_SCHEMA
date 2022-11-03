@@ -38,7 +38,7 @@ namespace AMS_SCHEMA.Pages.Schema.RelationType.Constraint
         }
 
 
-        Task<IEnumerable<AmsNeo4JNodeRelationPropery>> GetField(string? arg)
+        Task<IEnumerable<AmsNeo4JNodeRelationProperty>> GetField(string? arg)
         {
             var formFields = RelType.Properties;
 
@@ -47,7 +47,7 @@ namespace AMS_SCHEMA.Pages.Schema.RelationType.Constraint
                 formFields = formFields?.Where(x => x.Name.Contains(arg) || x.DisplayName.Contains(arg)).ToList();
             }
 
-            if (formFields == null) return Task.FromResult(Enumerable.Empty<AmsNeo4JNodeRelationPropery>());
+            if (formFields == null) return Task.FromResult(Enumerable.Empty<AmsNeo4JNodeRelationProperty>());
 
             var x = formFields.AsEnumerable();
 

@@ -1,5 +1,6 @@
 ﻿@using AMS_SCHEMA.Pages.Schema.TestData.Components
 @using AMS.Model.Models
+@using AMS_SCHEMA.Pages.Schema.TestData.Dialogs
 @using Neo4jClient
 @using QOQNOS.Core
 @using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic
@@ -7,6 +8,20 @@
 
     <DialogContent>
         <MudContainer Style="max-height: 600px; height: 600px; overflow-y: scroll">
+
+            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="NewDataNodeClick">
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body1">Add New Entity of Label</MudText>
+                    <LabelIconComponent Label="Label"></LabelIconComponent>
+                    <MudText Typo="Typo.body1">
+                        @Label.Name
+                    </MudText>
+                </MudStack>
+
+
+            </MudButton>
+
+
             @foreach (var context in _nodes)
             {
                 <MyTreeNodeComponent context="context" />
@@ -61,11 +76,11 @@
         _nodes.AddRange(res.Select(obj => CustomTreeService.CreateNode(
             null,
             new GenericRepository.NodeRelation
-            {
-                Labels = labels,
-                JObj = obj,
-                Json = obj.ToString()
-            },
+                {
+                    Labels = labels,
+                    JObj = obj,
+                    Json = obj.ToString()
+                },
             RelationshipDirection.Automatic))!);
         await base.OnInitializedAsync();
     }
@@ -73,6 +88,28 @@
     void CloseClick()
     {
         DialogInstance.Close();
+    }
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    async Task NewDataNodeClick()
+    {
+        var dialogReference = DialogService.Show<DataInfoDialog>($"Label Info {Label.Name} - New Single Entity (with no relations)",
+            new DialogParameters()
+                {
+                    ["Label"] = Label,
+                    ["Entity"] = new EntityBase()
+                },
+            new DialogOptions()
+                {
+                    MaxWidth = MaxWidth.Small,
+                    FullWidth = true
+                });
+
+        var result = await dialogReference.Result;
+
+
     }
 
 }

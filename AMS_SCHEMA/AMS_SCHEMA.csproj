@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.0" />
     <PackageReference Include="BlazorTemplater" Version="1.5.0" />
+    <PackageReference Include="Blueprint41" Version="1.0.21" />
     <PackageReference Include="FluentValidation" Version="11.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.10">
@@ -38,6 +39,7 @@
   <ItemGroup>
     <Folder Include="CodeGenerator\Api\ServiceConstract\" />
     <Folder Include="Data\" />
+    <Folder Include="Pages\Schema\EntityBase\" />
   </ItemGroup>
 
   <Import Project="..\..\..\..\..\Langram\NEO4J\TEST\QOQNOS.NEO4J.TEST.Shared\QOQNOS.NEO4J.TEST.Shared.projitems" Label="Shared" />

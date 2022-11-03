@@ -4,48 +4,52 @@
 @using AMS_SCHEMA.Pages.Schema.TestData.Components
 @using AMS_SCHEMA.Pages.Schema.TestData.Inputs
 @using Newtonsoft.Json.Linq
+@using Olive
+@using QOQNOS.Core
 @using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic
 <MudDialog>
     <DialogContent>
         <MudContainer Style="max-height: 600px;overflow-y: scroll;">
 
             <MudGrid Class="mt-1">
-                @foreach (var property in _fullProps)
+                @if (_fullProps != null)
                 {
-                    @if (property is PropertyFolder folder)
+                    @foreach (var property in _fullProps)
                     {
-                        <MudItem sm="12" md="12">
-                            <MyTreeNodeChipLabelComponent Labels="DataService.GetParentLabelsAndThis(folder.Label).OrderBy(x => x.ParentLabelId)"></MyTreeNodeChipLabelComponent>
-                        </MudItem>
-                    }
-                    else
-                    {
-                        <MudItem sm="@(property.DataType == "Guid" ? 12 : 6)">
-                            @switch (property.DataType)
-                            {
-                                case "bool":
-                                    <FrzInputProperty Property="@((MyProp<bool?>)property)"></FrzInputProperty>
-                                    break;
-                                case "DateTime":
-                                    <FrzInputProperty Property="@((MyProp<DateTime?>)property)"></FrzInputProperty>
-                                    break;
-                                case "Guid":
-                                    <FrzInputProperty Property="@((MyProp<Guid?>)property)"></FrzInputProperty>
-                                    break;
-                                case "string":
-                                    <FrzInputProperty Property="@((MyProp<string?>)property)"></FrzInputProperty>
-                                    break;
-                                case "int":
-                                    <FrzInputProperty Property="@((MyProp<int?>)property)"></FrzInputProperty>
-                                    break;
-                                default:
-                                    <MudText Typo="@Typo.caption" Color="@Color.Error">There is not control to use for @property.DataType</MudText>
-                                    break;
+                        @if (property is PropertyFolder folder)
+                        {
+                            <MudItem sm="12" md="12">
+                                <MyTreeNodeChipLabelComponent Labels="DataService.GetParentLabelsAndThis(folder.Label).OrderBy(x => x.ParentLabelId)"></MyTreeNodeChipLabelComponent>
+                            </MudItem>
+                        }
+                        else
+                        {
+                            <MudItem sm="@(property.DataType == "Guid" ? 12 : 6)">
+                                @switch (property.DataType)
+                                {
+                                    case "bool":
+                                        <FrzInputProperty Property="@((MyProp<bool?>)property)"></FrzInputProperty>
+                                        break;
+                                    case "DateTime":
+                                        <FrzInputProperty Property="@((MyProp<DateTime?>)property)"></FrzInputProperty>
+                                        break;
+                                    case "Guid":
+                                        <FrzInputProperty Property="@((MyProp<Guid?>)property)"></FrzInputProperty>
+                                        break;
+                                    case "string":
+                                        <FrzInputProperty Property="@((MyProp<string?>)property)"></FrzInputProperty>
+                                        break;
+                                    case "int":
+                                        <FrzInputProperty Property="@((MyProp<int?>)property)"></FrzInputProperty>
+                                        break;
+                                    default:
+                                        <MudText Typo="@Typo.caption" Color="@Color.Error">There is not control to use for @property.DataType</MudText>
+                                        break;
 
-                            }
-                        </MudItem>
-                    }
-                }
+                                }
+                            </MudItem>
+                        }
+                    }       }
             </MudGrid>
         </MudContainer>
 
@@ -54,6 +58,11 @@
         <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseClick">
             Close
         </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAndCloseClick">
+            Save and Close
+
+        </MudButton>
+
     </DialogActions>
 </MudDialog>
 
@@ -63,9 +72,13 @@
     MudDialogInstance DialogInstance { get; set; }
 
     [Parameter]
-    public MyNode context { get; set; }
+    public AmsNeo4JNodeLabel Label { get; set; }
 
-    AmsNeo4JNodeLabel Label => context.Labels.OrderBy(x=>x.ParentLabelId).Last();
+    [Parameter]
+    public EntityBase Entity { get; set; }
+
+    List<AmsNeo4JNodeLabel>? _labels = null;
+    IEnumerable<AmsNeo4JNodeLabelProperty>? _fullProps = null;
 
     [Inject]
     DataService DataService { get; set; }
@@ -73,18 +86,40 @@
     [Inject]
     GenericRepository GR { get; set; }
 
-    IEnumerable<AmsNeo4JNodeLabelPropery> _fullProps;
-
     protected override void OnParametersSet()
     {
-        var jObject = context.Jobj;
-        _fullProps = Label.PropertiesFull(jObject);
+        _fullProps ??= Label.PropertiesFull(JObject.FromObject(Entity));
+        _labels ??= DataService.GetParentLabelsAndThis(Label).OrderBy(x => x.ParentLabelId).ToList();
         base.OnParametersSet();
     }
 
     void CloseClick()
     {
         DialogInstance.Close();
+    }
+
+    async Task SaveAndCloseClick()
+    {
+        var obj = new JObject();
+        if (_fullProps != null)
+            foreach (var prop in _fullProps)
+            {
+                if (!prop.GetType().IsGenericType)
+                    continue;
+
+                var jObject = JObject.FromObject(prop);
+                if (jObject["Value"]!.Type == JTokenType.Null)
+                    continue;
+
+                if (prop.Neo4jName != null)
+                    obj.Add(prop.Neo4jName, jObject["Value"]);
+            }
+
+        string? labelChain = null;
+        if (_labels != null) 
+            labelChain = $":{string.Join(":", _labels.Select(x => x.Name))}";
+        await GR.Save(obj,labelChain);
+        DialogInstance.Close(obj);
     }
 
 }

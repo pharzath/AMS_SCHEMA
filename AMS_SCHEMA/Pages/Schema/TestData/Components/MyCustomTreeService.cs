@@ -70,7 +70,9 @@ namespace AMS_SCHEMA.Pages.Schema.TestData.Components
             var labels = relation.Labels;
             if (labels == null || !labels.Any())
                 labels = _dataService.GetLabels().Where(x =>
-                relation.Labels.Select(x => x.Name).Contains(x.Name))
+                relation.Labels
+                    .Select(x => x.Name)
+                    .Contains(x.Name))
                 ;
 
             var rel = _dataService.GetRelationTypes()

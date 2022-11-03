@@ -11,17 +11,17 @@
         <MudDatePicker @bind-Date="@tempDate" Label="@Property.DisplayName" Clearable="true" Editable="true"></MudDatePicker>
         @if (Property.Value != null)
         {
-            <MudTimePicker @bind-Time="@tempTime" Label="At Time"></MudTimePicker>
+            <MudTimePicker @bind-Time="@tempTime" Label="At Time" Clearable="true" Editable="true"></MudTimePicker>
         }
         break;
     case "Guid":
-        <MudTextField @bind-Value="@Property.Value" Label="@Property.DisplayName" Adornment="@(Property.Value == null ? Adornment.None : Adornment.End)" AdornmentColor="Color.Info" AdornmentIcon="@Icons.TwoTone.CopyAll" OnAdornmentClick="CopyToClipboardClick" />
+        <MudTextField @bind-Value="@Property.Value" Label="@Property.DisplayName" Clearable="true" Adornment="@(Property.Value == null ? Adornment.None : Adornment.End)" AdornmentColor="Color.Info" AdornmentIcon="@Icons.TwoTone.CopyAll" OnAdornmentClick="CopyToClipboardClick" />
         break;
     case "string":
-        <MudTextField @bind-Value="@Property.Value" Label="@Property.DisplayName" />
+        <MudTextField @bind-Value="@Property.Value" Label="@Property.DisplayName" Clearable="true" />
         break;
     case "int":
-        <MudNumericField @bind-Value="@Property.Value" Label="@Property.DisplayName" />
+        <MudNumericField @bind-Value="@Property.Value" Label="@Property.DisplayName" Clearable="true" />
         break;
 }
 

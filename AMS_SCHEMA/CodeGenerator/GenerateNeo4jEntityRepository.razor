@@ -156,7 +156,7 @@ public partial class @(Label.Name)Repository : NeoRepositoryBase
 @foreach (var rel in OutgoingRelations)
 {<text>
     // ===================================@rel.GetCypherDefinition()=======================================
-    public ICypherFluentQuery Query_Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))(Guid @(rel.From.Name.ToCamelCase())Key)
+    public ICypherFluentQuery Query_Get_@(rel.From.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))(Guid @(rel.From.Name.ToCamelCase())Key)
     {
         var query = _client.Cypher
             .Match(p =>
@@ -167,11 +167,11 @@ public partial class @(Label.Name)Repository : NeoRepositoryBase
         return query;
     }
 
-    public async Task&lt;IEnumerable&lt;@(rel.To.Name)>?> Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))_Async(Guid @(rel.From.Name.ToCamelCase())Key)
+    public async Task&lt;IEnumerable&lt;@(rel.To.Name)>?> Get_@(rel.From.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))_Async(Guid @(rel.From.Name.ToCamelCase())Key)
     {
         await _client.ConnectAsync();
         
-        var query = Query_Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))(@(rel.From.Name.ToCamelCase())Key);
+        var query = Query_Get_@(rel.From.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))(@(rel.From.Name.ToCamelCase())Key);
         var result = await query
                         .Return(@(rel.To.Name.ToShortVariableName()) => @(rel.To.Name.ToShortVariableName()).As&lt;@(rel.To.Name)>())
                         .ResultsAsync;
@@ -179,14 +179,14 @@ public partial class @(Label.Name)Repository : NeoRepositoryBase
         return result;
     }
     
-    public Task&lt;IEnumerable&lt;@(rel.To.Name)>?> Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))_Async(@(rel.From.Name) @(rel.From.Name.ToCamelCase()))
+    public Task&lt;IEnumerable&lt;@(rel.To.Name)>?> Get_@(rel.From.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))_Async(@(rel.From.Name) @(rel.From.Name.ToCamelCase()))
     {
-        return Get_@(rel.From.Name)_@(rel.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))_Async(@(rel.From.Name.ToCamelCase()).Id);
+        return Get_@(rel.From.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelPluralName(rel))_Async(@(rel.From.Name.ToCamelCase()).Id);
     }
 
     // ---------------------
 
-    public ICypherFluentQuery Query_Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))(Guid @(rel.To.Name.ToCamelCase())Key)
+    public ICypherFluentQuery Query_Get_@(rel.From.Name.ToPlural())_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))(Guid @(rel.To.Name.ToCamelCase())Key)
     {
         var query = _client.Cypher
             .Match(p =>
@@ -197,11 +197,11 @@ public partial class @(Label.Name)Repository : NeoRepositoryBase
         return query;
     }
 
-    public async Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))_Async(Guid @(rel.To.Name.ToCamelCase())Key)
+    public async Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.From.Name.ToPlural())_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))_Async(Guid @(rel.To.Name.ToCamelCase())Key)
     {
         await _client.ConnectAsync();
 
-        var query = Query_Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))(@(rel.To.Name.ToCamelCase())Key);
+        var query = Query_Get_@(rel.From.Name.ToPlural())_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))(@(rel.To.Name.ToCamelCase())Key);
         var result = await query
                         .Return(@(rel.From.Name.ToShortVariableName()) => @(rel.From.Name.ToShortVariableName()).As&lt;@(rel.From.Name)>())
                         .ResultsAsync;
@@ -209,9 +209,9 @@ public partial class @(Label.Name)Repository : NeoRepositoryBase
         return result;
     }
     
-    public Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))_Async(@(rel.To.Name) @(rel.To.Name.ToCamelCase()))
+    public Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.From.Name.ToPlural())_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))_Async(@(rel.To.Name) @(rel.To.Name.ToCamelCase()))
     {
-        return Get_@(rel.From.Name.ToPlural())_@(rel.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))_Async(@(rel.To.Name.ToCamelCase()).Id);
+        return Get_@(rel.From.Name.ToPlural())_@(rel.RelType.Name.ToPascalCase())_@(GetDestinationLabelSingularName(rel))_Async(@(rel.To.Name.ToCamelCase()).Id);
     }
 
     // ===================================@rel.GetCypherDefinition()=======================================
@@ -221,7 +221,7 @@ public partial class @(Label.Name)Repository : NeoRepositoryBase
 @foreach (var rel in IncommingRelations.Where(x=>x.From.Name != x.To.Name))
 {<text>
     // ===================================@rel.GetCypherDefinition()=======================================
-    ICypherFluentQuery Query_Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))(Guid @(rel.To.Name.ToCamelCase())Key)
+    ICypherFluentQuery Query_Get_@(rel.To.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))(Guid @(rel.To.Name.ToCamelCase())Key)
     {
         var query = _client.Cypher
             .Match(p =>
@@ -232,11 +232,11 @@ public partial class @(Label.Name)Repository : NeoRepositoryBase
         return query;
     }
 
-    public async Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))_Async(Guid @(rel.To.Name)Key)
+    public async Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.To.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))_Async(Guid @(rel.To.Name)Key)
     {
         await _client.ConnectAsync();
         
-        var query = Query_Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))(@(rel.To.Name)Key);
+        var query = Query_Get_@(rel.To.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))(@(rel.To.Name)Key);
         var result = await query
                         .Return(@(rel.From.Name.ToShortVariableName()) => @(rel.From.Name.ToShortVariableName()).As&lt;@(rel.From.Name)>())
                         .ResultsAsync;
@@ -244,9 +244,9 @@ public partial class @(Label.Name)Repository : NeoRepositoryBase
         return result;
     }
     
-    public Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))_Async(@(rel.To.Name) @(rel.To.Name.ToCamelCase()))
+    public Task&lt;IEnumerable&lt;@(rel.From.Name)>?> Get_@(rel.To.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))_Async(@(rel.To.Name) @(rel.To.Name.ToCamelCase()))
     {
-        return Get_@(rel.To.Name)_@(rel.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))_Async(@(rel.To.Name.ToCamelCase()).Id);
+        return Get_@(rel.To.Name)_@(rel.RelType.Name.ToPascalCase())_@(GetSourceLabelPluralName(rel))_Async(@(rel.To.Name.ToCamelCase()).Id);
     }
     // ===================================@rel.GetCypherDefinition()=======================================
  </text>}

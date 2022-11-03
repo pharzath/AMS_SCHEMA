@@ -72,14 +72,14 @@
 
     [Inject] DataService DataService { get; set; }
 
-    readonly AmsNeo4JNodeRelationProperyValidator _amsNeo4JNodeRelationProperyValidator = new();
+    readonly AmsNeo4JNodeRelationPropertyValidator _amsNeo4JNodeRelationPropertyValidator = new();
 
 
     [Parameter]
     public AmsNeo4JNodeRelationType RelationType { get; set; }
 
     [Parameter]
-    public AmsNeo4JNodeRelationPropery Property { get; set; }
+    public AmsNeo4JNodeRelationProperty Property { get; set; }
 
     List<string>? _errors;
 
@@ -91,7 +91,7 @@
     void SaveAndCloseClick(bool close = false)
     {
         Property.RelationId = RelationType.Id;
-        var validationResult = _amsNeo4JNodeRelationProperyValidator.Validate(Property);
+        var validationResult = _amsNeo4JNodeRelationPropertyValidator.Validate(Property);
         if (validationResult.Errors is {Count: > 0})
         {
             _errors = validationResult.Errors.Select(x => x.ErrorMessage).ToList();
@@ -104,7 +104,7 @@
                 DialogInstance.Close();
             else
             {
-                Property = new AmsNeo4JNodeRelationPropery();
+                Property = new AmsNeo4JNodeRelationProperty();
             }
         }
 

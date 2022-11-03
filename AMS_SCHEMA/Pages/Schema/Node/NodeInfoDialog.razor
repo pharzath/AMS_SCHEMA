@@ -8,6 +8,7 @@
 @using AMS_SCHEMA.Pages.Schema.Label.Property
 @using AMS_SCHEMA.Pages.Schema.Query
 @using AMS_SCHEMA.Pages.Schema.Relation
+@using AMS_SCHEMA.Pages.Schema.Required
 @using Olive
 
 <MudDialog>
@@ -17,8 +18,8 @@
                 <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Edit" OnClick="EditNodeClick">
                     Edit Node Name
                 </MudButton>
-
-                <MudTreeView Items="RootLabels"
+                
+                <MudTreeView Items="RootLabels" Style="max-height: 680px;overflow-y: scroll;"
                              Hover="true"
                              @bind-SelectedValue="SelectedTreeNodeLabel">
                     <ItemTemplate>
@@ -37,7 +38,7 @@
 
             </MudItem>
             <MudItem sm="9" md="9">
-                <LabelListComponent Label="SelectedLabel"></LabelListComponent>
+                <LabelListComponent @ref="_labelList" Label="SelectedLabel"></LabelListComponent>
                 @if (!SelectedLabel.Description.IsEmpty())
                 {
                     <MudPaper Class="ma-2 pa-3"  Elevation="2">
@@ -55,6 +56,10 @@
 
                         <MudTabPanel Text="Relation" Icon="@Icons.Filled.CompareArrows" BadgeColor="Color.Secondary">
                             <RelationListComponent Label="SelectedLabel"></RelationListComponent>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Required" Icon="@Icons.Filled.RequestQuote" BadgeColor="Color.Secondary">
+                            <RequiredLabelListComponent Label="SelectedLabel"></RequiredLabelListComponent>
                         </MudTabPanel>
 
                         <MudTabPanel Text="Queries" Icon="@Icons.Filled.QueryBuilder" BadgeColor="Color.Secondary">
@@ -86,6 +91,9 @@
 </MudDialog>
 
 @code {
+    AmsNeo4JNodeLabelTreenNode? _selectedTreeNodeLabel;
+    AmsNeo4JNodeLabel? _selectedLabel;
+    LabelListComponent? _labelList;
 
     [Inject] DataService DataService { get; set; }
     [Inject] IDialogService DialogService { get; set; }
@@ -126,6 +134,17 @@
         }
         return _tmp;
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Node.Name.StartsWith("New"))
+        {
+            await EditNodeClick();
+            await _labelList?.EditLabelClick(SelectedLabel)!;
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
 
     async Task EditNodeClick()
     {
@@ -187,7 +206,6 @@
         }
     }
 
-    AmsNeo4JNodeLabelTreenNode? _selectedTreeNodeLabel;
-    AmsNeo4JNodeLabel? _selectedLabel;
+
 }
 

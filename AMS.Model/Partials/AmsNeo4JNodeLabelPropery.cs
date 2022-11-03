@@ -5,26 +5,30 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentValidation;
+using Newtonsoft.Json;
 using Olive;
 using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeLabelPropery : IHaveId<int>
+    public partial class AmsNeo4JNodeLabelProperty : IHaveId<int>
     {
+        [JsonIgnore]
         [ForeignKey("LabelId")]
         public AmsNeo4JNodeLabel Label { get; set; }
 
+        [JsonIgnore]
         [NotMapped]
         public IEnumerable<AmsNeo4JNodeConstraint> Constraints => Label.Constraints.Where(x => x.Over == Name);
 
+        [JsonIgnore]
         [NotMapped]
         public IEnumerable<AmsNeo4JNodeIndex> Indices => Label.Indices.Where(x => x.Over == Name);
 
-        public static AmsNeo4JNodeLabelPropery CreateNewPropery(AmsNeo4JNodeLabel label,
+        public static AmsNeo4JNodeLabelProperty CreateNewProperty(AmsNeo4JNodeLabel label,
             string? name = null ,string? neo4jName = null , string? type = null, string? validationType = null)
         {
-            var prop = new AmsNeo4JNodeLabelPropery()
+            var prop = new AmsNeo4JNodeLabelProperty()
             {
                 Label = label,
                 Name = name,
@@ -42,9 +46,9 @@ namespace AMS.Model.Models
         }
     }
 
-    public class AmsNeo4JNodeLabelProperyValidator : AbstractValidator<AmsNeo4JNodeLabelPropery>
+    public class AmsNeo4JNodeLabelPropertyValidator : AbstractValidator<AmsNeo4JNodeLabelProperty>
     {
-        public AmsNeo4JNodeLabelProperyValidator()
+        public AmsNeo4JNodeLabelPropertyValidator()
         {
             RuleFor(x => x.LabelId).NotNull().NotEmpty();
             RuleFor(x => x.Name).NotNull().NotEmpty();

@@ -7,7 +7,7 @@
 <PageTitle>AMS_SCHEMA</PageTitle>
 
 <MudLayout>
-    <MudDrawer @bind-Open="@_drawerOpen" Variant="DrawerVariant.Mini">
+    <MudDrawer @bind-Open="@_drawerOpen" Variant="DrawerVariant.Mini" Anchor="Anchor.End">
         @if (_drawerOpen)
         {
             <MudIconButton Icon="@Icons.TwoTone.Close" Color="Color.Default" OnClick="() => _drawerOpen = false"></MudIconButton>

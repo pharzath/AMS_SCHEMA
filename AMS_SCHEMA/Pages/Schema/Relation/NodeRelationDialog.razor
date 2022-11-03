@@ -65,15 +65,10 @@
     [Parameter]
     public AmsNeo4JNodeRelation NodeRelation { get; set; }
 
-    protected override void OnAfterRender(bool firstRender)
-    {
-        base.OnAfterRender(firstRender);
-    }
-
     void SaveAndCloseClick()
     {
-        
-        NodeRelation.Name = NodeRelation.RelType.Name;
+
+        //NodeRelation.Name = NodeRelation.RelType.Name;
         DataService.SaveRelation(NodeRelation);
         DialogInstance.Close();
     }
@@ -83,9 +78,7 @@
         if (string.IsNullOrEmpty(value))
             return Task.FromResult(Enumerable.Empty<AmsNeo4JNodeLabel>());
 
-        return Task.FromResult(DataService.DbContext.AmsNeo4JNodeLabels
-            .Where(x => x.Name.Contains(value) || x.DisplayName.Contains(value))
-            .AsEnumerable());
+        return Task.FromResult(DataService.SearchLabels(value).AsEnumerable());
     }
 
 

@@ -9,9 +9,10 @@ namespace AMS.Model.Models
 {
     public partial class MyDbContext
     {
+
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<AmsNeo4JNodeLabel>()
+            /*modelBuilder.Entity<AmsNeo4JNodeLabel>()
                 .HasOne(x => x.ParentLabel)
                 .WithMany(x => x.ChildLabels)
                 .HasForeignKey(x=>x.ParentLabelId)
@@ -21,7 +22,7 @@ namespace AMS.Model.Models
             modelBuilder.Entity<AmsNeo4JNode>()
                 .HasOne(x => x.Label)
                 .WithOne()
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.NoAction);*/
         }
 
     }

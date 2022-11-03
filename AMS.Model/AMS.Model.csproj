@@ -26,4 +26,8 @@
     <ProjectReference Include="..\..\..\..\..\Langram\Microservices\Core\QOQNOS.Core\QOQNOS.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
+
 </Project>

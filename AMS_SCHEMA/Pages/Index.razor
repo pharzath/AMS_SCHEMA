@@ -1,7 +1,79 @@
 ﻿@page "/"
+@using AMS_SCHEMA.Application.Export
+@using AMS.Model.Services
+@using Blueprint41
 
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.
+Welcome to Schema Explorer.
+
+<MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="GenTypes">
+    Genrate Types
+</MudButton>
+
+<MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.GeneratingTokens" OnClick="GenerateXmlClick">
+    Export BP41 XML
+    
+</MudButton>
+
+
+
+@foreach (var str in FullTypes)
+{
+    <text>
+        "@(str)",
+
+    </text>
+    <br />
+}
+
+@code {
+    string[] types = new string[]{"string",
+        "bool",
+        "long",
+        "int",
+        "float",
+        "sbyte",
+        "short",
+        "DateTime",
+        "decimal",
+        "double",
+        "char",
+        "Guid",
+        "object"};
+
+    List<string> FullTypes = new List<string>();
+
+    void GenTypes()
+    {
+        var tmp = new[] { "{0}", "List<{0}>", "Dictionary<{0},{1}>" };
+        foreach (var tm in tmp.Take(2))
+        {
+            foreach (var type in types)
+            {
+                FullTypes.Add(string.Format(tm, type));
+            }
+        }
+        foreach (var type1 in types)
+            foreach (var type2 in types)
+                FullTypes.Add(string.Format(tmp[2], type1, type2));
+
+    }
+
+    [Inject] DataService DataService { get; set; }
+
+    void GenerateXmlClick()
+    {
+        var labels = DataService.GetLabels();
+        List<MyEntity> list = new List<MyEntity>();
+        
+        ExportService.ExportBP41Xml();
+    }
+
+    class MyEntity
+    {
+        public string label { get; set; }
+    }
+
+}

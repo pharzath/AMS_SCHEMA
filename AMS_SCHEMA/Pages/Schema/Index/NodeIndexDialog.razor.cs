@@ -1,7 +1,8 @@
-﻿using AMS.Model.Models;
+﻿using AMS.Model;
+using AMS.Model.Models;
 using AMS.Model.Services;
 using AMS_SCHEMA.Class;
-using AMS_SCHEMA.Pages.Schema.EntityBase;
+
 
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -38,7 +39,7 @@ namespace AMS_SCHEMA.Pages.Schema.Index
             DialogInstance.Close();
         }
 
-        Task<IEnumerable<AmsNeo4JNodeLabelPropery>> GetField(string? arg)
+        Task<IEnumerable<AmsNeo4JNodeLabelProperty>> GetField(string? arg)
         {
             var formFields = Label.Properties;
 
@@ -47,7 +48,7 @@ namespace AMS_SCHEMA.Pages.Schema.Index
                 formFields = formFields?.Where(x => x.Name.Contains(arg) || x.DisplayName.Contains(arg)).ToList();
             }
 
-            if (formFields == null) return Task.FromResult(Enumerable.Empty<AmsNeo4JNodeLabelPropery>());
+            if (formFields == null) return Task.FromResult(Enumerable.Empty<AmsNeo4JNodeLabelProperty>());
 
             var x = formFields.ToList();
             if (Label.ParentLabelId is null)

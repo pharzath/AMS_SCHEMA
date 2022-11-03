@@ -40,7 +40,8 @@ public class MyCachProvider : MemoryCache
 
     CachKey GetUniqCachKey<T>(CachKey key) where T : IHaveId<int>
     {
-        var any = _keys.FirstOrDefault(x => x.Name == key.Name && x.Type == key.Type && x.Id == key.Id);
+        var any = _keys
+            .FirstOrDefault(x => x.Name == key.Name && x.Type == key.Type && x.Id == key.Id);
         if (any != null)
             key = any;
         else
@@ -85,10 +86,16 @@ public class MyCachProvider : MemoryCache
 
     public void ExpireCachKeys<T>(T _) where T : IHaveId<int>
     {
-
-        var cachKeys = _keys.Where(x =>
-                                                            (x.Type == typeof(T) && x.Id == _.Id) ||
-                                                            (x.RelatedKeys != null && x.RelatedKeys.Any(z => z.Type == typeof(T) && z.Id == _.Id)) ||
+        Clear();
+        return;
+        // var cachKeys = _keys.Where(x =>
+        //                                                     (x.Type == typeof(T) && x.Id == _.Id) ||
+        //                                                     (x.RelatedKeys != null && x.RelatedKeys.Any(z => z.Type == typeof(T) && z.Id == _.Id)) ||
+        //                                                     (x.RelatedTypes != null && x.RelatedTypes.Contains(typeof(T)))
+        // )
+        //     .ToList();
+        var cachKeys = _keys.Where(x =>   x.Type == typeof(T) ||
+                                                            (x.RelatedKeys != null && x.RelatedKeys.Any(z => z.Type == typeof(T))) ||
                                                             (x.RelatedTypes != null && x.RelatedTypes.Contains(typeof(T)))
         )
             .ToList();
@@ -108,5 +115,6 @@ public class MyCachProvider : MemoryCache
     {
         foreach (var cachKey in _keys) 
             Remove(cachKey);
+        _keys.Clear();
     }
 }

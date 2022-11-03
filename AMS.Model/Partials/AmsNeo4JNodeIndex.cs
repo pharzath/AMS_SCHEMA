@@ -5,20 +5,25 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace AMS.Model.Models
 {
     public partial class AmsNeo4JNodeIndex : IHaveId<int>
     {
+        [JsonIgnore]
         public AmsNeo4JNodeLabel Label { get; set; }
 
+        [JsonIgnore]
         [NotMapped]
-        public AmsNeo4JNodeLabelPropery OverProp { get; set; }
+        public AmsNeo4JNodeLabelProperty OverProp { get; set; }
 
+        [JsonIgnore]
         public AmsNeo4JNodeRelationType RelType { get; set; }
 
+        [JsonIgnore]
         [NotMapped]
-        public AmsNeo4JNodeRelationPropery RelOverProp { get; set; }
+        public AmsNeo4JNodeRelationProperty RelOverProp { get; set; }
 
     }
 }
