@@ -2,7 +2,7 @@
 @using AMS.Model.Services
 @using AMS.Model.Models
 @using Olive
-@using Toolbelt.Blazor.HotKeys
+@using Toolbelt.Blazor.HotKeys2
 <MudDialog>
     <DialogContent>
         <MudAutocomplete @ref="_searchAutoCompleteField"
@@ -55,8 +55,8 @@
     protected override void OnInitialized()
     {
         this.HotKeysContext = this.HotKeys.CreateContext()
-            .Add(ModKeys.Ctrl,
-                Keys.Enter,
+            .Add(ModCode.Ctrl,
+                Code.Enter,
                 SearchDone,
                 "Search done",Exclude.InputNonText);
 

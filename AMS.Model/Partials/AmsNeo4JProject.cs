@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JProject : IHaveId<int>
+    public partial class AmsNeo4JProject : IHaveId<long>
     {
 
     }

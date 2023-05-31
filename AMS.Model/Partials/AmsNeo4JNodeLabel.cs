@@ -5,7 +5,7 @@ using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeLabel : IHaveId<int>
+    public partial class AmsNeo4JNodeLabel : IHaveId<long>
     {
         [JsonIgnore]
         [ForeignKey("NodeId")]

@@ -122,7 +122,7 @@
     }
 
     AmsNeo4JNodeLabelTreenNode? _tmp;
-    AmsNeo4JNodeLabelTreenNode? FindNode(HashSet<AmsNeo4JNodeLabelTreenNode> parents, int? id)
+    AmsNeo4JNodeLabelTreenNode? FindNode(HashSet<AmsNeo4JNodeLabelTreenNode> parents, long? id)
     {
         _tmp = Enumerable.FirstOrDefault(parents, x => x.Label.Id == id);
         if (_tmp != null)

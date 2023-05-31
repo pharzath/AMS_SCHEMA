@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AMS.Model.Models
+namespace AMS.Model.Models;
+
+public partial class AmsNeo4JNodeRelation
 {
-    public partial class AmsNeo4JNodeRelation
-    {
-        public int Id { get; set; }
-        public int? FromFk { get; set; }
-        public int? ToFk { get; set; }
-        public int? TypeFk { get; set; }
-        public string? Description { get; set; }
-    }
+    public long Id { get; set; }
+
+    public long? FromFk { get; set; }
+
+    public long? ToFk { get; set; }
+
+    public long? TypeFk { get; set; }
+
+    public string? Description { get; set; }
+
+    public string Guid { get; set; } = null!;
 }

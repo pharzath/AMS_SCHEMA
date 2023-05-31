@@ -10,7 +10,7 @@ using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeRelation : IHaveId<int>
+    public partial class AmsNeo4JNodeRelation : IHaveId<long>
     {
         [JsonIgnore]
         [NotMapped] 

@@ -8,7 +8,7 @@ using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeDepartment : IHaveId<int>
+    public partial class AmsNeo4JNodeDepartment : IHaveId<long>
     {
         [ForeignKey("DepartmentId")]
         public AmsNeo4JDepartment Department { get; set; }
@@ -17,9 +17,9 @@ namespace AMS.Model.Models
         public AmsNeo4JNode Node { get; set; }
         
         [NotMapped]
-        public int Id
+        public long Id
         {
-            get => ((int)DepartmentId)!;
+            get => ((long)DepartmentId)!;
             set => DepartmentId = value;
         }
     }

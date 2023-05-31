@@ -20,10 +20,10 @@ namespace AMS.Model.Services
     public class DataService
     {
         readonly MyCachProvider _cachProvider;
-        public MyDbContext DbContext { get; }
+        public QonosSchemaContext DbContext { get; }
         public AmsNeo4JProject? SelectedProject { get; set; }
 
-        public DataService(MyDbContext dbContext,
+        public DataService(QonosSchemaContext dbContext,
                            MyCachProvider cachProvider)
         {
             _cachProvider = cachProvider;
@@ -63,7 +63,7 @@ namespace AMS.Model.Services
 
         }
 
-        IQueryable<AmsNeo4JNodeRelation> AmsNeo4JNodeRelations(IEnumerable<int> ids)
+        IQueryable<AmsNeo4JNodeRelation> AmsNeo4JNodeRelations(IEnumerable<long> ids)
         {
             var relations = DbContext.AmsNeo4JNodeRelations
 
@@ -384,7 +384,7 @@ namespace AMS.Model.Services
             {
                 return DbContext.AmsNeo4JNodeIndices
                     .Include(x => x.Label)
-                    .Where(x => ids.Contains<int>(x.LabelId.Value))
+                    .Where(x => ids.Contains<long>(x.LabelId.Value))
                     .ToList();
             });
 
@@ -600,7 +600,7 @@ namespace AMS.Model.Services
             return labels.ToList();
         }
 
-        public AmsNeo4JNodeLabel? GetLabel(int? lblId)
+        public AmsNeo4JNodeLabel? GetLabel(long? lblId)
         {
             var label = GetLabels()
                 .FirstOrDefault(x => x.Id == lblId);
@@ -608,7 +608,7 @@ namespace AMS.Model.Services
             return label;
         }
 
-        public List<AmsNeo4JNodeLabelProperty> GetLabelProperties(int labelId)
+        public List<AmsNeo4JNodeLabelProperty> GetLabelProperties(long labelId)
         {
             var properies = _cachProvider.GetOrCreate(
                 _cachProvider.CreateCachKey<AmsNeo4JNodeLabelProperty>(nameof(GetLabelProperties), labelId),

@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AMS.Model.Models
+namespace AMS.Model.Models;
+
+public partial class AmsNeo4JNodeLabelRequiredRelation
 {
-    public partial class AmsNeo4JNodeLabelRequiredRelation
-    {
-        public int Id { get; set; }
-        public int LabelRelationFk { get; set; }
-        public int ReqCount { get; set; }
-        public bool? IsForceToCreateNew { get; set; }
-        public int LabelFk { get; set; }
-        public string? Description { get; set; }
-    }
+    public long Id { get; set; }
+
+    public long LabelRelationFk { get; set; }
+
+    public long ReqCount { get; set; }
+
+    public long? IsForceToCreateNew { get; set; }
+
+    public long LabelFk { get; set; }
+
+    public string? Description { get; set; }
 }

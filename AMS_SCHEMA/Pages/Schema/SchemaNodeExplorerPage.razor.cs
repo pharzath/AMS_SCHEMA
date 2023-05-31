@@ -2,27 +2,16 @@
 using AMS.Model.Services;
 using AMS_SCHEMA.Class;
 using AMS_SCHEMA.CodeGenerator;
-using BlazorTemplater;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using System.Web;
 using AMS_SCHEMA.Pages.Schema.Node;
 using AMS_SCHEMA.Pages.Schema.Search;
-using Toolbelt.Blazor.HotKeys;
-using static System.Collections.Specialized.BitVector32;
-using System.Xml.Linq;
+using Toolbelt.Blazor.HotKeys2;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Unicode;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Olive;
-using static AMS_SCHEMA.Pages.Schema.SchemaNodeExplorerPage;
 using System.Net;
 using AMS_SCHEMA.Pages.Project;
 using AMS_SCHEMA.Pages.Schema.TestData;
-using Neo4jClient.DataAnnotations.Cypher.Functions;
 
 namespace AMS_SCHEMA.Pages.Schema;
 
@@ -65,39 +54,40 @@ public partial class SchemaNodeExplorerPage : IDisposable
     protected override void OnInitialized()
     {
         HotKeysContext = HotKeys.CreateContext()
-            .Add(ModKeys.None,
-                Keys.F1,
-                GotoDepartmentSelectBox,
-                "Goto Department Selector Box")
-            .Add(ModKeys.None,
-                Keys.F2,
-                GotoSearchBox,
-                "Goto Search Box")
-            .Add(ModKeys.None,
-                Keys.ESC,
-                ClearSearchBox,
-                "close all aside panels",
-                Exclude.None)
-            .Add(ModKeys.None,
-                Keys.Backspace,
-                GoBackFromHistory,
-                "Go Back from history")
-            .Add(ModKeys.None,
-                Keys.Num0,
-                NavigateLabelDialog,
-                "Search for Labels")
-            .Add(ModKeys.Ctrl,
-                Keys.Space,
-                NavigateLabelDialog,
-                "Search for Labels")
-            .Add(ModKeys.None,
-                Keys.PgDown,
-                OpenQueryGenerator,
-                "Query Generator")
-            .Add(ModKeys.None,
-                Keys.PgUp,
-                CloseQueryGenerator,
-                "Close Query Generator")
+            .Add(ModCode.None,
+                Code.F1,
+                GotoDepartmentSelectBox, 
+                "Goto Department Selector Box"
+                )
+             .Add(ModCode.None,
+                 Code.F2,
+                 GotoSearchBox,
+                 "Goto Search Box")
+             .Add(ModCode.None,
+                 Code.Escape,
+                 ClearSearchBox,
+                 "close all aside panels",
+                 Exclude.None)
+             .Add(ModCode.None,
+                 Code.Backspace,
+                 GoBackFromHistory,
+                 "Go Back from history")
+             .Add(ModCode.None,
+                 Code.Num0,
+                 NavigateLabelDialog,
+                 "Search for Labels")
+             .Add(ModCode.Ctrl,
+                 Code.Space,
+                 NavigateLabelDialog,
+                 "Search for Labels")
+             .Add(ModCode.None,
+                 Code.PageDown,
+                 OpenQueryGenerator,
+                 "Query Generator")
+             .Add(ModCode.None,
+                 Code.PageUp,
+                 CloseQueryGenerator,
+                 "Close Query Generator")
             ;
 
         SearchSchema(null);
@@ -107,11 +97,11 @@ public partial class SchemaNodeExplorerPage : IDisposable
         base.OnInitialized();
     }
 
-    Task CloseQueryGenerator(HotKeyEntry arg)
+    ValueTask CloseQueryGenerator(HotKeyEntry arg)
     {
         openTop2 = false;
         StateHasChanged();
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     async Task HistoryBackClick()
@@ -119,11 +109,11 @@ public partial class SchemaNodeExplorerPage : IDisposable
         await GoBackFromHistory(null);
     }
 
-    Task OpenQueryGenerator(HotKeyEntry arg)
+    ValueTask OpenQueryGenerator(HotKeyEntry arg)
     {
         openTop2 = true;
 //        StateHasChanged();
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     string xMatchValue => GetQueryFromHistory();
@@ -323,7 +313,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
         return "-";
     }
 
-    async Task NavigateLabelDialog(HotKeyEntry arg)
+    async ValueTask NavigateLabelDialog(HotKeyEntry arg)
     {
         var dialogReference = DialogService.Show<NavigateToLabelDialog>("Search Label", new DialogOptions()
         {
@@ -337,7 +327,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
         await BrowserService.GotoSection(nodeName);
     }
 
-    async Task GoBackFromHistory(HotKeyEntry arg)
+    async ValueTask GoBackFromHistory(HotKeyEntry arg)
     {
         if(!_historyNodes.Any()) return;
         _historyNodes.RemoveLast();
@@ -348,7 +338,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
         StateHasChanged();
     }
 
-    async Task GotoDepartmentSelectBox(HotKeyEntry arg)
+    async ValueTask GotoDepartmentSelectBox(HotKeyEntry arg)
     {
         openTop = true;
         StateHasChanged();
@@ -356,7 +346,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
             await DepartmentSelectorField.FocusAsync();
     }
 
-    async Task ClearSearchBox(HotKeyEntry arg)
+    async ValueTask ClearSearchBox(HotKeyEntry arg)
     {
         if (SearchTextField != null)
         {
@@ -368,7 +358,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
         StateHasChanged();
     }
 
-    async Task GotoSearchBox(HotKeyEntry x)
+    async ValueTask GotoSearchBox(HotKeyEntry x)
     {
         openTop = true;
         StateHasChanged();
@@ -595,7 +585,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
 
     void NewProjectClick()
     {
-        var project = new AmsNeo4JProject() { Name = "New Project" , Guid = Guid.NewGuid()};
+        var project = new AmsNeo4JProject() { Name = "New Project" , Guid = Guid.NewGuid().ToString("D")};
         OpenProjectDialog(project);
     }
     void EditProjectClick(AmsNeo4JProject project)

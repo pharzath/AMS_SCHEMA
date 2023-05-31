@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AMS.Model.Models
 {
-    public partial class MyDbContext
+    public partial class QonosSchemaContext
     {
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder)

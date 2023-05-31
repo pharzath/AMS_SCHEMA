@@ -13,6 +13,8 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "QOQNOS.NEO4J.TEST.Shared", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AMS_SCHEMA.Application", "AMS_SCHEMA.Application\AMS_SCHEMA.Application.csproj", "{849FE1B5-0994-4B31-9416-9F9B31E847A5}"
 EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "ams.mobile.app", "ams.mobile.app\ams.mobile.app.esproj", "{B14AE342-05EB-4524-81BE-14CE07DF83C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,12 @@ Global
 		{849FE1B5-0994-4B31-9416-9F9B31E847A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{849FE1B5-0994-4B31-9416-9F9B31E847A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{849FE1B5-0994-4B31-9416-9F9B31E847A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B14AE342-05EB-4524-81BE-14CE07DF83C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B14AE342-05EB-4524-81BE-14CE07DF83C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B14AE342-05EB-4524-81BE-14CE07DF83C1}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{B14AE342-05EB-4524-81BE-14CE07DF83C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B14AE342-05EB-4524-81BE-14CE07DF83C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B14AE342-05EB-4524-81BE-14CE07DF83C1}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

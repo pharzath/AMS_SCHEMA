@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AMS.Model.Models
+namespace AMS.Model.Models;
+
+public partial class AmsNeo4JDepartment
 {
-    public partial class AmsNeo4JDepartment
-    {
-        public int DepartmentId { get; set; }
-        public string? Title { get; set; }
-        public int? ProjectFk { get; set; }
-    }
+    public long DepartmentId { get; set; }
+
+    public string? Title { get; set; }
+
+    public long? ProjectFk { get; set; }
 }

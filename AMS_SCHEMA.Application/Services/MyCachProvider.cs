@@ -16,7 +16,7 @@ public class MyCachProvider : MemoryCache
 {
 
     readonly List<CachKey> _keys = new();
-    public CachKey CreateCachKey<T>(string name, int elementId) where T : IHaveId<int>
+    public CachKey CreateCachKey<T>(string name, long elementId) where T : IHaveId<long>
     {
         var key = new CachKey(name)
         {
@@ -27,7 +27,7 @@ public class MyCachProvider : MemoryCache
         return key;
     }
 
-    public CachKey CreateCachKey<T>(string name, T? element) where T : IHaveId<int>
+    public CachKey CreateCachKey<T>(string name, T? element) where T : IHaveId<long>
     {
         var key = new CachKey(name)
         {
@@ -38,7 +38,7 @@ public class MyCachProvider : MemoryCache
         return key;
     }
 
-    CachKey GetUniqCachKey<T>(CachKey key) where T : IHaveId<int>
+    CachKey GetUniqCachKey<T>(CachKey key) where T : IHaveId<long>
     {
         var any = _keys
             .FirstOrDefault(x => x.Name == key.Name && x.Type == key.Type && x.Id == key.Id);
@@ -49,7 +49,7 @@ public class MyCachProvider : MemoryCache
         return key;
     }
 
-    public CachKey CreateCachKey<T>(string name, params Type[]? relatedTo) where T : IHaveId<int>
+    public CachKey CreateCachKey<T>(string name, params Type[]? relatedTo) where T : IHaveId<long>
     {
         var key = new CachKey(name)
         {
@@ -60,7 +60,7 @@ public class MyCachProvider : MemoryCache
         return key;
     }
 
-    public CachKey CreateCachKey<T>(string name, T? element, params Type[] relatedTo) where T : IHaveId<int>
+    public CachKey CreateCachKey<T>(string name, T? element, params Type[] relatedTo) where T : IHaveId<long>
     {
         var key = new CachKey(name)
         {
@@ -72,7 +72,7 @@ public class MyCachProvider : MemoryCache
         return key;
     }
 
-    public CachKey CreateCachKey<T>(string name, T? element, params CachKey[] relatedKeys) where T : IHaveId<int>
+    public CachKey CreateCachKey<T>(string name, T? element, params CachKey[] relatedKeys) where T : IHaveId<long>
     {
         var key = new CachKey(name)
         {
@@ -84,7 +84,7 @@ public class MyCachProvider : MemoryCache
         return key;
     }
 
-    public void ExpireCachKeys<T>(T _) where T : IHaveId<int>
+    public void ExpireCachKeys<T>(T _) where T : IHaveId<long>
     {
         Clear();
         return;

@@ -3,7 +3,7 @@
 public class CachKey : IEquatable<CachKey>
 {
     public Type Type { get; set; }
-    public int? Id { get; set; }
+    public long? Id { get; set; }
     public string? Name { get; set; }
     public Type[]? RelatedTypes { get; set; }
     public CachKey[]? RelatedKeys { get; set; }

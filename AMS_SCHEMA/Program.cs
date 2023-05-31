@@ -45,7 +45,7 @@ builder.Services.AddScoped<IGraphClient>(s =>
     return graphClient;
 });
 
-builder.Services.AddDbContext<MyDbContext>(options =>
+builder.Services.AddDbContext<QonosSchemaContext>(options =>
 {
     options.EnableSensitiveDataLogging();
     options.ConfigureWarnings(configurationBuilder =>
@@ -56,7 +56,7 @@ builder.Services.AddDbContext<MyDbContext>(options =>
     //options.UseSqlServer(builder.Configuration["ConnectionString"]);
 });
 
-builder.Services.AddHotKeys();
+builder.Services.AddHotKeys2();
 
 builder.Services.AddScoped<DataService>();
 
