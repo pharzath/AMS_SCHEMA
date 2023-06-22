@@ -1,0 +1,464 @@
+﻿@page "/SystemGen"
+@using Olive
+@using AMS.Model.Services
+@using AMS.Model.Models
+@using MudBlazor.Extensions.Options
+@using AMS.Model
+@using AMS_SCHEMA.Class
+@using AMS_SCHEMA.CodeGenerator
+@using AMS_SCHEMA.Pages.Schema.Label.Module
+@using Blueprint41
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using System.Text
+@using Microsoft.AspNetCore.Components
+
+<style>
+    .mud-table-cell-custom-group {
+        font-weight: 500;
+    }
+
+    .mud-table-cell-custom-group-footer {
+        padding-bottom: 50px;
+        text-align: right;
+    }
+
+</style>
+
+<MudExDialog ContentStyle="overflow-y:scroll" Class="mud-ex-dialog-initial">
+    <DialogContent>
+
+        <MudGrid>
+            <MudItem md="4">
+                <MudTable Items="_labels"
+                          Hover="true"
+                          Breakpoint="Breakpoint.Sm"
+                          FixedHeader="true"
+                          MultiSelection="true"
+                          GroupBy="@_groupDefinition"
+                          GroupHeaderStyle="background-color:var(--mud-palette-background-grey)"
+                          GroupFooterClass="mb-4"
+                          SelectOnRowClick="true"
+                @bind-SelectedItems="SelectedEntities"
+                          Dense="true"
+                @ref="_tableRef">
+                    <ColGroup>
+                        <col style="width: 60px;" />
+                        <col />
+                    </ColGroup>
+                    <HeaderContent>
+                        <MudTh>Name</MudTh>
+                    </HeaderContent>
+                    <GroupHeaderTemplate>
+                        <MudTh Class="mud-table-cell-custom-group" colspan="5">@($"{context.GroupName}: {context.Key}") </MudTh>
+                    </GroupHeaderTemplate>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudChip Size="Size.Small">
+                                <LabelIconComponent Size="Size.Small" Label="context"></LabelIconComponent>
+                                @context.Name
+                            </MudChip>
+
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+
+            </MudItem>
+            <MudItem md="8">
+                <MudTabs>
+                    <MudTabPanel Text="Blueprint 41">
+                        <MudText Typo="Typo.h5">Data Store Code :</MudText>
+                        <MudIconButton Icon="@Icons.TwoTone.CopyAll" Color="Color.Success" OnClick="CopyGenCodeToClipboardClick"></MudIconButton>
+                        <MudText Typo="Typo.subtitle1">
+<pre>
+<code>
+                                    @_generatedCode
+</code>
+</pre>
+                        </MudText>
+                    </MudTabPanel>
+                    <MudTabPanel Text="All">
+                        <MudText Typo="Typo.h5" Class="m-3">
+                            Types to Generate
+                        </MudText>
+                        <MudPaper>
+                            @foreach (var type in Enum.GetValues<AmsNeo4JMicroserviceModule.ModuleTypeEnum>().OrderBy(x => x.ToString()))
+                            {
+                                <MudButton Class="m-2" Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.TwoTone.ForkRight" OnClick="() => GenerateModule(type)">
+                                    @type.ToString().Replace("_", ".")
+                                </MudButton>
+                            }
+                        </MudPaper>
+
+                        <MudButton Class="mt-5" Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.TwoTone.GeneratingTokens" OnClick="GenerateAllModules">
+                            Generate All Types
+                        </MudButton>
+
+                    </MudTabPanel>
+                    <MudTabPanel Text="Handlers">
+                        <MudTable Items="_genericHandlers">
+                            <ToolBarContent>
+                                <MudSpacer />
+                                <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.TwoTone.ForkRight" OnClick="CreateNewSimpleSetting">
+                                    Add Simple Setting
+                                </MudButton>
+
+                                <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.ForkRight" OnClick="CreateHandler">
+                                    Add New Generic Handler
+                                </MudButton>
+
+                            </ToolBarContent>
+                            <HeaderContent>
+                                <MudTh>Key</MudTh>
+                                <MudTh>Value</MudTh>
+                                <MudTh>Description</MudTh>
+                                <MudTh></MudTh>
+                                <MudTh></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.Key</MudTd>
+                                <MudTd>@GetValue(context)</MudTd>
+                                <MudTd>
+                                    @context.Description
+                                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Warning" StartIcon="@Icons.TwoTone.Add" OnClick="() => CopyToSelectedLabels(context)">
+                                        Add to Selected Labels
+                                    </MudButton>
+
+                                </MudTd>
+                                <MudTd>
+                                    <MudIconButton Icon="@Icons.TwoTone.Edit" Color="Color.Success" OnClick="() => EditHandlerSettingItemTemplate(context)"></MudIconButton>
+                                </MudTd>
+                                <MudTd>
+                                    <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="() => DeleteHandlerSettingTemplate(context)"></MudIconButton>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.TwoTone.Check" OnClick="ApplyAllHandlersToSelectedLabels">
+                            Apply All Handlers to Selected Labels
+                        </MudButton>
+
+                    </MudTabPanel>
+                </MudTabs>
+            </MudItem>
+        </MudGrid>
+
+    </DialogContent>
+
+</MudExDialog>
+
+@code {
+
+    int i = 0;
+    private MudTable<AmsNeo4JNodeLabel> _tableRef;
+    List<AmsNeo4JMicroserviceModuleSettingTemplate>? _genericHandlers;
+    private readonly TableGroupDefinition<AmsNeo4JNodeLabel> _groupDefinition = new()
+        {
+            GroupName = "Microservice",
+            Indentation = false,
+            Expandable = true,
+            IsInitiallyExpanded = false,
+            Selector = (e) => e.Microservice?.Name
+        };
+
+    [Inject] DataService? DataService { get; set; }
+
+    List<AmsNeo4JNodeLabel>? _labels;
+
+    readonly DialogOptionsEx _dialogOptionsEx = new DialogOptionsEx()
+        {
+            CloseButton = true,
+            Resizeable = true,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Large,
+            Animations = null,
+            DragMode = MudDialogDragMode.Simple,
+            MaximizeButton = true
+        };
+
+    protected override void OnInitialized()
+    {
+        _labels = DataService?.GetLabels();
+        _genericHandlers = DataService?.GetLabelModuleSettingTemplates();
+        base.OnInitialized();
+    }
+
+    [Inject] CodeGeneratorService? CodeGeneratorService { get; set; }
+
+    [CascadingParameter] MudDialogInstance? DialogInstance { get; set; }
+
+    [Inject] ISnackbar? Snackbar { get; set; }
+
+    void GenerateAllModules()
+    {
+        foreach (var lbl in _tableRef.SelectedItems)
+        {
+            if (lbl.Microservice?.Modules == null) continue;
+
+            foreach (var module in lbl.Microservice.Modules)
+            {
+                CodeGeneratorService?.GenerateModule(lbl, module);
+            }
+        }
+        Snackbar?.Add("All Selected Labels Done");
+    }
+
+    void GenerateModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum type)
+    {
+        if (_tableRef.SelectedItems is { Count: 0 })
+        {
+            Snackbar?.Add("There is not any Label selected to Generate", Severity.Info);
+            return;
+        }
+        foreach (var lbl in _tableRef.SelectedItems)
+        {
+            var module = lbl.Microservice?.Modules.FirstOrDefault(x => x.ModuleType == type);
+            CodeGeneratorService?.GenerateModule(lbl, module);
+        }
+    }
+
+    async Task CreateNewSimpleSetting()
+    {
+        var setting = new AmsNeo4JMicroserviceModuleSetting()
+            {
+                LabelFk = 0,
+                MicroserviceModuleFk = 0,
+            };
+        setting = await EditSetting(setting, false);
+    }
+
+    async Task<AmsNeo4JMicroserviceModuleSetting?> EditSetting(AmsNeo4JMicroserviceModuleSetting setting, bool edit = false)
+    {
+        var reference = await DialogService.ShowEx<ModuleSettingDialog>("Setting " + setting.Module, dialog =>
+        {
+            dialog.Setting = setting;
+        }, option =>
+        {
+            option.Animations = null;
+            option.DragMode = MudDialogDragMode.Simple;
+            option.Resizeable = true;
+            option.MaxWidth = MaxWidth.Medium;
+        });
+        var result = await reference.Result;
+        if (result.Canceled) return null;
+
+        var settingData = (AmsNeo4JMicroserviceModuleSetting)result.Data;
+        DataService?.AddNewModuleSetting(setting);
+        return settingData;
+    }
+
+    async Task CreateHandler()
+    {
+        var handler = new HandlerSettingItem();
+        var setting = await AddHandlerSettingItemTemplate(handler);
+        if (setting != null)
+            await CopyToAnotherModule(setting, _tableRef.SelectedItems);
+    }
+
+    async Task<AmsNeo4JMicroserviceModuleSettingTemplate?> AddHandlerSettingItemTemplate(HandlerSettingItem handler)
+    {
+        var reference = await DialogService.EditObject(handler, $"New Handler", _dialogOptionsEx);
+
+        if (reference.Cancelled) return null;
+
+        if (DataService?.GetLabelModuleSettings(0, 0)?.Any(x => x.Key == reference.Result.Name) ?? true)
+        {
+            Snackbar?.Add("Duplicated Handler", Severity.Error);
+            return null;
+        }
+
+        var jObject = JObject.FromObject(reference.Result);
+        var setting = new AmsNeo4JMicroserviceModuleSettingTemplate()
+            {
+                Key = reference.Result.Name,
+                SettingType = SettingTypeEnum.MethodHandler,
+                DataValue = jObject.ToString(Formatting.Indented)
+            };
+
+        DataService.SaveModuleSettingTemplate(setting);
+        _genericHandlers?.Add(setting);
+        return setting;
+    }
+
+    async Task EditHandlerSettingItemTemplate(AmsNeo4JMicroserviceModuleSettingTemplate settingTemplate)
+    {
+        settingTemplate.HandlerSettingItem = JObject.Parse(settingTemplate.DataValue).ToObject<HandlerSettingItem>();
+
+        var reference = await DialogService.EditObject(settingTemplate, $"Edit Handler", _dialogOptionsEx,
+            meta =>
+            {
+                meta.Property(x => x.Id).Ignore();
+                meta.Property(x => x.DataValue).Ignore();
+                meta.WrapEachInMudItem(x => x.md = 6);
+            });
+
+        if (reference.Cancelled) return;
+
+        settingTemplate.DataValue = JObject.FromObject(settingTemplate.HandlerSettingItem).ToString(Formatting.Indented);
+
+        DataService.SaveModuleSettingTemplate(settingTemplate);
+
+    }
+
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    async Task CopyToAnotherModule(AmsNeo4JMicroserviceModuleSettingTemplate rawSetting, IEnumerable<AmsNeo4JNodeLabel> labels)
+    {
+        List<AmsNeo4JMicroserviceModule.ModuleTypeEnum> excepts = new()
+        {
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.API,
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.MOBILE,
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB,
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_SILO,
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB_CORE
+        };
+
+        foreach (var label in labels)
+        {
+
+            var apiModuleLabel = label.Microservice.Modules.First(mod => mod.ModuleType == AmsNeo4JMicroserviceModule.ModuleTypeEnum.API);
+            var apiModuleLabelSetting = DataService.GetLabelModuleSettings(label, apiModuleLabel)
+                .FirstOrDefault(x => x.Key == rawSetting.Key);
+            if (apiModuleLabelSetting == null)
+            {
+                apiModuleLabelSetting = GetClone(rawSetting, apiModuleLabel, label);
+                try
+                {
+                    DataService.AddNewModuleSetting(apiModuleLabelSetting);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+
+            var selectedTypes = Enum.GetValues<AmsNeo4JMicroserviceModule.ModuleTypeEnum>()
+                .Except(excepts);
+            foreach (var module in selectedTypes.Select(type => label.Microservice.GetModule(type)))
+            {
+                var currentSettings =
+                    DataService
+                        .GetLabelModuleSettings(label, module)?
+                        .FirstOrDefault(x => x.Key == apiModuleLabelSetting.Key);
+                if (currentSettings is not null)
+                {
+                    Snackbar.Add($"Setting {rawSetting.Key} already exist in module : {module}", Severity.Warning);
+                    continue;
+                }
+
+                var clone = GetClone(apiModuleLabelSetting, module, label);
+                try
+                {
+                    DataService.AddNewModuleSetting(clone);
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add(ex.Message, Severity.Error);
+                }
+            }
+        }
+
+        Snackbar?.Add("Process Complete", Severity.Info);
+    }
+
+    static AmsNeo4JMicroserviceModuleSetting GetClone(AmsNeo4JMicroserviceModuleSetting templateSetting, AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
+    {
+        return new AmsNeo4JMicroserviceModuleSetting
+            {
+                CopiedFromModuleFk = templateSetting.Module.Id,
+                MicroserviceModuleFk = module.Id,
+                LabelFk = label.Id,
+                Key = string.Format(templateSetting.Key, label.Name.ToPascalCase()),
+                Value = templateSetting.Value,
+                DataValue = templateSetting.DataValue.Replace("{0}", label.Name.ToPascalCase()),
+                SettingType = templateSetting.SettingType,
+                Description = string.Format(templateSetting.Description, label.Name.ToPascalCase())
+            };
+    }
+    static AmsNeo4JMicroserviceModuleSetting GetClone(AmsNeo4JMicroserviceModuleSettingTemplate templateSetting, AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
+    {
+        var format = string.Format(templateSetting.Key, label.Name);
+        return new AmsNeo4JMicroserviceModuleSetting
+            {
+                MicroserviceModuleFk = module.Id,
+                LabelFk = label.Id,
+                Key = format,
+                Value = templateSetting.Value,
+                DataValue = templateSetting.DataValue.Replace("{0}", label.Name),
+                SettingType = templateSetting.SettingType,
+                Description = string.Format(templateSetting.Description, label.Name)
+            };
+    }
+
+    public static string? GetValue(AmsNeo4JMicroserviceModuleSettingTemplate context)
+    {
+        if (context.Value != null)
+            return context.Value;
+        var handler = JObject.Parse(context.DataValue);
+        return handler["Name"]?.ToString().WithWrappers("Handler : ", "");
+    }
+
+
+    async Task DeleteHandlerSettingTemplate(AmsNeo4JMicroserviceModuleSettingTemplate context)
+    {
+        var boxEx = await DialogService.ShowMessageBoxEx(new MessageBoxOptions()
+            {
+                Title = "Delete Handler Template",
+                Message = $"Are you sure you want Delete the ({context.Key}) handler ?",
+                YesText = "Yes",
+                CancelText = "No"
+            }, new DialogOptionsEx());
+        if (boxEx is true)
+        {
+            DataService?.DeleteModuleSettingTemplate(context);
+            _genericHandlers?.Remove(context);
+        }
+    }
+
+    async Task CopyToSelectedLabels(AmsNeo4JMicroserviceModuleSettingTemplate context)
+    {
+        await CopyToAnotherModule(context, _tableRef.SelectedItems);
+    }
+
+    async Task ApplyAllHandlersToSelectedLabels()
+    {
+        foreach (var handler in _genericHandlers)
+        {
+            await CopyToSelectedLabels(handler);
+        }
+
+        Snackbar?.Add("All DONE !", Severity.Normal);
+    }
+
+    string? _generatedCode;
+    HashSet<AmsNeo4JNodeLabel> _selectedEntities;
+
+    string? GenerateDataStoreCode(HashSet<AmsNeo4JNodeLabel> selectedLabels)
+    {
+        var code = CodeGeneratorService?.GenerateBPDataStore(selectedLabels,new List<AmsNeo4JNodeRelation>());
+
+        return code;
+    }
+
+    HashSet<AmsNeo4JNodeLabel> SelectedEntities
+    {
+        get => _selectedEntities;
+        set
+        {
+            _selectedEntities = value;
+            _generatedCode = GenerateDataStoreCode(_tableRef.SelectedItems);
+
+        }
+    }
+
+    
+    [Inject] IJsApiService JsApiService { get; set; }
+    
+    async Task CopyGenCodeToClipboardClick()
+    {
+        await JsApiService.CopyToClipboardAsync(_generatedCode);
+        Snackbar?.Add("Generated code copied to clipboard successfully.", Severity.Info);
+    }
+
+}

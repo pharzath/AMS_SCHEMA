@@ -1,0 +1,77 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+
+@using Olive
+@using System.Web
+@using AMS.Model
+@using AMS.Model.Services
+@implements IHaveDestinationFilePath
+using Orleans;
+
+namespace @(Module).@Label.Name.ToPascalCase();
+
+[GenerateSerializer]
+public class @(Label.Name.ToPascalCase())Dto
+{
+    #region Header Code
+    #endregion
+
+    [Id(0)]
+    public Guid Id { get; set; }
+
+@foreach (var property in Label.Properties)
+{<text>
+     [Id(@(i++))] @("AlternateGrainKey".OnlyWhen(property.AlternateGrainKey is true).WithWrappers("/* "," */"))
+     public @property.DataType @property.Name { get; set; }
+
+ </text>}
+
+    #region Footer Code
+    #endregion
+
+}
+
+@code {
+    int i = 1;
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public AmsNeo4JMicroserviceModule Module { get; set; }
+
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> FromRelations { get; set; }
+
+    [Parameter]
+    public IEnumerable<string> Requests { get; set; }
+
+    // [Parameter]
+    // public List&lt;AmsNeo4JNodeConstraint> Constraints { get; set; }
+
+    string GetParentClass()
+    {
+        if (Label.ParentLabel is { })
+        {
+            return Label.ParentLabel.Name.ToPascalCase();
+        }
+
+        return $"AbstractEntity&lt;{Label.Name.ToPascalCase()}, Guid>";
+    }
+
+    string IsNullable(AmsNeo4JNodeLabelProperty fld)
+    {
+        return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL"))
+            ? ""
+            : "?";
+    }
+    string GetToSafeName(AmsNeo4JNodeRelation rel)
+    {
+        if (rel.From.Name == rel.To.Name)
+            return "Sub" + rel.To.Name;
+        return rel.To.Name;
+    }
+
+    [Parameter]
+    public string DestFilePath { get; set; }
+}

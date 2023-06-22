@@ -3,17 +3,23 @@
 
 @using Olive
 @using System.Web
+@using AMS.Model
 @using AMS.Model.Services
 @using AMS_SCHEMA.Application.ExtensionMethods
 using System.ComponentModel.DataAnnotations.Schema;
 using Newtonsoft.Json;
-using QOQNOS.Core;
+using QOQNOS.CORE.data;
+@foreach (var ns in _nameSpaces){
+<text>
+using @ns;
+</text>}
+namespace @Module.Name;
 
-namespace AMS.Model;
 // #@Label.DisplayName#
-[Table("@Label.Name")]
-public partial class @Label.Name : @GetParentClass()
+[GenerateSerializer]
+public partial class @(Label.Name) : @GetParentClass()
 {
+
 #region Neo4J
 
     public static string L = "@Label.Name";
@@ -103,6 +109,7 @@ public partial class @Label.Name : @GetParentClass()
     /// @fld.DisplayName - @fld.Description.OrEmpty().ReplaceLineEndings(" , ")
     /// </summary>
     [JsonProperty("@fld.Neo4jName")]
+    [Id(@(_propCounter++))@("AlternateGrainKey".OnlyWhen(fld.AlternateGrainKey is true).WithWrappers(", " ,""))]
     public @(fld.DataType.GetColumnDataType())@IsNullable(fld) @fld.Name { get; set; }
     </text>}
 
@@ -116,6 +123,7 @@ public partial class @Label.Name : @GetParentClass()
         <text>
         [Column("@rel.RelType.Name")]
         [InverseProperty("@rel.GetRelationFrom_InversCollectionName(relationFroms)")]
+        [Id(@(_propCounter++))]
         public ICollection&lt;@rel.To.Name> @rel.GetRelationTo_CollectionName(relationFroms) { get; set; }
         </text>
     }
@@ -126,6 +134,7 @@ public partial class @Label.Name : @GetParentClass()
         <text>
         // @rel.RelType.Name
         [InverseProperty("@rel.GetRelationTo_InversCollectionName(InRelations)")]
+        [Id(@(_propCounter++))]
         public ICollection&lt;@rel.From.Name> @rel.GetRelationFrom_CollectionName(InRelations) { get; set; }
         </text>
     }
@@ -136,8 +145,13 @@ public partial class @Label.Name : @GetParentClass()
 
 @code {
 
+    int _propCounter = 0;
+
     [Inject]
     public DataService DataService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JMicroserviceModule Module { get; set; }
 
     [Parameter]
     public AmsNeo4JNodeLabel Label { get; set; }
@@ -150,6 +164,27 @@ public partial class @Label.Name : @GetParentClass()
 
     // [Parameter]
     // public List<AmsNeo4JNodeConstraint> Constraints { get; set; }
+    List<string?>? _nameSpaces = null;
+    protected override void OnInitialized()
+    {
+        var amsNeo4JNodeLabels = Relations
+            .Where(x => x.From != null || x.To != null)
+            .SelectMany(item => new List<AmsNeo4JNodeLabel> { item.From , item.To })
+            .ToList();
+
+        _nameSpaces = amsNeo4JNodeLabels
+            .Where(x => x.Microservice != null && x.Microservice.Id != Module.MicroserviceFk)
+            .Distinct(x => x.Microservice?.Id)
+            .SelectMany(lbl => lbl.Microservice.Modules.Where(x=> x.ModuleType == Module.ModuleType))
+            .Select(x=>x.Name)
+            .ToList();
+
+        var parentNs = Label.ParentLabel?.Microservice?.Modules.First(x=>x.ModuleType == Module.ModuleType);
+        if(parentNs!=null)
+            _nameSpaces.Add(parentNs.Name);
+
+        base.OnInitialized();
+    }
 
     string GetParentClass()
     {
@@ -158,12 +193,15 @@ public partial class @Label.Name : @GetParentClass()
             return Label.ParentLabel.Name;
         }
 
-        return $"AbstractEntity<{Label.Name}, Guid>";
+        //return $"AbstractEntity<{Label.Name}, Guid>";
+        return $" EntityBase ";
     }
 
     string IsNullable(AmsNeo4JNodeLabelProperty fld)
     {
-        return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL")) 
+        
+        return fld.AllowNull is null or false || 
+               fld.Label.Constraints.Any(x => x.Over == fld.Name && x.Type is "IS NODE KEY" or "IS NOT NULL")
             ? "" 
             : "?";
     }

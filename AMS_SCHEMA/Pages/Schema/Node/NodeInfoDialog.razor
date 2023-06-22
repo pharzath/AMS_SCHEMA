@@ -1,17 +1,16 @@
-﻿@using AMS.Model.Models
-@using AMS.Model.Services
-@using AMS_SCHEMA.Class
-@using AMS_SCHEMA.Pages.Schema.Index
+﻿@using AMS_SCHEMA.Pages.Schema.Index
 @using AMS_SCHEMA.Pages.Schema.Label
 @using AMS_SCHEMA.Pages.Schema.Constraint
 @using AMS_SCHEMA.Pages.Schema.Department
+@using AMS_SCHEMA.Pages.Schema.Label.CodeGen
+@using AMS_SCHEMA.Pages.Schema.Label.Module
 @using AMS_SCHEMA.Pages.Schema.Label.Property
 @using AMS_SCHEMA.Pages.Schema.Query
 @using AMS_SCHEMA.Pages.Schema.Relation
 @using AMS_SCHEMA.Pages.Schema.Required
 @using Olive
 
-<MudDialog>
+<MudDialog Class="Xmud-ex-dialog-initial">
     <DialogContent>
         <MudGrid>
             <MudItem sm="3" md="3">
@@ -38,20 +37,38 @@
 
             </MudItem>
             <MudItem sm="9" md="9">
-                <LabelListComponent @ref="_labelList" Label="SelectedLabel"></LabelListComponent>
+                <MudStack Row="true" Spacing="2">
+                    <LabelListComponent @ref="_labelList" Label="SelectedLabel"></LabelListComponent>
+                    
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" Size="Size.Small" Color="Color.Info" StartIcon="@Icons.TwoTone.Info" OnClick="ClassConfigurationClick">
+                        Class Configuration
+                        
+                    </MudButton>
+
+                </MudStack>
+
                 @if (!SelectedLabel.Description.IsEmpty())
                 {
-                    <MudPaper Class="ma-2 pa-3"  Elevation="2">
-                        <MudText Typo="Typo.h6" Color="Color.Info" >
+                    <MudPaper Class="ma-2 pa-3" Elevation="2">
+                        <MudText Typo="Typo.h6" Color="Color.Info">
                             @SelectedLabel.Description
                         </MudText>
                     </MudPaper>
                 }
 
-                <MudTabs Class="height:100%">
+                <MudTabs Class="height:100%" @ref="_tabs">
                     <MudContainer Style="min-height: 400px; max-height: 600px; overflow-y: scroll;">
                         <MudTabPanel Text="Node, Labels and PropertiesDict" Icon="@Icons.Filled.Workspaces">
                             <PropertyListComponent Label="SelectedLabel"></PropertyListComponent>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Code Gen" Icon="@Icons.Filled.GeneratingTokens" BadgeColor="Color.Primary">
+                            <CodGenCongListComponent Label="SelectedLabel"></CodGenCongListComponent>
+                        </MudTabPanel>
+
+                        <MudTabPanel Text="Module Setting" Icon="@Icons.Filled.ViewModule" BadgeColor="Color.Warning">
+                            <ModuleSettingPanel Label="SelectedLabel"></ModuleSettingPanel>
                         </MudTabPanel>
 
                         <MudTabPanel Text="Relation" Icon="@Icons.Filled.CompareArrows" BadgeColor="Color.Secondary">
@@ -89,123 +106,3 @@
         </MudButton>
     </DialogActions>
 </MudDialog>
-
-@code {
-    AmsNeo4JNodeLabelTreenNode? _selectedTreeNodeLabel;
-    AmsNeo4JNodeLabel? _selectedLabel;
-    LabelListComponent? _labelList;
-
-    [Inject] DataService DataService { get; set; }
-    [Inject] IDialogService DialogService { get; set; }
-
-    [CascadingParameter]
-    public MudDialogInstance DialogInstance { get; set; }
-
-    [Parameter]
-    public AmsNeo4JNode Node { get; set; }
-
-    [Parameter]
-    public AmsNeo4JNodeLabel? SelectedLabel
-    {
-        get => _selectedLabel;
-        set
-        {
-            _selectedLabel = value;
-            _selectedTreeNodeLabel ??= FindNode(RootLabels, _selectedLabel?.Id);
-        }
-    }
-
-    protected override void OnInitialized()
-    {
-        Console.Clear();
-        base.OnInitialized();
-    }
-
-    AmsNeo4JNodeLabelTreenNode? _tmp;
-    AmsNeo4JNodeLabelTreenNode? FindNode(HashSet<AmsNeo4JNodeLabelTreenNode> parents, long? id)
-    {
-        _tmp = Enumerable.FirstOrDefault(parents, x => x.Label.Id == id);
-        if (_tmp != null)
-            return _tmp;
-
-        foreach (var parent in parents)
-        {
-            FindNode(parent.Items, id);
-        }
-        return _tmp;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && Node.Name.StartsWith("New"))
-        {
-            await EditNodeClick();
-            await _labelList?.EditLabelClick(SelectedLabel)!;
-        }
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
-
-    async Task EditNodeClick()
-    {
-        var reference = DialogService.Show<NodeDialog>("Node",
-            new DialogParameters()
-                {
-                    ["Node"] = Node
-                },
-            new DialogOptions()
-                {
-                    FullWidth = true,
-                    MaxWidth = MaxWidth.Medium
-                });
-        await reference.Result;
-        StateHasChanged();
-    }
-
-    void SaveAndCloseClick()
-    {
-        DataService.SaveNode(Node);
-        DialogInstance.Close();
-    }
-
-
-
-    Task<HashSet<AmsNeo4JNodeLabelTreenNode>> LoadServerData(AmsNeo4JNodeLabelTreenNode label)
-    {
-        HashSet<AmsNeo4JNodeLabelTreenNode> children = DataService.GetChildLabels(label);
-        return Task.FromResult(children);
-    }
-
-    public HashSet<AmsNeo4JNodeLabelTreenNode> RootLabels
-    {
-        get
-        {
-            var root = Utils.GetNodes(DataService, Node);
-            _selectedLabel ??= root.FirstOrDefault()?.Label;
-            return root;
-        }
-    }
-
-
-    void AddNewSubLabelClick(AmsNeo4JNodeLabelTreenNode context)
-    {
-        var newLabel = AmsNeo4JNodeLabel.CreateNewLabel(context.Label);
-
-        DataService.SaveLabel(newLabel);
-        StateHasChanged();
-    }
-
-
-    public AmsNeo4JNodeLabelTreenNode? SelectedTreeNodeLabel
-    {
-        get => _selectedTreeNodeLabel;
-        set
-        {
-            _selectedTreeNodeLabel = value;
-            SelectedLabel = _selectedTreeNodeLabel?.Label;
-        }
-    }
-
-
-}
-

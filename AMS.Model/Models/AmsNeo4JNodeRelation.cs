@@ -5,15 +5,24 @@ namespace AMS.Model.Models;
 
 public partial class AmsNeo4JNodeRelation
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public long? FromFk { get; set; }
+    public bool IsRequiredRelation { get; set; }
 
-    public long? ToFk { get; set; }
+    public int? FromFk { get; set; }
 
-    public long? TypeFk { get; set; }
+    public int? ToFk { get; set; }
+
+    public int? TypeFk { get; set; }
 
     public string? Description { get; set; }
 
-    public string Guid { get; set; } = null!;
+    public string? InEntPropName { get; set; }
+    
+    public EntPropTypeEnum InEntPropType { get; set; }
+    
+    public string? OutEntPropName { get; set; }
+    
+    public EntPropTypeEnum OutEntPropType { get; set; }
 }
+

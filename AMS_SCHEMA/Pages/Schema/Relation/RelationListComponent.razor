@@ -11,9 +11,14 @@
 
     <MudTable Items="NodeRelations">
         <HeaderContent>
-            <MudTd>From</MudTd>
-            <MudTd>Rel</MudTd>
-            <MudTd>To</MudTd>
+            <MudTd>From (In Entity)</MudTd>
+            <MudTd>Ent. Prop</MudTd>
+            <MudTd>Ent. Prop Type</MudTd>
+            <MudTd>Optional</MudTd>
+            <MudTd>Rel (Neo4j Name)</MudTd>
+            <MudTd>To (Out Entity)</MudTd>
+            <MudTd>Ent. Prop</MudTd>
+            <MudTd>Ent. Prop Type</MudTd>
             <MudTd></MudTd>
             <MudTd></MudTd>
         </HeaderContent>
@@ -26,16 +31,19 @@
                     </MudChip>
                     <MudText Typo="Typo.overline">@context.From.DisplayName</MudText>
                 </MudStack>
-
-
             </MudTd>
+
+            <MudTd>@context.InEntPropName</MudTd>
+            <MudTd>@context.InEntPropType</MudTd>
+            <MudTd>
+                <MudCheckBox Checked="context.IsRequiredRelation" ReadOnly="true"></MudCheckBox>
+            </MudTd>
+
             <MudTd>
                 <MudStack Row="false" Spacing="0">
-                    <MudText Typo="Typo.caption">@context.RelType.Name.WithWrappers("[:", "]")</MudText>
-                    <MudText Typo="Typo.caption">@context.RelType.DisplayName.WithWrappers("[:", "]")</MudText>
+                    <MudText Typo="Typo.caption">@context.RelType?.Name.WithWrappers("[:", "]")</MudText>
+                    <MudText Typo="Typo.caption">@context.RelType?.DisplayName.WithWrappers("[:", "]")</MudText>
                 </MudStack>
-
-
             </MudTd>
             <MudTd>
                 <MudStack Row="false" Spacing="0">
@@ -47,10 +55,12 @@
                 </MudStack>
 
             </MudTd>
+
+            <MudTd>@context.OutEntPropName</MudTd>
+            <MudTd>@context.OutEntPropType</MudTd>
+
             <MudTd>
-                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.TwoTone.Edit" OnClick="() => EditNodeRelation(context)">
-                    Edit
-                </MudButton>
+                <MudIconButton Icon="@Icons.TwoTone.Edit" Color="Color.Info" OnClick="() => EditNodeRelation(context)"></MudIconButton>
             </MudTd>
             <MudTd>
                 <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteRelationClick(context)"></MudIconButton>

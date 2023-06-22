@@ -1,0 +1,159 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+
+@using Olive
+@using AMS.Model
+@using AMS_SCHEMA.CodeGenerator
+@using Microsoft.EntityFrameworkCore
+
+<MudContainer Style="max-height: 600px;overflow-y: scroll">
+
+    @if (Label.Microservice is { })
+    {
+        <MudCard>
+            <MudCardContent>
+                <MudChip Size="Size.Small">
+                    <MudChip Color="Color.Info" Style="@($"background-color: {Label.Color}".OnlyWhen(!Label.Color.IsEmpty()))">
+                        <LabelIconComponent Label="Label"></LabelIconComponent>
+                        <MudText Typo="Typo.body1">@Label.Name</MudText>
+                    </MudChip>
+                    Assigned to Microservice [@Label.Microservice]
+                    <MudButton Variant="Variant.Text" Color="Color.Error" FullWidth="true" Size="Size.Small" Class="my-3"
+                               StartIcon="@Icons.TwoTone.ViewModule" OnClick="RemoveLabelToModule">
+                        UnAssign
+                    </MudButton>
+
+                </MudChip>
+
+            </MudCardContent>
+
+        </MudCard>
+    }
+
+    <MudGrid>
+        <MudItem sm="12" md="6">
+            <MudSelect T="AmsNeo4JProject" @bind-Value="_project" Label="Project">
+                @if (_projects != null)
+                {
+                    @foreach (var p in _projects)
+                    {
+                        <MudSelectItem Value="p">@p</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem sm="12" md="6">
+            <MudSelect T="AmsNeo4JMicroservice" @bind-Value="_microservice" Label="Microservice">
+                @if (_project is { Id: > 0 })
+                {
+                    @foreach (var ms in _microservices.Where(x => x.ProjectFk == _project.Id))
+                    {
+                        <MudSelectItem Value="ms">@ms</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+        </MudItem>
+
+
+        @if (Label.Microservice is { })
+        {
+            <MudTable Items="_microserviceModules?.OrderBy(x=>x.Name)">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        @context.Name
+                        <MudText Typo="Typo.caption" Color="Color.Warning">
+                            (@context.RootFolder)
+                        </MudText>
+
+                    </MudTd>
+
+                    <MudTd>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.TwoTone.GeneratingTokens" OnClick="()=>Generate(context)">
+                            @context.ModuleType
+                        </MudButton>
+
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+
+        }
+
+
+        @*<MudItem sm="12" md="6">
+        <MudSelect T="AmsNeo4JMicroserviceModule" @bind-Value="_microserviceModule" Label="Microservice Module">
+        @if (_microservice is {Id: > 0 } )
+        {
+        @foreach (var msm in microserviceModules.Where(x => x.MicroserviceFk == _microservice.Id))
+        {
+        <MudSelectItem Value="msm">@msm</MudSelectItem>
+        }
+        }
+        </MudSelect>
+        </MudItem>*@
+    </MudGrid>
+
+    @if (Label.MicroserviceFk is null or 0 && _microservice is { })
+    {
+        <MudButton Variant="Variant.Outlined" Color="Color.Tertiary"
+                   StartIcon="@Icons.TwoTone.ViewModule" OnClick="AddLabelToModule">
+            Assign (@Label.Name) Label To Microservice [@_microservice]
+        </MudButton>
+    }
+
+</MudContainer>
+
+@code {
+
+    List<AmsNeo4JProject>? _projects;
+    List<AmsNeo4JMicroservice>? _microservices;
+    List<AmsNeo4JMicroserviceModule>? _microserviceModules;
+    AmsNeo4JProject? _project;
+    AmsNeo4JMicroservice? _microservice;
+    AmsNeo4JMicroserviceModule? _microserviceModule;
+
+    [Parameter]
+    public required AmsNeo4JNodeLabel Label { get; set; }
+
+    [Inject]
+    public required DataService DataService { get; set; }
+
+    [Inject]
+    public required IDialogService DialogService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _projects = await DataService.GetProjects()?.ToListAsync()!;
+        _microservices = await DataService.GetMiroservices( Label.Microservice?.Project?.Id ?? 0)?.ToListAsync()!;
+        _project = Label.Microservice?.Project;
+        _microservice = Label.Microservice;
+        _microserviceModules = await DataService.GetMiroserviceModules(Label.Microservice?.Id ?? 0)?.ToListAsync()!;
+        await base.OnInitializedAsync();
+    }
+
+    async Task AddLabelToModule()
+    {
+        Label.Microservice = _microservice!;
+        await DataService.SaveLabel(Label);
+        _microserviceModules = await DataService.GetMiroserviceModules(Label.Microservice?.Id ?? 0)?.ToListAsync()!;
+    }
+
+    async Task RemoveLabelToModule()
+    {
+        Label.MicroserviceFk = null;
+        await DataService.SaveLabel(Label);
+        _microserviceModules = await DataService.GetMiroserviceModules(Label.Microservice?.Id ?? 0)?.ToListAsync()!;
+    }
+
+    [Inject] CodeGeneratorService CodeGeneratorService { get; set; }
+
+    void Generate(AmsNeo4JMicroserviceModule module)
+    {
+        CodeGeneratorService.GenerateModule(Label, module);
+    }
+
+}

@@ -4,6 +4,16 @@
 <MudDialog>
     <DialogContent>
         <MudGrid>
+            <MudItem sm="12" md="12">
+                <SchemaExplorerRelationComponent Relation="NodeRelation" Direction="Direction" ViewOnly="true" />
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudStack Row="true" Spacing="2">
+                    <MudText Typo="Typo.body2">Relation Type :</MudText>
+                    <MudText Typo="Typo.subtitle1">Optional</MudText>
+                    <MudSwitch @bind-Checked="NodeRelation.IsRequiredRelation" Label="Required"></MudSwitch>
+                </MudStack>
+            </MudItem>
             <MudItem sm="12" md="4">
                 <MudAutocomplete T="AmsNeo4JNodeLabel" SearchFunc="@PrepareLabel" @bind-Value="NodeRelation.From" Label="From">
                     <ItemTemplate>
@@ -39,6 +49,21 @@
                     </ItemTemplate>
                 </MudAutocomplete>
             </MudItem>
+            <MudItem sm="12" md="6">
+                <MudTextField @bind-Value="NodeRelation.InEntPropName" Clearable="true" Label=@(NodeRelation.From.Name.WithWrappers(""," Property"))></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudExEnumSelect TEnum="EntPropTypeEnum" @bind-Value="NodeRelation.InEntPropType" Label=@(NodeRelation.InEntPropName.OrEmpty().WithWrappers($"{NodeRelation.From.Name} "," Property Type"))></MudExEnumSelect>
+                <MudIconButton Icon="@Icons.TwoTone.GeneratingTokens" Color="Color.Warning" OnClick="GetInEntPropClick"></MudIconButton>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudTextField @bind-Value="NodeRelation.OutEntPropName" Clearable="true" Label=@(NodeRelation.To.Name.WithWrappers(""," Property"))></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudExEnumSelect TEnum="EntPropTypeEnum" @bind-Value="NodeRelation.OutEntPropType" Label=@(NodeRelation.OutEntPropName.OrEmpty().WithWrappers($"{NodeRelation.To.Name} "," Property Type"))></MudExEnumSelect>
+                <MudIconButton Icon="@Icons.TwoTone.GeneratingTokens" Color="Color.Warning" OnClick="GetOutEntPropClick"></MudIconButton>
+            </MudItem>
+
             <MudItem sm="12" md="12">
                 <MudTextField Lines="10" Label="DisplayName" @bind-Value="NodeRelation.Description"></MudTextField>
             </MudItem>
@@ -65,6 +90,9 @@
     [Parameter]
     public AmsNeo4JNodeRelation NodeRelation { get; set; }
 
+    [Parameter]
+    public SchemaNodeExplorerPage.RelDirection Direction { get; set; }
+
     void SaveAndCloseClick()
     {
 
@@ -73,13 +101,31 @@
         DialogInstance.Close();
     }
 
-    private Task<IEnumerable<AmsNeo4JNodeLabel>> PrepareLabel(string value)
+    private Task<IEnumerable<AmsNeo4JNodeLabel?>> PrepareLabel(string value)
     {
-        if (string.IsNullOrEmpty(value))
-            return Task.FromResult(Enumerable.Empty<AmsNeo4JNodeLabel>());
-
-        return Task.FromResult(DataService.SearchLabels(value).AsEnumerable());
+        return Task.FromResult(string.IsNullOrEmpty(value) 
+            ? Enumerable.Empty<AmsNeo4JNodeLabel?>() : DataService.SearchLabels(value).AsEnumerable());
     }
 
+
+    void GetOutEntPropClick()
+    {
+        NodeRelation.OutEntPropName = NodeRelation.OutEntPropType switch
+        {
+            EntPropTypeEnum.Collection => NodeRelation.From?.Name.ToPlural(),
+            EntPropTypeEnum.Lookup => NodeRelation.From?.Name,
+            _ => NodeRelation.OutEntPropName
+            };
+    }
+
+    void GetInEntPropClick()
+    {
+        NodeRelation.InEntPropName = NodeRelation.InEntPropType switch
+        {
+            EntPropTypeEnum.Collection => NodeRelation.To?.Name.ToPlural(),
+            EntPropTypeEnum.Lookup => NodeRelation.To?.Name,
+            _ => NodeRelation.InEntPropName
+            };
+    }
 
 }

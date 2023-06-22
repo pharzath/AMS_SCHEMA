@@ -74,8 +74,11 @@
     [Parameter]
     public AmsNeo4JNodeLabel Label { get; set; }
 
+    // [Parameter]
+    // public EntityBase Entity { get; set; }
+
     [Parameter]
-    public EntityBase Entity { get; set; }
+    public MyNode MyNode { get; set; }
 
     List<AmsNeo4JNodeLabel>? _labels = null;
     IEnumerable<AmsNeo4JNodeLabelProperty>? _fullProps = null;
@@ -88,7 +91,7 @@
 
     protected override void OnParametersSet()
     {
-        _fullProps ??= Label.PropertiesFull(JObject.FromObject(Entity));
+        _fullProps ??= Label.PropertiesFull(JObject.FromObject(MyNode.Jobj));
         _labels ??= DataService.GetParentLabelsAndThis(Label).OrderBy(x => x.ParentLabelId).ToList();
         base.OnParametersSet();
     }

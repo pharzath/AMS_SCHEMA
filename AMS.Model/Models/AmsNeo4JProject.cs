@@ -5,13 +5,15 @@ namespace AMS.Model.Models;
 
 public partial class AmsNeo4JProject
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public string? Name { get; set; }
+    public string? Name { get; set; } // QOQNOS EMS
 
-    public string? DisplayName { get; set; }
+    public string? DisplayName { get; set; } // Some Persian Text
 
-    public string? Guid { get; set; }
+    public required string RootPath { get; set; } // E:\\QOQNOS
+    
+    public required string Namespace { get; set; } // QOQNOS
 
     public string? Description { get; set; }
 }

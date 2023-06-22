@@ -13,17 +13,16 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Caching.Memory;
 using Olive;
 using QOQNOS.Core;
-using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace AMS.Model.Services
 {
-    public class DataService
+    public class DataService : IDisposable
     {
         readonly MyCachProvider _cachProvider;
-        public QonosSchemaContext DbContext { get; }
+        public MyDbContext DbContext { get; }
         public AmsNeo4JProject? SelectedProject { get; set; }
 
-        public DataService(QonosSchemaContext dbContext,
+        public DataService(MyDbContext dbContext,
                            MyCachProvider cachProvider)
         {
             _cachProvider = cachProvider;
@@ -31,18 +30,22 @@ namespace AMS.Model.Services
         }
 
 
+        object RootLabelLock = 0;
         public List<AmsNeo4JNodeLabel> GetRootLabels(AmsNeo4JNode node)
         {
-            var lables = GetLabels()
-            .Where(x => x.NodeId == node.Id && x.ParentLabelId == null);
-            var data = lables.ToList();
-            return data;
+            lock (RootLabelLock)
+            {
+                var lables = GetLabels()
+                    .Where(x => x?.NodeId == node.Id && x?.ParentLabelId == null);
+                var data = lables.ToList();
+                return data;
+            }
         }
 
         public List<AmsNeo4JNodeLabel> GetSubLabels(AmsNeo4JNode node)
         {
             var lables = GetLabels()
-                .Where(x => x.NodeId == node.Id && x.ParentLabelId != null);
+                .Where(x => x?.NodeId == node.Id && x?.ParentLabelId != null);
             var data = lables.ToList();
             return data;
         }
@@ -88,9 +91,10 @@ namespace AMS.Model.Services
             return relations;
         }
 
-        public List<AmsNeo4JNodeConstraint> GetNodeConstraints()
+        public List<AmsNeo4JNodeConstraint>? GetNodeConstraints()
         {
-            return _cachProvider.GetOrCreate(_cachProvider.CreateCachKey<AmsNeo4JNodeConstraint>(nameof(GetNodeConstraints)), _ =>
+            return _cachProvider.GetOrCreate(
+                _cachProvider.CreateCachKey<AmsNeo4JNodeConstraint>(nameof(GetNodeConstraints)), _ =>
             {
                 return DbContext.AmsNeo4JNodeConstraints
                     .Include(x => x.Label)
@@ -101,7 +105,7 @@ namespace AMS.Model.Services
 
         public List<AmsNeo4JNodeConstraint> GetNodeConstraints(AmsNeo4JNodeLabel label)
         {
-            return GetNodeConstraints().Where(x => x.LabelFk.Value == label.Id).ToList();
+            return GetNodeConstraints()?.Where(x => x.LabelFk.Value == label.Id).ToList();
         }
 
         IQueryable<AmsNeo4JNodeConstraint> AmsNeo4JNodeConstraints(AmsNeo4JNodeLabel label)
@@ -140,7 +144,7 @@ namespace AMS.Model.Services
 
         public List<AmsNeo4JNodeRelation> GetLabelRelationTos(AmsNeo4JNodeLabel lable)
         {
-            return GetRelations().Where(x => x.ToFk.Value == lable.Id).ToList();
+            return GetRelations().Where(x => x.ToFk == lable.Id).ToList();
 
         }
 
@@ -165,15 +169,16 @@ namespace AMS.Model.Services
             return relations;
         }
 
-        public void SaveLabel(AmsNeo4JNodeLabel label)
+        public async Task SaveLabel(AmsNeo4JNodeLabel label)
         {
-            if (label.Node.Name.StartsWith("New")) label.Node.Name = label.Name;
+            if (label.Node.Name.StartsWith("New"))
+                label.Node.Name = label.Name;
             DbContext.AmsNeo4JNodeLabels.Update(label);
-            DbContext.SaveChanges();
+            await DbContext.SaveChangesAsync();
             _cachProvider.ExpireCachKeys(label);
         }
 
-        public List<AmsNeo4JNodeRelationType> GetRelationTypes()
+        public List<AmsNeo4JNodeRelationType>? GetRelationTypes()
         {
             return _cachProvider.GetOrCreate(_cachProvider.CreateCachKey<AmsNeo4JNodeRelationType>(nameof(GetRelationTypes)), _ =>
             {
@@ -193,7 +198,7 @@ namespace AMS.Model.Services
             _cachProvider.ExpireCachKeys(nodeRelation);
         }
 
-        public List<AmsNeo4JNode> GetNodes(string? search = null,
+        public IQueryable<AmsNeo4JNode> GetNodes(string? search = null,
             IEnumerable<AmsNeo4JDepartment>? amsmoduleDepartments = null,
             bool? andSelectDepartment = null)
         {
@@ -215,10 +220,17 @@ namespace AMS.Model.Services
                             .ThenInclude(x => x.Constraints)
 
                             .Include(x => x.Label)
+                            .ThenInclude(x => x.Microservice)
+                            .ThenInclude(x => x.Modules)
+
+                            .Include(x => x.Label)
+                            //.ThenInclude(x => x.ModuleSettings.Where(z=>z.LabelFk == x.Id ))
+
+                            .Include(x => x.Label)
                             .ThenInclude(x => x.Indices)
 
                             .Where(x => SelectedProject == null || x.ProjectFk == SelectedProject.Id)
-                            .ToList()
+                            //.ToList()
                         ;
                 });
 
@@ -232,11 +244,11 @@ namespace AMS.Model.Services
                     .ToList();
 
                 nodes = nodes.Where(x =>
-                                         nodeIds.Contains(x.Id) ||
-                                         x.Name.Contains(search) ||
-                                         x.DisplayName.OrEmpty().Contains(search)
-                )
-                    .ToList();
+                    nodeIds.Contains(x.Id) ||
+                    x.Name.Contains(search) ||
+                    x.DisplayName.OrEmpty().Contains(search)
+                );
+                //.ToList();
 
 
             }
@@ -249,8 +261,8 @@ namespace AMS.Model.Services
 
             var ids = amsmoduleDepartments.Select(d => d.DepartmentId).ToArray();
             nodes = andSelectDepartment is true
-                ? nodes.Where(x => x.Departments.Select(a => a.Department.DepartmentId).ContainsAll(ids)).ToList()
-                : nodes.Where(x => x.Departments.Select(a => a.Department.DepartmentId).ContainsAny(ids)).ToList();
+                ? nodes.Where(x => x.Departments.Select(a => a.Department.DepartmentId).ContainsAll(ids))//.ToList()
+                : nodes.Where(x => x.Departments.Select(a => a.Department.DepartmentId).ContainsAny(ids));//.ToList();
 
 
             return nodes;
@@ -329,11 +341,16 @@ namespace AMS.Model.Services
             return list;
         }
 
-        public List<AmsNeo4JDepartment> GetDepartments()
+        public IQueryable<AmsNeo4JDepartment> GetDepartments()
         {
             var list = _cachProvider.GetOrCreate(
-                _cachProvider.CreateCachKey<AmsNeo4JDepartment>(nameof(GetDepartments),SelectedProject?.Id ?? 0), _ =>
-                    DbContext.AmsNeo4JDepartments.Where(x=>SelectedProject == null || SelectedProject.Id == x.ProjectFk).ToList());
+                _cachProvider.CreateCachKey<AmsNeo4JDepartment>(nameof(GetDepartments), SelectedProject?.Id ?? 0), _ =>
+                {
+                    return DbContext.AmsNeo4JDepartments.Where(x =>
+                        SelectedProject == null || SelectedProject.Id == x.ProjectFk);
+                }
+                //.ToList()
+            );
             return list;
         }
 
@@ -384,7 +401,7 @@ namespace AMS.Model.Services
             {
                 return DbContext.AmsNeo4JNodeIndices
                     .Include(x => x.Label)
-                    .Where(x => ids.Contains<long>(x.LabelId.Value))
+                    .Where(x => ids.Contains<int>(x.LabelId))
                     .ToList();
             });
 
@@ -413,6 +430,19 @@ namespace AMS.Model.Services
             node.ProjectFk = SelectedProject?.Id ?? 1;
             DbContext.AmsNeo4JNodes.Update(node);
             DbContext.SaveChanges();
+            _cachProvider.ExpireCachKeys(node);
+        }
+
+        /// <exception cref="DbUpdateException">An error is encountered while saving to the database.</exception>
+        /// <exception cref="DbUpdateConcurrencyException">A concurrency violation is encountered while saving to the database.
+        ///                 A concurrency violation occurs when an unexpected number of rows are affected during save.
+        ///                 This is usually because the data in the database has been modified since it was loaded into memory.</exception>
+        /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
+        public async Task SaveNodeAsync(AmsNeo4JNode node)
+        {
+            node.ProjectFk = SelectedProject?.Id ?? 1;
+            DbContext.AmsNeo4JNodes.Update(node);
+            await DbContext.SaveChangesAsync();
             _cachProvider.ExpireCachKeys(node);
         }
 
@@ -447,7 +477,9 @@ namespace AMS.Model.Services
                         .ThenInclude(x => x.Label)
                         .ThenInclude(x => x.ChildLabels)
 
-                        .Where(x => SelectedProject == null || x.From.Node.ProjectFk == SelectedProject.Id || x.To.Node.ProjectFk == SelectedProject.Id)
+                        // .Where(x => SelectedProject == null || 
+                        // x.From?.Node.ProjectFk == SelectedProject.Id || 
+                        // x.To?.Node.ProjectFk == SelectedProject.Id)
                         .ToList()
                     ;
             });
@@ -457,9 +489,10 @@ namespace AMS.Model.Services
         }
         public List<AmsNeo4JNodeRelation> GetRelations(string? relationName)
         {
-            return GetRelations()
+            var amsNeo4JNodeRelations = GetRelations()
                 .Where(x => x.RelType.Name == relationName)
                 .ToList();
+            return amsNeo4JNodeRelations;
         }
 
         public void SaveRelationType(AmsNeo4JNodeRelationType relationType)
@@ -546,7 +579,7 @@ namespace AMS.Model.Services
             return labels.ToHashSet();
         }
 
-        public List<AmsNeo4JNodeLabel> GetLabels()
+        public List<AmsNeo4JNodeLabel?> GetLabels()
         {
             var list = _cachProvider.GetOrCreate(
                 _cachProvider.CreateCachKey<AmsNeo4JNodeLabel>(nameof(GetLabels), SelectedProject?.Id ?? 0),
@@ -566,12 +599,19 @@ namespace AMS.Model.Services
                         .Include(x => x.Constraints)
 
                         .Include(x => x.Indices)
+                        
+                        .Include(x => x.InheriteFromLabel)
+
+                        .Include(x => x.Microservice)
+                        .ThenInclude(x => x.Modules)
+                        //.AsNoTrackingWithIdentityResolution()
 
                         .Where(x => SelectedProject == null || x.Node.ProjectFk == SelectedProject.Id)
 
                         .OrderBy(x => x.ParentLabelId)
 
-                        .ToList();
+                        .ToList()
+                        ;
 
                 });
 
@@ -586,10 +626,10 @@ namespace AMS.Model.Services
                 : GetLabels().FirstOrDefault(x => x.Id == lbl.ParentLabelId);
         }
 
-        public List<AmsNeo4JNodeLabel> SearchLabels(string? search)
+        public List<AmsNeo4JNodeLabel?> SearchLabels(string? search)
         {
             return GetLabels()
-                .Where(x => x.Name.ToLower().Contains(search.ToLower()) || x.DisplayName.OrEmpty().Contains(search))
+                .Where(x => x != null && (x.Name.ToLower().Contains(search.ToLower()) || x.DisplayName.OrEmpty().Contains(search)))
                 .ToList();
         }
 
@@ -669,7 +709,6 @@ namespace AMS.Model.Services
         public void ClearCach()
         {
             _cachProvider.Clear();
-            Console.Clear();
         }
 
         public void DeleteLabelRequire(AmsNeo4JNodeLabelRequiredRelation context)
@@ -714,14 +753,17 @@ namespace AMS.Model.Services
             _cachProvider.Clear();
         }
 
-        public List<AmsNeo4JProject> GetProjects()
+        public IQueryable<AmsNeo4JProject>? GetProjects()
         {
-            return _cachProvider.GetOrCreate(_cachProvider.CreateCachKey<AmsNeo4JProject>(nameof(GetProjects)), _ =>
+
+            return _cachProvider.GetOrCreate(_cachProvider.CreateCachKey<AmsNeo4JProject>(nameof(GetProjects)),
+                _ =>
                 {
 
-                    var list = DbContext.AmsNeo4JProjects.ToList();
+                    var list = DbContext.AmsNeo4JProjects.AsQueryable();
                     return list;
                 });
+
         }
 
         public void SaveProject(AmsNeo4JProject project)
@@ -731,5 +773,199 @@ namespace AMS.Model.Services
             _cachProvider.ExpireCachKeys(project);
         }
 
+        public void SaveMicroservice(AmsNeo4JMicroservice microservice)
+        {
+            DbContext.AmsNeo4JMicroservices.Update(microservice);
+            DbContext.SaveChanges();
+            _cachProvider.ExpireCachKeys(microservice);
+        }
+
+        public void SaveMicroserviceModule(AmsNeo4JMicroserviceModule microserviceModule)
+        {
+            DbContext.AmsNeo4JMicroserviceModules.Update(microserviceModule);
+            DbContext.SaveChanges();
+            _cachProvider.ExpireCachKeys(microserviceModule);
+        }
+
+        public IQueryable<AmsNeo4JMicroservice>? GetMiroservices(int projectFk)
+        {
+            return _cachProvider.GetOrCreate(
+                _cachProvider.CreateCachKey<AmsNeo4JMicroservice>(nameof(GetMiroservices) + projectFk),
+                _ =>
+                {
+                    return DbContext.AmsNeo4JMicroservices
+                        //.AsNoTrackingWithIdentityResolution()
+                        .Include(x => x.Project )
+                        //.AsNoTrackingWithIdentityResolution()
+                        .Where(x => projectFk == 0 || x.ProjectFk == projectFk)
+                        //.ToList()
+                        ;
+                });
+        }
+
+        public IQueryable<AmsNeo4JMicroserviceModule>? GetMiroserviceModules(int msFk)
+        {
+
+            return _cachProvider.GetOrCreate(
+                _cachProvider.CreateCachKey<AmsNeo4JMicroserviceModule>(nameof(GetMiroserviceModules) + msFk),
+                _ =>
+                {
+                    return DbContext.AmsNeo4JMicroserviceModules
+                        //.AsNoTrackingWithIdentityResolution()
+                        .Include(x => x.Microservice)
+                        .Where(x => msFk == 0 || x.MicroserviceFk == msFk)
+                        //.ToList()
+                        ;
+                });
+        }
+
+        public void DeleteProject(AmsNeo4JProject prj)
+        {
+            DbContext.AmsNeo4JProjects.Remove(prj);
+            DbContext.SaveChanges();
+            _cachProvider.ExpireCachKeys();
+        }
+
+        public void DeleteMicroservice(AmsNeo4JMicroservice ms)
+        {
+            DbContext.AmsNeo4JMicroservices.Remove(ms);
+            DbContext.SaveChanges();
+            _cachProvider.ExpireCachKeys();
+        }
+
+        public void DeleteMicroserviceModule(AmsNeo4JMicroserviceModule msm)
+        {
+            DbContext.AmsNeo4JMicroserviceModules.Remove(msm);
+            DbContext.SaveChanges();
+            _cachProvider.ExpireCachKeys();
+        }
+
+        public void Dispose()
+        {
+            //DbContext.Dispose();
+        }
+
+        public List<AmsNeo4JMicroserviceModuleSetting>? GetLabelModuleSettings(AmsNeo4JNodeLabel label,
+            AmsNeo4JMicroserviceModule? module)
+        {
+            return GetLabelModuleSettings(label.Id, module?.Id);
+        }
+
+        public List<AmsNeo4JMicroserviceModuleSetting>? GetLabelModuleSettings(int labelId, int? moduleId)
+        {
+
+            return _cachProvider.GetOrCreate(
+                _cachProvider.CreateCachKey<AmsNeo4JMicroserviceModule>(nameof(GetLabelModuleSettings) + labelId+ "-" + moduleId),
+                _ =>
+                {
+                    var xx= DbContext.AmsNeo4JMicroserviceModuleSettings
+                        .Include(x => x.Label)
+                        .Include(x => x.Module);
+                    if (moduleId == null)
+                    {
+                        return xx
+                            .Where(x => x.LabelFk == labelId )
+                            .ToList();
+                    }
+
+                    return xx
+                            .Where(x => x.LabelFk == labelId &&  x.MicroserviceModuleFk == moduleId)
+                            .ToList()
+                        ;
+                });
+        }
+
+        public List<AmsNeo4JMicroserviceModuleSettingDefault>? GetMicroserviceModuleSettingDefaults(AmsNeo4JMicroserviceModule module)
+        {
+            return _cachProvider.GetOrCreate(
+                _cachProvider.CreateCachKey<AmsNeo4JMicroserviceModuleSettingDefault>(nameof(GetMicroserviceModuleSettingDefaults) + module.Id),
+                _ =>
+                {
+                    return DbContext.AmsNeo4JMicroserviceModuleSettingDefaults
+                            //.AsNoTrackingWithIdentityResolution()
+                            .Include(x => x.Module)
+                            .Where(x => x.MicroserviceModuleFk == module.Id)
+                            .ToList()
+                        ;
+                });
+
+        }
+
+        public void AddNewModuleSetting(AmsNeo4JMicroserviceModuleSetting setting)
+        {
+
+            DbContext.AmsNeo4JMicroserviceModuleSettings.Add(setting);
+            DbContext.SaveChanges();
+            ClearCach();
+        }
+        public void SaveModuleSetting(AmsNeo4JMicroserviceModuleSetting setting)
+        {
+
+            DbContext.AmsNeo4JMicroserviceModuleSettings.Update(setting);
+            DbContext.SaveChanges();
+            ClearCach();
+        }
+
+        public void SaveModuleSettingTemplate(AmsNeo4JMicroserviceModuleSettingTemplate setting)
+        {
+
+            DbContext.AmsNeo4JMicroserviceModuleSettingTemplates.Update(setting);
+            DbContext.SaveChanges();
+            ClearCach();
+        }
+
+        public List<AmsNeo4JMicroserviceModuleSettingTemplate> GetLabelModuleSettingTemplates()
+        {
+            return DbContext.AmsNeo4JMicroserviceModuleSettingTemplates.ToList();
+        }
+
+        public void DeleteModuleSettingTemplate(AmsNeo4JMicroserviceModuleSettingTemplate context)
+        {
+            DbContext.AmsNeo4JMicroserviceModuleSettingTemplates.Remove(context);
+            DbContext.SaveChanges();
+            ClearCach();
+        }
+
+        // public AmsNeo4JNodeLabelClassConfig? GetLabelClassConfig(AmsNeo4JNodeLabel? label)
+        // {
+        //     if(label == null) 
+        //         return null;
+        //
+        //     var firstOrDefault = DbContext.AmsNeo4JNodeLabelClassConfigs.FirstOrDefault(x=>x.LabelFk == label.Id);
+        //     return firstOrDefault;
+        // }
+        //
+        // public void SaveLabelClassConfig(AmsNeo4JNodeLabelClassConfig classConf)
+        // {
+        //     DbContext.AmsNeo4JNodeLabelClassConfigs.Update(classConf);
+        //     DbContext.SaveChanges();
+        // }
+
+        public IEnumerable<AmsNeo4JNodeLabelFunctionalId> GetFunctionalIds()
+        {
+             return DbContext.AmsNeo4JNodeLabelFunctionalIds.AsEnumerable(); 
+        }
+
+        /// <exception cref="DbUpdateException">An error is encountered while saving to the database.</exception>
+        /// <exception cref="DbUpdateConcurrencyException">A concurrency violation is encountered while saving to the database.
+        ///                 A concurrency violation occurs when an unexpected number of rows are affected during save.
+        ///                 This is usually because the data in the database has been modified since it was loaded into memory.</exception>
+        public void SaveFunctionalId(AmsNeo4JNodeLabelFunctionalId functionalId)
+        {
+            DbContext.AmsNeo4JNodeLabelFunctionalIds.Update(functionalId);
+            DbContext.SaveChanges();
+
+
+        }
+
+        /// <exception cref="DbUpdateException">An error is encountered while saving to the database.</exception>
+        /// <exception cref="DbUpdateConcurrencyException">A concurrency violation is encountered while saving to the database.
+        ///                 A concurrency violation occurs when an unexpected number of rows are affected during save.
+        ///                 This is usually because the data in the database has been modified since it was loaded into memory.</exception>
+        /// <exception cref="OperationCanceledException">If the <see cref="CancellationToken" /> is canceled.</exception>
+        public async Task SaveChanges()
+        {
+            await DbContext.SaveChangesAsync();
+        }
     }
 }

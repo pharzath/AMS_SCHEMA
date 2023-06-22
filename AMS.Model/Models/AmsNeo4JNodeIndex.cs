@@ -5,9 +5,9 @@ namespace AMS.Model.Models;
 
 public partial class AmsNeo4JNodeIndex
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public long? LabelId { get; set; }
+    public int LabelId { get; set; }
 
     public string? Type { get; set; }
 
@@ -15,5 +15,5 @@ public partial class AmsNeo4JNodeIndex
 
     public string? Command { get; set; }
 
-    public long? RelTypeId { get; set; }
+    public int? RelTypeId { get; set; }
 }

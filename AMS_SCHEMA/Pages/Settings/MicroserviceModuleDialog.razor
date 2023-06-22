@@ -1,0 +1,127 @@
+﻿@using AMS.Model
+@using Nextended.Core.DeepClone
+@using Nextended.Core.Extensions
+@using Olive
+@using FieldType = Nextended.Core.DeepClone.FieldType
+<MudDialog Class="mud-ex-dialog-initial">
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="12" md="4">
+                <MudTextField @bind-Value="Module.Microservice.Project.Name" Label="Project" ReadOnly="true"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="4">
+                <MudTextField @bind-Value="Module.Microservice.Name" Label="Microservce" ReadOnly="true"></MudTextField>
+            </MudItem>
+            <MudItem sm="12" md="4">
+                <MudExEnumSelect @bind-Value="ModuleType" TEnum="AmsNeo4JMicroserviceModule.ModuleTypeEnum" Label="Module Type"></MudExEnumSelect>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudTextField @bind-Value="Module.Name" Label="Name" Adornment="Adornment.End" AdornmentIcon="@Icons.TwoTone.Update" OnAdornmentClick="UpdateName"></MudTextField>
+                <MudText Typo="Typo.caption" Color="Color.Default">
+                    original value:  @_moduleOrig?.Name
+                </MudText>
+            </MudItem>
+            <MudItem sm="12" md="12">
+                <MudTextField @bind-Value="Module.RootFolder" Label="Root Folder" Adornment="Adornment.End" AdornmentIcon="@Icons.TwoTone.Update" OnAdornmentClick="UpdateFolder" >
+                    
+                </MudTextField>
+                <MudText Typo="Typo.caption" Color="Color.Default">
+                    original value:  @_moduleOrig?.RootFolder
+                </MudText>
+
+            </MudItem>
+
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseAction">
+            Cancel
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAction">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    AmsNeo4JMicroserviceModule? _moduleOrig;
+
+    [Parameter] 
+    public AmsNeo4JMicroserviceModule Module
+    {
+        get => _module;
+        set
+        {
+            _module = value;
+
+
+            ModuleType = _module.ModuleType;
+
+        }
+    }
+
+
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    void CloseAction()
+    {
+        _moduleOrig?.CloneTo(Module);
+        DialogInstance.Close(DialogResult.Cancel());
+    }
+
+    void SaveAction()
+    {
+        DialogInstance.Close(DialogResult.Ok(Module));
+    }
+
+    void ValueChanged(AmsNeo4JMicroserviceModule.ModuleTypeEnum obj)
+    {
+        if (_moduleOrig == null)
+        {
+            //_moduleOrig = Module?.Clone<AmsNeo4JMicroserviceModule>(FieldType.FieldInfo);
+        }
+        Module.ModuleType = obj;
+    }
+
+    [Parameter]
+    public AmsNeo4JMicroserviceModule.ModuleTypeEnum ModuleType
+    {
+        get => _moduleType;
+        set
+        {
+            _moduleType = value;
+            ValueChanged(value);
+        }
+    }
+
+    AmsNeo4JMicroserviceModule.ModuleTypeEnum _moduleType;
+    AmsNeo4JMicroserviceModule _module;
+
+    [Inject]
+    ISnackbar Snackbar { get; set; }
+
+    void UpdateName()
+    {
+        
+        Module.Name = string.Join('.', Module.Microservice.Project.Namespace, Module.Microservice.Name, Module.ModuleType.ToString().Replace("_", "."));
+    }
+
+    void UpdateFolder()
+    {
+
+        if (Module.Name.IsEmpty())
+        {
+            Snackbar.Add("You have to specify the module name first to create Folder name.", Severity.Info);
+            return;
+        }
+
+        Module.RootFolder = Path.Combine(Module.Microservice.Project.RootPath, Module.Microservice.Folder, Module.Name);
+    }
+
+}

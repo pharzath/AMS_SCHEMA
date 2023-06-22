@@ -1,0 +1,99 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using MudBlazor.Extensions.Options
+@using Olive
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="12" md="6">
+                <MudField Label="Label">@Label.Name</MudField>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <LabelSelector @bind-SelectedLabel="Label.InheriteFromLabel" 
+                               Clearable="true"
+                               AutoComplete="true" 
+                               Label="Inherit from" 
+                               Excepts="new []{ Label }" ></LabelSelector>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudSwitch T="bool?" Label=@($"{Label.Name} Is Virtual") @bind-Checked="Label.IsVirtual"></MudSwitch>
+                <MudSwitch T="bool?" Label=@($"{Label.Name} Is Abstract") @bind-Checked="Label.IsAbstract"></MudSwitch>
+            </MudItem>
+            <MudItem sm="12" md="6">
+                <MudStack Row="true" Spacing="0">
+                    <MudSelect T="AmsNeo4JNodeLabelFunctionalId" Clearable="true" Label="FunctionalId" @bind-Value="Label.FunctionalId">
+                        @foreach (var fid in _fIds)
+                        {
+                            <MudSelectItem Value="fid">@fid.Name (@fid.Type.ToString()) @(" (Default)".OnlyWhen(fid.IsDefault))</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudButton Size="Size.Small"  Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.TwoTone.Add" OnClick="AddNewFunctionalIdClick">
+                        Add
+                    </MudButton>
+
+                </MudStack>
+
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseAction">
+            Cancel
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAction">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    [Inject]
+    public DataService DataService { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _fIds = DataService.GetFunctionalIds();
+        base.OnInitialized();
+    }
+
+    void CloseAction()
+    {
+        DialogInstance.Close(DialogResult.Cancel());
+    }
+
+    void SaveAction()
+    {
+        DialogInstance.Close(DialogResult.Ok(Label));
+    }
+
+    IEnumerable<AmsNeo4JNodeLabelFunctionalId> _fIds;
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    async Task AddNewFunctionalIdClick()
+    {
+        var fIdRes = await DialogService.EditObject(new AmsNeo4JNodeLabelFunctionalId() , "New Functional Id" , new DialogOptionsEx(), 
+            meta =>
+            {
+                
+                meta.Properties().NotResettable();
+                meta.Property(x => x.Id).Ignore();
+
+            });
+        if (fIdRes.Cancelled is false)
+        {
+            DataService.SaveFunctionalId(fIdRes.Result);
+            _fIds = DataService.GetFunctionalIds();
+
+        }
+    }
+
+}

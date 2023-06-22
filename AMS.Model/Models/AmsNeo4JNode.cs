@@ -5,13 +5,14 @@ namespace AMS.Model.Models;
 
 public partial class AmsNeo4JNode
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
     public string Name { get; set; } = null!;
 
     public string? DisplayName { get; set; }
 
-    public long? LabelId { get; set; }
+    public int? LabelId { get; set; }
 
-    public long? ProjectFk { get; set; }
+    public int? ProjectFk { get; set; }
+    public int DisplayOrder { get; set; }
 }

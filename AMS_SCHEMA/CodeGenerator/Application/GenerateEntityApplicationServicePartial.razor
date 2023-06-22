@@ -1,0 +1,58 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+
+@using Olive
+@using System.Web
+@using AMS.Model
+@using AMS.Model.Services
+using MediatR;
+using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Interface)).@Label.Name.ToPascalCase();
+
+namespace @(Module).Services.@Label.Name.ToPascalCase();
+
+public abstract class @(Label.Name.ToPascalCase())Service
+{
+
+}
+
+@code {
+
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public AmsNeo4JMicroserviceModule Module { get; set; }
+
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> FromRelations { get; set; }
+
+    [Parameter]
+    public IEnumerable<string> Requests { get; set; }
+
+    // [Parameter]
+    // public List&lt;AmsNeo4JNodeConstraint> Constraints { get; set; }
+
+    string GetParentClass()
+    {
+        if (Label.ParentLabel is { })
+        {
+            return Label.ParentLabel.Name;
+        }
+
+        return $"AbstractEntity&lt;{Label.Name}, Guid>";
+    }
+
+    string IsNullable(AmsNeo4JNodeLabelProperty fld)
+    {
+        return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL"))
+            ? ""
+            : "?";
+    }
+    string GetToSafeName(AmsNeo4JNodeRelation rel)
+    {
+        if (rel.From.Name == rel.To.Name)
+            return "Sub" + rel.To.Name;
+        return rel.To.Name;
+    }
+}

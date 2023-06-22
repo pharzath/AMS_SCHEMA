@@ -55,7 +55,7 @@
     [Parameter]
     public AmsNeo4JNodeLabel Label { get; set; }
 
-    List<MyNode> _nodes = new List<MyNode>();
+    readonly List<MyNode> _nodes = new List<MyNode>();
 
     List<string> _aletrs = new List<string>();
     protected override async Task OnInitializedAsync()

@@ -3,10 +3,17 @@
 
 @using Olive
 @using System.Web
+@using AMS.Model
+using System.ComponentModel.DataAnnotations.Schema;
 using Newtonsoft.Json;
-using QOQNOS.Core;
+using QOQNOS.CORE.data;
+@foreach (var ns in _nameSpaces){
+<text>
+using @ns;
+</text>}
 
-namespace AMS.Model;
+namespace @Module.Name;
+
 // #@Label.DisplayName#
 public partial class @Label.Name : @GetParentClass()
 {
@@ -21,6 +28,9 @@ public partial class @Label.Name : @GetParentClass()
 @code {
     
     [Parameter]
+    public AmsNeo4JMicroserviceModule Module { get; set; }
+
+    [Parameter]
     public AmsNeo4JNodeLabel Label { get; set; }
     
     [Parameter]
@@ -29,6 +39,16 @@ public partial class @Label.Name : @GetParentClass()
     [Parameter]
     public List<AmsNeo4JNodeRelation> IncommingRelations { get; set; }
 
+    List<string> _nameSpaces = new List<string>();
+    protected override void OnInitialized()
+    {
+        var parentNs = Label.ParentLabel?.Microservice?.Modules.First(x => x.ModuleType == Module.ModuleType);
+        if (parentNs != null)
+            _nameSpaces.Add(parentNs.Name);
+
+        base.OnInitialized();
+    }
+
     string GetParentClass()
     {
         if (Label.ParentLabel is { })
@@ -36,7 +56,8 @@ public partial class @Label.Name : @GetParentClass()
             return Label.ParentLabel.Name;
         }
 
-        return $"AbstractEntity<{Label.Name}, Guid>";
+        //return $"AbstractEntity<{Label.Name}, Guid>";
+        return $" EntityBase";
     }
 
 }

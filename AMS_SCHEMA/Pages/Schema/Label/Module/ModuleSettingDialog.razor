@@ -1,0 +1,77 @@
+﻿@using AMS.Model
+@using AMS.Model.Services
+@using Olive
+
+<MudDialog Class="Xmud-ex-dialog-initial">
+    <DialogContent>
+        <MudGrid>
+            <MudItem sm="12" md="6">
+                <MudAutocomplete @bind-Value="Setting.Key" Label="Key" 
+                                 SearchFunc="SomePredefinedKeySearch" 
+                                 CoerceText="true" CoerceValue="true" ResetValueOnEmptyText="true"
+                                 Clearable="true" MinCharacters="0" SelectOnClick="true" ></MudAutocomplete>
+
+            </MudItem>
+
+            <MudItem sm="12" md="6">
+                <MudAutocomplete @bind-Value="Setting.Value" Label="Value" SearchFunc="GetDefaultValues" CoerceText="true" CoerceValue="true" ResetValueOnEmptyText="true" Clearable="true"></MudAutocomplete>
+            </MudItem>
+
+            <MudItem sm="12" md="12">
+                <MudTextField @bind-Value="Setting.Description" Label="Description" Lines="4"></MudTextField>
+            </MudItem>
+
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseAction">
+            Close
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAction">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+
+    IEnumerable<string> _defValues;
+    List<AmsNeo4JMicroserviceModuleSettingDefault>? _defs;
+
+    [Inject] DataService DataService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JMicroserviceModuleSetting Setting { get; set; }
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    void CloseAction()
+    {
+        DialogInstance.Close(DialogResult.Cancel());
+    }
+
+    void SaveAction()
+    {
+        DialogInstance.Close(DialogResult.Ok(Setting));
+    }
+
+    Task<IEnumerable<string>> SomePredefinedKeySearch(string arg1)
+    {
+        _defs = DataService.GetMicroserviceModuleSettingDefaults(Setting.Module);
+        if(arg1.HasValue())
+            _defs = _defs.Where(x => x.DefaultKey.Contains(arg1)).ToList();
+
+        return Task.FromResult(_defs.Select(x => x.DefaultKey));
+    }
+
+    Task<IEnumerable<string>> GetDefaultValues(string arg)
+    {
+        var keySelected = _defs.FirstOrDefault(x => x.DefaultKey == Setting.Key);
+        return keySelected == null ? 
+            Task.FromResult(Enumerable.Empty<string>()) : 
+            Task.FromResult(keySelected.DefaultValue?.Split(',').AsEnumerable())!;
+    }
+
+}

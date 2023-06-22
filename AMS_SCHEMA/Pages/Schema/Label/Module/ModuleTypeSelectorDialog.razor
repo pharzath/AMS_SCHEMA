@@ -1,0 +1,57 @@
+﻿@using AMS.Model
+@using AMS.Model.Services
+@using Nextended.Core.Extensions
+@using Olive
+<MudDialog>
+    <DialogContent>
+        <MudTable Items="Types.OrderBy(x=>x.ToString())" MultiSelection="true" @ref="_table">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.ToString().Replace("_",".")</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Close" OnClick="CloseAction">
+            Close
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Save" OnClick="SaveAction" 
+                   Disabled="!Types.Any()">
+                Save
+            </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+
+@code {
+
+    [Inject]
+    public DataService DataService { get; set; }
+
+    [CascadingParameter]
+    public MudDialogInstance DialogInstance { get; set; }
+
+    MudTable<AmsNeo4JMicroserviceModule.ModuleTypeEnum> _table;
+
+    [Parameter]
+    public AmsNeo4JMicroserviceModule.ModuleTypeEnum[] Orig { get; set; }
+
+    IEnumerable<AmsNeo4JMicroserviceModule.ModuleTypeEnum> Types => Enum.GetValues<AmsNeo4JMicroserviceModule.ModuleTypeEnum>()
+        .Except(Orig);
+
+
+    void CloseAction()
+    {
+        DialogInstance.Close(DialogResult.Cancel());
+    }
+
+    void SaveAction()
+    {
+        DialogInstance.Close(DialogResult.Ok(_table.SelectedItems));
+    }
+
+}

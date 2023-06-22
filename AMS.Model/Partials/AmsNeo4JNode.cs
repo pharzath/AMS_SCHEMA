@@ -7,21 +7,18 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using QOQNOS.Core;
+using System.ComponentModel.DataAnnotations;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNode : IHaveId<long>
+    public partial class AmsNeo4JNode : IHaveId<int>
     {
         [JsonIgnore]
-
         public List<AmsNeo4JNodeDepartment> Departments { get; set; }
 
         [JsonIgnore]
-
         [ForeignKey("LabelId")]
         public AmsNeo4JNodeLabel Label { get; set; }
-        /*[NotMapped]
-        public AmsNeo4JNodeLabel Label => Labels.FirstOrDefault();*/
 
 
         public static AmsNeo4JNode CreateNewNode(string name)
@@ -30,6 +27,7 @@ namespace AMS.Model.Models
             {
                 Name = name
             };
+            
             return node;
         }
     }

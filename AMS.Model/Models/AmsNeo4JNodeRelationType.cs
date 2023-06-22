@@ -5,7 +5,7 @@ namespace AMS.Model.Models;
 
 public partial class AmsNeo4JNodeRelationType
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
     public string? Name { get; set; }
 

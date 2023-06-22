@@ -8,6 +8,11 @@
     .OrderBy(x=>x.Order)
     .ThenBy(x=>x.Id)">
     <ToolBarContent>
+        @if (Label.ParentLabel is { })
+        {
+            <MudCheckBox @bind-Checked="Label.InheritPropsFromParentLabel" Label="Inherit Props From Parent ?"></MudCheckBox>
+        }
+        <MudSpacer/>
         <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="CreateNewPropertyClick">
             Create Property For (@Label.Name)
         </MudButton>

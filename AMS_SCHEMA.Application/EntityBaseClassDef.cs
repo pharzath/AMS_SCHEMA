@@ -3,7 +3,7 @@ using AMS_SCHEMA.Class;
 
 namespace AMS.Model
 {
-    public class EntityBaseClassDef
+    public class EntityBaseClassDefXx
     {
         public static readonly Dictionary<string, PropDef> PropertiesDict = new()
         {

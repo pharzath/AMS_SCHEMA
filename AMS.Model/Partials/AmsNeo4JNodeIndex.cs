@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeIndex : IHaveId<long>
+    public partial class AmsNeo4JNodeIndex : IHaveId<int>
     {
         [JsonIgnore]
         public AmsNeo4JNodeLabel Label { get; set; }

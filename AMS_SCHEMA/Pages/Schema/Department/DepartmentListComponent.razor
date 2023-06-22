@@ -1,11 +1,15 @@
 ﻿@using AMS.Model.Services
 @using AMS.Model.Models
+@using Microsoft.EntityFrameworkCore
 
 <MudSelect Label="Department" @bind-Value="SelectedDepartment" T="AmsNeo4JDepartment"
            Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Add" OnAdornmentClick="AddToDepartmentClick">
-    @foreach (var dep in DataService.GetDepartments())
+    @if (_department != null)
     {
-        <MudSelectItem Value="dep">@dep.Title</MudSelectItem>
+        @foreach (var dep in _department)
+        {
+            <MudSelectItem Value="dep">@dep.Title</MudSelectItem>
+        }
     }
 </MudSelect>
 
@@ -36,9 +40,16 @@
 
     List<AmsNeo4JNodeDepartment> Departments => DataService.GetNodeDepartment(Label.Node);
 
+
+    protected override async Task OnInitializedAsync()
+    {
+        _department = await DataService.GetDepartments().ToListAsync();
+        await base.OnInitializedAsync();
+    }
+
     void AddToDepartmentClick()
     {
-        DataService.AddDepartmentToNode(Label.Node,SelectedDepartment);
+        DataService.AddDepartmentToNode(Label.Node, SelectedDepartment);
     }
 
     void DeleteDepartmentFromNode(AmsNeo4JNodeDepartment context)
@@ -46,4 +57,5 @@
         DataService.DeleteDepartmentFromNode(context);
     }
 
+    IEnumerable<AmsNeo4JDepartment>? _department;
 }

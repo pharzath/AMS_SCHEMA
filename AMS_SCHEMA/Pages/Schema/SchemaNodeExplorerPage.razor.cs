@@ -1,4 +1,5 @@
-﻿using AMS.Model.Models;
+﻿using System.Collections.Immutable;
+using AMS.Model.Models;
 using AMS.Model.Services;
 using AMS_SCHEMA.Class;
 using AMS_SCHEMA.CodeGenerator;
@@ -10,15 +11,21 @@ using Toolbelt.Blazor.HotKeys2;
 using System.ComponentModel;
 using Olive;
 using System.Net;
+using AMS.Model;
 using AMS_SCHEMA.Pages.Project;
+using AMS_SCHEMA.Pages.Schema.Label.CodeGen;
+using AMS_SCHEMA.Pages.Schema.Relation;
 using AMS_SCHEMA.Pages.Schema.TestData;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.EntityFrameworkCore;
+using MudBlazor.Extensions;
 
 namespace AMS_SCHEMA.Pages.Schema;
 
 public partial class SchemaNodeExplorerPage : IDisposable
 {
     [Inject] IJsApiService JsApiService { get; set; }
-    [Inject] AMSCodeGenerator CodeGenerator { get; set; }
+    [Inject] CodeGeneratorService CodeGeneratorService { get; set; }
     [Inject] IDialogService DialogService { get; set; }
 
     [Inject] DataService DataService { get; set; }
@@ -28,11 +35,13 @@ public partial class SchemaNodeExplorerPage : IDisposable
     [Inject] HotKeys HotKeys { get; set; }
     HotKeysContext HotKeysContext;
 
-    List<AmsNeo4JNode> _nodes;
+    List<AmsNeo4JNode>? _nodes;
+    List<AmsNeo4JDepartment>? _departments;
+
     IEnumerable<AmsNeo4JDepartment> _selectedDepartments;
     bool _andSelectDepartment;
 
-    List<AmsNeo4JProject>? _projects;
+    IEnumerable<AmsNeo4JProject>? _projects;
 
     object SelectedProjectObject
     {
@@ -42,7 +51,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
             _selectedProjectObject = value;
             DataService.SelectedProject = SelectedProjectObject as AmsNeo4JProject;
             DataService.ClearCach();
-            SearchSchema(SearchText);
+            SearchSchema(SearchText).Wait();
         }
     }
 
@@ -56,7 +65,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
         HotKeysContext = HotKeys.CreateContext()
             .Add(ModCode.None,
                 Code.F1,
-                GotoDepartmentSelectBox, 
+                GotoDepartmentSelectBox,
                 "Goto Department Selector Box"
                 )
              .Add(ModCode.None,
@@ -90,11 +99,17 @@ public partial class SchemaNodeExplorerPage : IDisposable
                  "Close Query Generator")
             ;
 
-        SearchSchema(null);
 
-        _projects = DataService.GetProjects();
 
         base.OnInitialized();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        //_departments = await DataService.GetDepartments().ToListAsync();
+        _projects = await DataService.GetProjects()?.ToListAsync()!;
+        await SearchSchema(null);
+        await base.OnInitializedAsync();
     }
 
     ValueTask CloseQueryGenerator(HotKeyEntry arg)
@@ -112,7 +127,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
     ValueTask OpenQueryGenerator(HotKeyEntry arg)
     {
         openTop2 = true;
-//        StateHasChanged();
+        //        StateHasChanged();
         return ValueTask.CompletedTask;
     }
 
@@ -145,10 +160,10 @@ public partial class SchemaNodeExplorerPage : IDisposable
         //busy = true;
         //return "";
         var vars = new List<string>();
-        var sb = new List<string>(){"MATCH "} ;// new StringBuilder("MATCH ");
+        var sb = new List<string>() { "MATCH " };// new StringBuilder("MATCH ");
         var node = _historyNodes.First;
         var v = "b";
-        
+
         if (hKey == _historyNodes.Count.ToString())
             return hValue;
 
@@ -216,7 +231,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
                 else
                 {
                     var labels = DataService.GetParentLabels(prev.Res);
-                    if (prev.Res.ChildLabels != null) 
+                    if (prev.Res.ChildLabels != null)
                         labels.AddRange(prev.Res.ChildLabels);
 
                     if (labels.Any(x => x.Name == a.Name))
@@ -329,7 +344,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
 
     async ValueTask GoBackFromHistory(HotKeyEntry arg)
     {
-        if(!_historyNodes.Any()) return;
+        if (!_historyNodes.Any()) return;
         _historyNodes.RemoveLast();
         var section = history.Pop();
         await BrowserService.GotoSection(section.Node.Name);
@@ -400,19 +415,18 @@ public partial class SchemaNodeExplorerPage : IDisposable
 
     async Task OpenNodeEditDialog(AmsNeo4JNode node, AmsNeo4JNodeLabel? label)
     {
-        var reference = DialogService.Show<NodeInfoDialog>($"Node: {node.Name} - {node.DisplayName}"
-            , new DialogParameters()
-            {
-                ["Node"] = node,
-                ["SelectedLabel"] = label,
-            }
-            , new DialogOptions()
-            {
-                FullWidth = true,
-                MaxWidth = MaxWidth.Large
-            });
+        var reference = await DialogService.ShowAsync<NodeInfoDialog>($"Node: {node.Name} - {node.DisplayName}", new DialogParameters()
+        {
+            //["Node"] = node,
+            ["SelectedLabel"] = label
+        }, new DialogOptions()
+        {
+            FullScreen = true,
+            CloseButton = true
+        });
         var referenceResult = await reference.Result;
-        SearchSchema(SearchText);
+
+        await SearchSchema(SearchText);
 
         StateHasChanged();
 
@@ -420,12 +434,25 @@ public partial class SchemaNodeExplorerPage : IDisposable
 
     public string? SearchText { get; set; }
 
-    void SearchSchema(string? searchText)
+    public string SortOrder { get; set; } = "Custom";
+
+    readonly object _myLockObj = 0;
+    async Task SearchSchema(string? searchText)
     {
-        _nodes = DataService
-            .GetNodes(searchText, SelectedDepartments, AndSelectDepartment)
-            .OrderBy(x => x.Label?.Name)
-            .ToList();
+        IQueryable<AmsNeo4JNode> z;
+        lock (_myLockObj)
+        {
+            var x = DataService
+                .GetNodes(searchText, SelectedDepartments, AndSelectDepartment);
+            z = SortOrder switch
+            {
+                "Custom" => x.OrderBy(keySelector: x => x.DisplayOrder),
+                "Alphabetical" => x.OrderBy(keySelector: x => x.Label.Name),
+                _ => x
+            };
+            
+        }
+        _nodes = await z.ToListAsync();
     }
 
     public IEnumerable<AmsNeo4JDepartment> SelectedDepartments
@@ -449,7 +476,8 @@ public partial class SchemaNodeExplorerPage : IDisposable
     }
 
 
-    List<string> GetPropertyTooltipText(AmsNeo4JNodeLabel label, AmsNeo4JNodeLabelProperty prop)
+    static List<string> GetPropertyTooltipText(AmsNeo4JNodeLabel label,
+                                               AmsNeo4JNodeLabelProperty prop)
     {
         var tooltip = new List<string>
         {
@@ -469,13 +497,20 @@ public partial class SchemaNodeExplorerPage : IDisposable
     async Task CreateNewNodeClick()
     {
         var node = AmsNeo4JNode.CreateNewNode("New Node");
-        DataService.SaveNode(node);
+        await DataService.SaveNodeAsync(node);
+
         var label = AmsNeo4JNodeLabel.CreateNewLabel(node);
-        DataService.SaveLabel(label);
+        await DataService.SaveLabel(label);
+
+foreach (var n in _nodes)
+{
+    n.DisplayOrder++;
+    await DataService.SaveNodeAsync(n);
+}
 
         await OpenNodeEditDialog(node, label);
 
-        SearchSchema(SearchText);
+        await SearchSchema(SearchText);
         StateHasChanged();
     }
 
@@ -523,35 +558,53 @@ public partial class SchemaNodeExplorerPage : IDisposable
     bool openTop2 = false;
     object _selectedProjectObject;
 
-    async Task GotoLabelClick(AmsNeo4JNode fromNode, AmsNeo4JNodeLabel to, AmsNeo4JNodeRelation rel, RelDirection dir)
+    async Task GotoLabelClick(MouseEventArgs eventArgs, AmsNeo4JNode fromNode, AmsNeo4JNodeLabel to, AmsNeo4JNodeRelation rel, RelDirection dir)
     {
         Console.WriteLine("--------------------------");
-
-        var item = new HistoryNode()
+        if (eventArgs.CtrlKey)
         {
-            Node = fromNode,
-            Relation = rel,
-            Dir = dir
-        };
-        history.Push(item);
-        
-        _historyNodes.AddLast(item);
+
+
+            var item = new HistoryNode()
+            {
+                Node = fromNode,
+                Relation = rel,
+                Dir = dir
+            };
+            history.Push(item);
+
+            _historyNodes.AddLast(item);
+            openTop2 = history.Any();
+        }
 
         await BrowserService.GotoSection(to.Node.Name);
-        openTop2 = history.Any();
+
     }
 
 
     [Inject] ISnackbar Snackbar { get; set; }
-    void GenerateAll()
+
+    async Task GenerateAll()
     {
-        CodeGenerator.GenerateAll(_nodes);
-        Snackbar.Add("Generate completed ", Severity.Success);
+        var dialogRef = await DialogService.ShowEx<SystemCodeGeneratorDialog>("Generate", dialog =>
+        {
+
+        },
+         ex =>
+        {
+            ex.DragMode = MudDialogDragMode.Simple;
+            ex.MaxWidth = MaxWidth.Large;
+            ex.FullHeight = true;
+            ex.Resizeable = true;
+            ex.MaximizeButton = true;
+            //            ex.FullWidth = true;
+        });
+
     }
 
     void GenerateEntityRelatedFilesClick(AmsNeo4JNode context)
     {
-        CodeGenerator.GenerateEntityRelatedFiles(context);
+        CodeGeneratorService.GenerateEntityRelatedFiles(context);
         Snackbar.Add("Generate completed ", Severity.Success);
     }
 
@@ -579,13 +632,18 @@ public partial class SchemaNodeExplorerPage : IDisposable
     {
         var referenceLabelColor = $"background-color: {label.Color}".OnlyWhen(!label.Color.IsEmpty());
         if (referenceLabelColor.IsEmpty())
-            referenceLabelColor = "background: " + (label.ParentLabelId == null ?  Colors.Indigo.Lighten1 : Colors.DeepPurple.Lighten3);
+            referenceLabelColor = "background: " + (label.ParentLabelId == null ? Colors.Indigo.Lighten1 : Colors.DeepPurple.Lighten3);
         return referenceLabelColor;
     }
 
     void NewProjectClick()
     {
-        var project = new AmsNeo4JProject() { Name = "New Project" , Guid = Guid.NewGuid().ToString("D")};
+        var project = new AmsNeo4JProject
+        {
+            Name = "New Project",
+            RootPath = "E:\\QOQNOS",
+            Namespace = "QOQNOS"
+        };
         OpenProjectDialog(project);
     }
     void EditProjectClick(AmsNeo4JProject project)
@@ -605,6 +663,54 @@ public partial class SchemaNodeExplorerPage : IDisposable
                 FullWidth = true,
                 MaxWidth = MaxWidth.Medium
             });
+
+    }
+    void StateChangedClick()
+    {
+        StateHasChanged();
+    }
+
+    void SortOrderChanged(object arg)
+    {
+        Snackbar.Add("Sort Order changed");
+    }
+
+    async Task MoveNodeUpClick(AmsNeo4JNode node)
+    {
+        var i = _nodes!.IndexOf(node);
+        if(i == 0)
+            return;
+        var nodeOrder = node.DisplayOrder;
+        var nextNodeOrder = _nodes[i - 1].DisplayOrder;
+        node.DisplayOrder = nextNodeOrder;
+        _nodes[i - 1].DisplayOrder = nodeOrder;
+        await DataService.SaveNodeAsync(node);
+        await DataService.SaveNodeAsync(_nodes[i - 1]);
+        await SearchSchema(SearchText);
+    }
+
+    async Task MoveNodeDownClick(AmsNeo4JNode node)
+    {
+        var i = _nodes!.IndexOf(node);
+        if (i == _nodes.Count-1)
+            return;
+        var nodeOrder = node.DisplayOrder;
+        var nextNodeOrder = _nodes[i + 1].DisplayOrder;
+        node.DisplayOrder = nextNodeOrder;
+        _nodes[i + 1].DisplayOrder = nodeOrder;
+        await DataService.SaveNodeAsync(node);
+        await DataService.SaveNodeAsync(_nodes[i + 1]);
+        await SearchSchema(SearchText);
+
+    }
+    async Task MoveNodeLastClick(AmsNeo4JNode node)
+    {
+
+        for (var i = _nodes!.Count(x => x.DisplayOrder >= node.DisplayOrder) - 1; i >= 0; i--)
+        {
+            await MoveNodeDownClick(node);
+        }
+        await SearchSchema(SearchText);
 
     }
 

@@ -1,0 +1,150 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+
+@using Olive
+@using System.Web
+@using AMS.Model
+@using AMS.Model.Services
+@using AMS_SCHEMA.Pages.Schema.Label.Module
+@using Neo4jClient.DataAnnotations.Cypher.Functions
+@using Newtonsoft.Json.Linq
+@implements IHaveDestinationFilePath
+
+using Microsoft.AspNetCore.Mvc;
+using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Interface)).@(Label.Name.ToPascalCase());
+using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION)).Services.@(Label.Name.ToPascalCase());
+
+namespace @(Module.Name).@(Label.Name.ToPascalCase());
+
+public partial class @(Label.Name.ToPascalCase())Controller : I@(Label.Name.ToPascalCase())Controller
+{
+    #region Header Code
+    #endregion
+
+    private readonly ILogger _logger;
+    readonly @(Label.Name.ToPascalCase())Service _@(Label.Name.ToCamelCase())Service;
+
+    public @(Label.Name.ToPascalCase())Controller(ILogger&lt;@(Label.Name.ToPascalCase())Controller> logger,
+        @(Label.Name.ToPascalCase())Service @(Label.Name.ToCamelCase())Service)
+    {
+        _logger = logger;
+        _@(Label.Name.ToCamelCase())Service = @(Label.Name.ToCamelCase())Service;
+    }
+    
+
+@foreach (var handler in Handlers)
+{<text>
+        [@(handler.HttpMethod)("/@handler.Name.ToPascalCase()")]
+        public async Task&lt;ActionResult&lt;@(handler.Name.ToPascalCase())Request.Response>> @(handler.Name)(@(handler.Name)Request request)
+    {
+        var response = await _@(Label.Name.ToCamelCase())Service.@(handler.Name)(request);
+        return new ActionResult&lt;@(handler.Name)Request.Response>(new @(handler.Name)Request.Response {
+            @GetParamName(handler.ReturnType, true) = response
+        });
+    }
+ </text>}
+
+ 
+    #region Footer Code
+    #endregion
+/*
+
+//================================================================
+@foreach (var rel in FromRelations)
+{
+    <text>
+        public Task&lt;@(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)JoinHandler.Response> 
+            Post(@(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)JoinHandler request)
+        {
+            throw new NotImplementedException();
+        }
+    </text>
+}
+//================================================================
+
+*/
+
+}
+
+@code {
+
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public AmsNeo4JMicroserviceModule Module { get; set; }
+
+    [Parameter]
+    public List<AmsNeo4JNodeRelation> FromRelations { get; set; }
+
+    [Parameter]
+    public IEnumerable<HandlerSettingItem> Handlers { get; set; }
+
+    // [Parameter]
+    // public List&lt;AmsNeo4JNodeConstraint> Constraints { get; set; }
+
+    string GetParentClass()
+    {
+        if (Label.ParentLabel is { })
+        {
+            return Label.ParentLabel.Name.ToPascalCase();
+        }
+
+        return $"AbstractEntity&lt;{Label.Name.ToPascalCase()}, Guid>";
+    }
+
+    string IsNullable(AmsNeo4JNodeLabelProperty fld)
+    {
+        return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL"))
+            ? ""
+            : "?";
+    }
+    string GetToSafeName(AmsNeo4JNodeRelation rel)
+    {
+        if (rel.From.Name == rel.To.Name)
+            return "Sub" + rel.To.Name;
+        return rel.To.Name;
+    }
+    string GetParamType(MethodParameter param)
+    {
+
+        var typeName = "";
+        typeName = param.IsSelfDto ? $"{Label.Name.ToPascalCase()}Dto" : param.Type;
+        if (param.IsCollection)
+            typeName = typeName.WithWrappers("IEnumerable<", ">");
+        return typeName;
+    }
+
+    string GetCommandParameters(HandlerSettingItem handler)
+    {
+        var sb = handler.Parameters.Select(parameter => $"{GetParamType(parameter)} {GetParamName(parameter)}");
+        return string.Join(',' , sb);
+    }
+
+    string GetParamName(MethodParameter param, bool isPropertyName = true)
+    {
+        var labelName = Label.Name.ToPascalCase();
+        if (!isPropertyName)
+            labelName = labelName.ToCamelCase();
+
+        if (param.IsSelfDto)
+            return labelName + "Dto";
+
+
+        var name = string.Format(param.Name ?? "", labelName, labelName).ToPascalCase();
+        if (!isPropertyName)
+            name = name.ToCamelCase();
+
+        if (name.HasValue())
+            return name;
+
+        if (param.Type.ToLower() is "guid" or "int")
+            return "Key";
+
+        return "BAD_NAME";
+    }
+
+    [Parameter]
+    public string DestFilePath { get; set; }
+}

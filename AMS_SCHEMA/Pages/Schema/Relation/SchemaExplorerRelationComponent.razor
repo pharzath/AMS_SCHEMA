@@ -1,0 +1,117 @@
+﻿@using AMS.Model.Models
+@using Olive
+<MudTooltip Text="@Relation.Description" Arrow="true" Color="Color.Info" Placement="Placement.Top">
+    @if (!ViewOnly)
+    {
+        <MudIconButton Icon="@Icons.TwoTone.Edit" Color="Color.Dark" OnClick="() => DirectEditRelation(Relation)"/>
+    }
+    <MudChip Label="true" Size="Size.Medium" Color="Color.Default" OnClick="() => Relation.IsEn = !Relation.IsEn">
+        <MudChip Style="@GetReferenceLabelColor(Relation.From, true)" Color="(Direction == SchemaNodeExplorerPage.RelDirection.Outgoing ? Color.Tertiary : Color.Default)"
+                 OnClick="(ev) => LabelClicked(ev, true)">
+            <LabelIconComponent Label="Relation.From"></LabelIconComponent>
+            @GetRelationInfoFrom(Relation)
+        </MudChip>
+        <MudIcon Icon="@Icons.Filled.Remove"/>
+        <MudChip Label="true">
+            @GetRelationInfo(Relation).WithWrappers("[", "]")
+        </MudChip>
+        <MudIcon Icon="@Icons.Filled.ArrowRightAlt"/>
+        <MudChip Style="@GetReferenceLabelColor(Relation.To, false)" Color="(Direction == SchemaNodeExplorerPage.RelDirection.Incoming ? Color.Tertiary : Color.Default)"
+                 OnClick="(ev) => LabelClicked(ev, false)">
+            <LabelIconComponent Label="Relation.To"></LabelIconComponent>
+            @GetRelationInfoTo(Relation)
+        </MudChip>
+    </MudChip>
+</MudTooltip>
+@if (Relation.InEntPropType != EntPropTypeEnum.None || Relation.OutEntPropType != EntPropTypeEnum.None)
+{
+    <MudTooltip Text="@GetBoundedProp()" Arrow="true" Color="Color.Primary" Placement="Placement.Bottom">
+        <MudIcon Icon="@Icons.TwoTone.Check" Color="Color.Default"></MudIcon>
+    </MudTooltip>
+}
+
+
+@code {
+
+    [Parameter]
+    public bool ViewOnly { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeRelation Relation { get; set; }
+
+    [Parameter]
+    public SchemaNodeExplorerPage.RelDirection Direction { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnLabelClick { get; set; }
+
+    string GetReferenceLabelColor(AmsNeo4JNodeLabel label,bool isFrom)
+    {
+        if ((isFrom && Direction == SchemaNodeExplorerPage.RelDirection.Incoming) ||
+            (!isFrom && Direction == SchemaNodeExplorerPage.RelDirection.Outgoing)) return null;
+        var referenceLabelColor = $"background-color: {label.Color}".OnlyWhen(!label.Color.IsEmpty());
+        if (referenceLabelColor.IsEmpty())
+            referenceLabelColor = "background: " + (label.ParentLabelId == null ? Colors.Indigo.Lighten1 : Colors.DeepPurple.Lighten3);
+        return referenceLabelColor;
+    }
+
+    string GetRelationInfoFrom(AmsNeo4JNodeRelation relation)
+    {
+        if (relation.IsEn)
+            return $"{relation.From?.Name.Or(relation.From?.DisplayName)}";
+
+        return $"{relation.From?.DisplayName.Or(relation.From?.Name)}";
+    }
+
+    string GetRelationInfoTo(AmsNeo4JNodeRelation relation)
+    {
+        if (relation.IsEn)
+            return $"{relation.To?.Name.Or(relation.To?.DisplayName)}";
+
+        return $"{relation.To?.DisplayName.Or(relation.To?.Name)}";
+    }
+
+    string GetRelationInfo(AmsNeo4JNodeRelation relation)
+    {
+        if (relation.IsEn)
+            return $"{relation.RelType?.Name}";
+
+        return $"{relation.RelType?.DisplayName}";
+    }
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    async Task DirectEditRelation(AmsNeo4JNodeRelation rel)
+    {
+
+        await DialogService.ShowAsync<NodeRelationDialog>(rel.RelType.Name, new DialogParameters()
+            {
+                ["NodeRelation"] = rel,
+                ["Direction"] = Direction
+            },
+            new DialogOptions()
+                {
+                    FullScreen = true,
+                    CloseButton = true
+                });
+        StateHasChanged();
+    }
+
+    async Task LabelClicked(MouseEventArgs eventArgs,bool isFrom)
+    {
+        if(ViewOnly) return;
+        if((isFrom && Direction == SchemaNodeExplorerPage.RelDirection.Incoming)||
+           (!isFrom && Direction == SchemaNodeExplorerPage.RelDirection.Outgoing)) 
+            return;
+        await OnLabelClick.InvokeAsync(eventArgs);
+    }
+
+    string GetBoundedProp()
+    {
+        var s1= $"{Relation.InEntPropName} [{Relation.InEntPropType}]".OnlyWhen(Relation.InEntPropType != EntPropTypeEnum.None);
+        var s2= $"{Relation.OutEntPropName} [{Relation.OutEntPropType}]".OnlyWhen(Relation.OutEntPropType != EntPropTypeEnum.None);
+        return $"{s1} {s2.WithWrappers(" - ","")}";
+    }
+
+}

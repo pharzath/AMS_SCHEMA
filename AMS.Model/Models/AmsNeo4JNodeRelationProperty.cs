@@ -5,9 +5,9 @@ namespace AMS.Model.Models;
 
 public partial class AmsNeo4JNodeRelationProperty
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public long? RelationId { get; set; }
+    public int? RelationId { get; set; }
 
     public string? Name { get; set; }
 
@@ -21,7 +21,7 @@ public partial class AmsNeo4JNodeRelationProperty
 
     public string? ValidationType { get; set; }
 
-    public long? Order { get; set; }
+    public int? Order { get; set; }
 
-    public string Guid { get; set; } = null!;
+    public Guid Guid { get; set; }
 }

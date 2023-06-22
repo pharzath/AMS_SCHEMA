@@ -3,7 +3,7 @@ using QOQNOS.Core;
 
 namespace AMS.Model.Models;
 
-public partial class AmsNeo4JDepartment : IHaveId<long>
+public partial class AmsNeo4JDepartment : IHaveId<int>
 {
     [ForeignKey(nameof(ProjectFk))]
     public AmsNeo4JProject Project { get; set; }
@@ -14,7 +14,7 @@ public partial class AmsNeo4JDepartment : IHaveId<long>
     }
 
     [NotMapped]
-    public long Id
+    public int Id
     {
         get => DepartmentId;
         set => DepartmentId = value;

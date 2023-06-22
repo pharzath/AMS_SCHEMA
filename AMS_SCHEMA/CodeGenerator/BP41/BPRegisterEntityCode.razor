@@ -1,0 +1,90 @@
+﻿@using AMS.Model.Services
+@using AMS.Model.Models
+@using Olive
+Entities.New("@Label.Name" @GetLabelParent().WithWrappers(",","") )
+@("\t.Abstract(true)".OnlyWhen(Label.IsAbstract is true))
+@("\t.Virtual(true)".OnlyWhen(Label.IsVirtual is true))
+@foreach (var prop in GetLabelHirarcialProperties(Label)){
+    @:    .AddProperty("@prop.Name", typeof(@GetDataType(prop)), nullable: @IsNullable(prop) @GetIndexConstrain(prop))
+    @if(Label.Constraints != null){if (Label.Constraints.Any(x => x.Over == prop.Name && x.Type == "IS NODE KEY")){
+        @:.SetKey("@prop.Name", autoGenerate: true)
+    }}};
+
+@code {
+
+        [Parameter]
+        public required AmsNeo4JNodeLabel Label { get; set; }
+
+        [Inject]
+        public DataService DataService { get; set; }
+
+        bool LabelIsAbstract(AmsNeo4JNodeLabel Label)
+        {
+            return Label.IsAbstract is true ||
+                   DataService.GetLabels().Any(x => x.ParentLabelId == Label.Id || x.InheriteFromLabelId == Label.Id);
+        }
+
+    string IsNullable(AmsNeo4JNodeLabelProperty prop)
+    {
+        if (Label.Constraints.FirstOrDefault(x => x.Over == prop.Name)
+            is { Type: "IS NOT NULL" }) 
+            return "false";
+
+        var res = prop.AllowNull is null or true;
+
+        return res.ToString().ToLower();
+
+    }
+    string? GetIndexConstrain(AmsNeo4JNodeLabelProperty prop)
+    {
+        var idx = Label.Constraints.FirstOrDefault(x=>x.Over == prop.Name);
+        return 
+            idx != null
+                ? ", IndexType." + GetStandardTypeName(idx.Type)
+                : null;
+    }
+
+    string GetStandardTypeName(string? idxType)
+    {
+        return idxType switch
+        {
+            "IS NODE KEY" => "Unique",
+            "IS UNIQUE" => "Indexed",
+            "IS NOT NULL" => "None",
+            _ => "BAD_idxType"
+            };
+    }
+
+    string? GetLabelParent()
+    {
+        // if (Label.ParentLabel is { })
+        //     return $"Entities[\"{Label.ParentLabel.Name}\"]";
+
+        if (Label.InheriteFromLabel is { })
+            return $"Entities[\"{Label.InheriteFromLabel.Name}\"]";
+
+        
+
+        return null;
+    }
+
+    IEnumerable<AmsNeo4JNodeLabelProperty> GetLabelHirarcialProperties(AmsNeo4JNodeLabel label)
+    {
+        var props = new List<AmsNeo4JNodeLabelProperty>(label.Properties!);
+        var lbl = label.ParentLabel;
+        while (lbl is { IsAbstract: false,IsVirtual: false })
+        {
+            props.AddRange(lbl.Properties.OrEmpty());
+            lbl = lbl.ParentLabel;
+        }
+        return props;
+    }
+
+    string GetDataType(AmsNeo4JNodeLabelProperty prop)
+    {
+        if (prop.DataType == "items")
+            return "string";
+        return prop.DataType;
+    }
+
+}

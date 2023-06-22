@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 using Olive;
 using System.Xml.Linq;
 using System.ComponentModel.DataAnnotations.Schema;
-using ServiceStack;
+using AMS_SCHEMA.Class;
 
 namespace AMS_SCHEMA.Application.ExtensionMethods
 {
@@ -35,7 +35,7 @@ namespace AMS_SCHEMA.Application.ExtensionMethods
                     DisplayName = "کلاس مادر",
                 }));
 
-            AddProps(lst, EntityBaseClassDef.GetProperties(label), jObject);
+            //AddProps(lst, EntityBaseClassDefX.GetProperties(label), jObject);
             return lst;
         }
 

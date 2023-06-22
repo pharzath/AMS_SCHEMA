@@ -51,8 +51,8 @@ namespace AMS_SCHEMA.Pages.Schema.Index
             if (formFields == null) return Task.FromResult(Enumerable.Empty<AmsNeo4JNodeLabelProperty>());
 
             var x = formFields.ToList();
-            if (Label.ParentLabelId is null)
-                x.AddRange(EntityBaseClassDef.GetEntityBaseProperties());
+            // if (Label.ParentLabelId is null)
+            //     x.AddRange(EntityBaseClassDefX.GetEntityBaseProperties());
 
             return Task.FromResult(x.AsEnumerable())!;
 

@@ -10,7 +10,7 @@ using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeRelation : IHaveId<long>
+    public partial class AmsNeo4JNodeRelation : IHaveId<int>
     {
         [JsonIgnore]
         [NotMapped] 
@@ -72,3 +72,4 @@ namespace AMS.Model.Models
         }
     }
 }
+public enum EntPropTypeEnum { None, Lookup, Collection}

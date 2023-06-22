@@ -12,8 +12,8 @@ namespace AMS.Services.Contract._@Label.Name;
 
 [Tag("AMS")]
 [Route("/@(Label.Name)List", "Get")]
-public class @(Label.Name)ListRequest 
-    : IGet, IReturn&lt;@(Label.Name)ListRequest.Response>
+public class @(Label.Name)ListHandler 
+    : IGet, IReturn&lt;@(Label.Name)ListHandler.Response>
 {
     public class Response : ListResponse&lt;@(Label.Name)>
     {
@@ -22,8 +22,8 @@ public class @(Label.Name)ListRequest
 
 [Tag("AMS")]
 [Route("/@(Label.Name)/{@(Label.Name)Id}", "Get")]
-public class @(Label.Name)Request 
-    : IGet, IReturn&lt;@(Label.Name)ListRequest.Response>
+public class @(Label.Name)Handler 
+    : IGet, IReturn&lt;@(Label.Name)ListHandler.Response>
 {
     public Guid @(Label.Name)Id { get; set; }
     public class Response : SimpleResponse&lt;@(Label.Name)>
@@ -33,22 +33,22 @@ public class @(Label.Name)Request
 
 [Tag("AMS")]
 [Route("/@(Label.Name)", "Post")]
-public class @(Label.Name)CreateRequest 
+public class @(Label.Name)CreateHandler 
     : @(Label.Name), IPost
 {
 }
 
 [Tag("AMS")]
 [Route("/@(Label.Name)", "Put")]
-public class @(Label.Name)UpdateRequest 
+public class @(Label.Name)UpdateHandler 
     : @(Label.Name), IPut
 {
 }
 
 [Tag("AMS")]
 [Route("/@(Label.Name)/{@(Label.Name)Id}", "Delete")]
-public class @(Label.Name)DeleteRequest 
-    : IDelete, IReturn&lt;@(Label.Name)DeleteRequest.Response>
+public class @(Label.Name)DeleteHandler 
+    : IDelete, IReturn&lt;@(Label.Name)DeleteHandler.Response>
 {
     public Guid @(Label.Name)Id { get; set; }
 
@@ -62,8 +62,8 @@ public class @(Label.Name)DeleteRequest
 <text>
 [Tag("AMS")]
 [Route("/@(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)Join/{@(rel.From.Name)Id}/{@(GetToSafeName(rel))Id}", "Post")]
-public class @(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)JoinRequest
-        : IPost, IReturn&lt;@(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)JoinRequest.Response>
+public class @(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)JoinHandler
+        : IPost, IReturn&lt;@(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)JoinHandler.Response>
 {
     public Guid @(rel.From.Name)Id { get; set; }
     public Guid @(GetToSafeName(rel))Id { get; set; }
@@ -78,8 +78,8 @@ public class @(rel.From.Name)@(rel.RelType.Name.ToPascalCase())@(rel.To.Name)Joi
     <text>
 [Tag("AMS")]
 [Route("/@(rel.To.Name)@(rel.From.Name.ToPlural())_By@(rel.RelType.Name.ToPascalCase())_List/{@(GetToSafeName(rel))Id}", "Get")]
-public class @(rel.To.Name)@(rel.From.Name.ToPlural())_By@(rel.RelType.Name.ToPascalCase())_ListRequest 
-    : IGet, IReturn&lt;@(rel.To.Name)@(rel.From.Name.ToPlural())_By@(rel.RelType.Name.ToPascalCase())_ListRequest.Response>
+public class @(rel.To.Name)@(rel.From.Name.ToPlural())_By@(rel.RelType.Name.ToPascalCase())_ListHandler 
+    : IGet, IReturn&lt;@(rel.To.Name)@(rel.From.Name.ToPlural())_By@(rel.RelType.Name.ToPascalCase())_ListHandler.Response>
 {
     public Guid @(GetToSafeName(rel))Id { get; set; }
     

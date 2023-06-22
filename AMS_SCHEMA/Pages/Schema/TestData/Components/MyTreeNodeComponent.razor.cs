@@ -65,29 +65,30 @@ namespace AMS_SCHEMA.Pages.Schema.TestData.Components
 
 
         [Inject]
-        public IDialogService DialogService { get; set; }
+        public required IDialogService DialogService { get; set; }
 
         async Task EditNodeClick()
         {
             var label = context.Labels.Last();
 
-            var dialogReference = DialogService.Show<DataInfoDialog>($"Label Info {context.LabelsText} - ({context.Entity.Title})",
+            var dialogReference = await DialogService.ShowAsync<DataInfoDialog>($"Label Info {context.LabelsText} - ({context.Entity.Title})",
                 new DialogParameters()
                 {
                     ["Label"] = label,
-                    ["Entity"] = context.Entity
+                    ["MyNode"] = context,
+                    //["Entity"] = context.Entity,
                 },
                 new DialogOptions()
                 {
-                    MaxWidth = MaxWidth.Small,
+                    MaxWidth = MaxWidth.Large,
                     FullWidth = true
                 });
 
             var result = await dialogReference.Result;
-            if (result.Cancelled is false)
+            if (result.Canceled is false)
             {
                 context.Jobj = (JObject)result.Data;
-                context.Entity = context.Jobj.ToObject<EntityBase>()!;
+                context.Entity = context.Jobj?.ToObject<EntityBase>()!;
                 StateHasChanged();
             }
         }
@@ -100,7 +101,7 @@ namespace AMS_SCHEMA.Pages.Schema.TestData.Components
 
         async Task AddNewRelatedNodeClick()
         {
-            var res = DialogService.Show<AddNewRelationToDataNodeDialog>("Label : " + context.LabelsText + " - " + context.Entity.Title,
+            var res = await DialogService.ShowAsync<AddNewRelationToDataNodeDialog>("Label : " + context.LabelsText + " - " + context.Entity.Title,
                 new DialogParameters
                 {
                     ["Label"] = context.Labels.Last(),

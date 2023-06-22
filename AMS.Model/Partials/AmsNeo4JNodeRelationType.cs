@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeRelationType : IHaveId<long>
+    public partial class AmsNeo4JNodeRelationType : IHaveId<int>
     {
         [JsonIgnore]
         public List<AmsNeo4JNodeRelationProperty> Properties { get; set; }

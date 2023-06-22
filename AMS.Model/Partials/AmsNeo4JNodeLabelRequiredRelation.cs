@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace AMS.Model.Models;
 
-public partial class AmsNeo4JNodeLabelRequiredRelation : IHaveId<long>
+public partial class AmsNeo4JNodeLabelRequiredRelation : IHaveId<int>
 {
     [JsonIgnore]
     [ForeignKey(nameof(LabelRelationFk))]

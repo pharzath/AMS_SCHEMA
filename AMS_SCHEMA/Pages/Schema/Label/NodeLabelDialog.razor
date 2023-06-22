@@ -11,7 +11,7 @@
                                  AdornmentColor="Color.Info"
                                  AdornmentIcon="@NodeIcon?.IconContent"
                                  @bind-Value="NodeIcon"
-                                 MaxItems="100"
+                                 MaxItems="50"
                                  Clearable="true"
                                  SearchFunc="SearchIcon"
                                  Label="Select Label Icon">
@@ -90,9 +90,9 @@
         }
     }
 
-    void SaveAndCloseClick()
+    async Task SaveAndCloseClick()
     {
-        DataService.SaveLabel(Label);
+        await DataService.SaveLabel(Label);
         DialogInstance.Close();
     }
 

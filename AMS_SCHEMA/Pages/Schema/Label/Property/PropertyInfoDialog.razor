@@ -6,15 +6,20 @@
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.EntityFrameworkCore.ChangeTracking
 @using MudBlazor.Extensions
+@using Olive
+@using Toolbelt.Blazor.HotKeys2
 <MudDialog>
     <DialogContent>
         <MudGrid>
             <MudItem sm="12" md="6">
-                <MudTextField Required="true" Label="Name" @bind-Value="Property.Name" DebounceInterval="10" OnDebounceIntervalElapsed="UpdateNeoNameField"></MudTextField>
+
+                <MudTextField @ref="nameTextField" Required="true" Label="Name" @bind-Value="Property.Name" DebounceInterval="10" OnDebounceIntervalElapsed="UpdateNeoNameField"></MudTextField>
             </MudItem>          
+            @*
             <MudItem sm="12" md="6">
                 <MudTextField Required="true" Label="Neo4J Proprty name" @bind-Value="Property.Neo4jName" HelperText="Maybe some JsonProperty attribute applied in code."></MudTextField>
             </MudItem>
+            *@
             <MudItem sm="12" md="12">
                 <MudTextField Label="Display Name" @bind-Value="Property.DisplayName"></MudTextField>
             </MudItem>
@@ -26,7 +31,19 @@
                     <MudSelectItem Value="@("guid")">guid</MudSelectItem>
                     <MudSelectItem Value="@("DateTime")">DateTime</MudSelectItem>
                     <MudSelectItem Value="@("float")">float</MudSelectItem>
+                    <MudSelectItem Value="@("items")">ITEMS</MudSelectItem>
                 </MudSelect>
+            </MudItem>
+            @if (Property.DataType is "items")
+            {
+                <MudItem md="12">
+                    <MudTextField @bind-Value="Property.ItemsStringValue" Label="Comma/Enter Separated Items Values"></MudTextField>
+
+                </MudItem>
+            }
+            <MudItem sm="12" md="6">
+                <MudCheckBox @bind-Checked="Property.AlternateGrainKey" Label="Alternate Grain Key"></MudCheckBox>
+                <MudCheckBox @bind-Checked="Property.AllowNull" Label="Allow Null"></MudCheckBox>
             </MudItem>
             <MudItem sm="12" md="6">
                 <MudSelect Label="Validation Type" @bind-Value="Property.ValidationType">
@@ -83,17 +100,41 @@
     [Parameter]
     public AmsNeo4JNodeLabelProperty Property { get; set; }
 
+    protected override void OnInitialized()
+    {
+        HotKeysContext = HotKeys.CreateContext()
+            .Add(ModCode.Ctrl | ModCode.Shift,
+                Code.S,
+                async code =>
+                {
+                    await SaveAndCloseClick(false);
+                },
+                "Save and New"
+            );
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Property.DataType.IsEmpty())
+            Property.DataType = "string";
+        if (Property.ValidationType.IsEmpty())
+            Property.ValidationType = "none";
+        base.OnParametersSet();
+    }
+
     List<string>? _errors;
 
     void CloseClick()
     {
         DialogInstance.Close();
     }
+    MudTextField<string> nameTextField;
 
-    void SaveAndCloseClick(bool close = false)
+    async Task SaveAndCloseClick(bool close = false)
     {
         Property.LabelId = Label.Id;
-        var validationResult = _amsNeo4JNodeLabelPropertyValidator.Validate(Property);
+        var validationResult = await _amsNeo4JNodeLabelPropertyValidator.ValidateAsync(Property);
         if (validationResult.Errors is {Count: > 0})
         {
             _errors = validationResult.Errors.Select(x => x.ErrorMessage).ToList();
@@ -105,15 +146,25 @@
                 DialogInstance.Close();
             else
             {
-                Property = new AmsNeo4JNodeLabelProperty();
+                Property = new AmsNeo4JNodeLabelProperty()
+                {
+                    DataType = "string",
+                    ValidationType = "none"
+                };
+                await nameTextField.FocusAsync();
             }
         }
 
     }
 
+    [Inject] HotKeys HotKeys { get; set; }
+    HotKeysContext HotKeysContext;
+
     void UpdateNeoNameField()
     {
-        Property.Neo4jName = Property.Name.ToCamelCase();
+        Property.DisplayName = Property.Name.OrEmpty().ToLiteralFromPascalCase();
+        if (Property.Name.StartsWith("is", StringComparison.OrdinalIgnoreCase))
+            Property.DataType = "bool";
     }
 
 }

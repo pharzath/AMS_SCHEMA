@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using MudBlazor;
+using MudBlazor.Extensions;
 using MudBlazor.Services;
 using Neo4jClient;
 using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic;
@@ -26,10 +28,19 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<MyCachProvider>();
 
 builder.Services.AddMudServices();
+builder.Services.AddMudExtensions(c =>
+{
+    c.WithDefaultDialogOptions(ex =>
+    {
+        ex.Position = DialogPosition.Center;
+    });
+});
+
+
 
 builder.Services.AddScoped<BrowserService>();
 
-builder.Services.AddScoped<AMSCodeGenerator>();
+builder.Services.AddScoped<CodeGeneratorService>();
 
 builder.Services.AddScoped<GenericRepository>();
 builder.Services.AddScoped<MyCustomTreeService>();
@@ -45,7 +56,7 @@ builder.Services.AddScoped<IGraphClient>(s =>
     return graphClient;
 });
 
-builder.Services.AddDbContext<QonosSchemaContext>(options =>
+builder.Services.AddDbContext<MyDbContext>(options =>
 {
     options.EnableSensitiveDataLogging();
     options.ConfigureWarnings(configurationBuilder =>
@@ -53,14 +64,26 @@ builder.Services.AddDbContext<QonosSchemaContext>(options =>
         configurationBuilder.Ignore(CoreEventId.NavigationBaseIncludeIgnored);
     });
 
-    //options.UseSqlServer(builder.Configuration["ConnectionString"]);
+    options.UseSqlServer(builder.Configuration["ConnectionString"], optionsBuilder =>
+    {
+        optionsBuilder.EnableRetryOnFailure(4);
+    });
 });
 
 builder.Services.AddHotKeys2();
 
 builder.Services.AddScoped<DataService>();
 
+
+
 var app = builder.Build();
+
+using (var serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope())
+{
+    var context = serviceScope.ServiceProvider.GetRequiredService<MyDbContext>();
+    context.Database.EnsureCreated();
+}
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

@@ -1,0 +1,11 @@
+﻿@using AMS.Model
+@using Olive
+namespace @(CodeGen.Module)@(PostFix.WithWrappers(".",null));
+@code {
+
+    [CascadingParameter]
+    public required CodeGeneratorTemplate CodeGen { get; set; }
+
+    [Parameter]
+    public string? PostFix { get; set; }
+}

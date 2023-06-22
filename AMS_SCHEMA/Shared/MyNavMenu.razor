@@ -1,8 +1,9 @@
 ﻿<MudNavMenu>
-    <MudNavLink Icon="@Icons.Filled.Dashboard" Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-    <MudNavLink Icon="@Icons.Filled.Label" Href="/SchemaListLabels" Match="NavLinkMatch.Prefix">Labels</MudNavLink>
+    <MudNavLink Icon="@Icons.Filled.Label" Href="/" Match="NavLinkMatch.Prefix">Labels</MudNavLink>
+    <MudNavLink Icon="@Icons.Filled.Dashboard" Href="/Index" Match="NavLinkMatch.All">Dashboard</MudNavLink>
     <MudNavLink Icon="@Icons.Filled.NewReleases" Href="/SchemaRelationExplorer" Match="NavLinkMatch.Prefix">Relations</MudNavLink>
-    <MudNavGroup Icon="@Icons.Filled.Settings" Title="Settings" Expanded="false">
+    <MudNavGroup Icon="@Icons.Filled.Settings" Title="ModuleSettings" Expanded="false">
+        <MudNavLink Icon="@Icons.Filled.DesignServices" Href="/Microservices" Match="NavLinkMatch.Prefix">Microservice</MudNavLink>
         <MudNavLink Icon="@Icons.Filled.Person" Href="/users" Match="NavLinkMatch.Prefix">Users</MudNavLink>
         <MudNavLink Icon="@Icons.Filled.Security" Href="/security" Match="NavLinkMatch.Prefix">Security</MudNavLink>
     </MudNavGroup>

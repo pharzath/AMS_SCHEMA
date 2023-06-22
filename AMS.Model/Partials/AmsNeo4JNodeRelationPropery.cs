@@ -11,7 +11,7 @@ using QOQNOS.Core;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JNodeRelationProperty : IHaveId<long>
+    public partial class AmsNeo4JNodeRelationProperty : IHaveId<int>
     {
         [JsonIgnore]
         [ForeignKey("RelationId")]

@@ -1,0 +1,47 @@
+﻿@using Olive
+@if (!CodeGen.ConstructorExist(WithAtleastParams))
+{
+    <text>
+
+    @($"// {DateTime.Now} : Generate by Code Generator.".OnlyWhen(CodeGenHints))
+    @CodeTemplate
+
+    </text>
+}
+else
+{
+    <text>
+                
+    @($"// {DateTime.Now} : Original Constructor placed here, Not overwritten by Code Generator.".OnlyWhen(CodeGenHints))
+    @BeforeExisting
+    @CodeGen.GetConstructorSource(WithAtleastParams)
+    @AfterExisting
+
+    </text>
+}
+
+@code {
+
+    [Parameter]
+    public string[] WithAtleastParams { get; set; }
+
+    [Parameter]
+    public RenderFragment CodeTemplate { get; set; }
+
+    [Parameter]
+    public RenderFragment BeforeExisting { get; set; }
+
+    [Parameter]
+    public RenderFragment AfterExisting { get; set; }
+
+    [CascadingParameter]
+    public CodeGeneratorTemplate CodeGen { get; set; }
+
+
+    [CascadingParameter(Name = nameof(Entity))]
+    public string Entity { get; set; }
+
+    [CascadingParameter]
+    public bool CodeGenHints { get; set; }
+
+}

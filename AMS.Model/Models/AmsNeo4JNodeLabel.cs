@@ -1,19 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AMS.Model.Models;
 
 public partial class AmsNeo4JNodeLabel
 {
-    public long Id { get; set; }
+    [Key]
+    public int Id { get; set; }
 
     public string Name { get; set; } = null!;
 
-    public long? NodeId { get; set; }
+    public int? NodeId { get; set; }
 
     public string? Description { get; set; }
 
-    public long? ParentLabelId { get; set; }
+    public int? ParentLabelId { get; set; }
 
     public string? Icon { get; set; }
 
@@ -23,13 +26,17 @@ public partial class AmsNeo4JNodeLabel
 
     public string? DisplayName { get; set; }
 
-    public string? Guid { get; set; }
+    public bool? IsAbstract { get; set; }
 
-    public long IsAbstract { get; set; }
+    public bool? IsVirtual { get; set; }
 
-    public long IsVirtual { get; set; }
+    public bool? IsStaticData { get; set; }
 
-    public long IsStaticData { get; set; }
+    public int? InheriteFromLabelId { get; set; }
 
-    public string? FunctionalId { get; set; }
+    public int? FunctionalIdFk { get; set; }
+
+    public int? MicroserviceFk { get; set;}
+
+    public bool InheritPropsFromParentLabel { get; set; }
 }

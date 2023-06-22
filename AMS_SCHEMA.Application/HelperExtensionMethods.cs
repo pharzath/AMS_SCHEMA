@@ -1,7 +1,9 @@
 ﻿using AMS.Model.Models;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+using AutoMapper;
 using Olive;
+
 
 namespace AMS_SCHEMA.Class
 {
@@ -9,6 +11,8 @@ namespace AMS_SCHEMA.Class
     {
         public static string ToPascalCase(this string s)
         {
+            if (s.IsEmpty()) return s;
+
             var words = s.Split('_', ' ');
             var w = words.Select(x => x[0].ToUpper() + xxx(x[1..]));
             return string.Join(null, w);
@@ -45,7 +49,7 @@ namespace AMS_SCHEMA.Class
                 if (s[i].IsUpper())
                     v += s[i].ToLower();
             }
-            return v.IsEmpty() ? s[0].ToString() : v;
+            return OliveExtensions.IsEmpty(v) ? s[0].ToString() : v;
         }
 
         public static string GetColumnDataType(this string tpy)
@@ -67,6 +71,25 @@ namespace AMS_SCHEMA.Class
             }
             return tpy;
         }
+        public static T ConvertTo<T>(this object from)
+        {
+            // Check if from is null.
+            if (from == null)
+            {
+                return default(T);
+            }
 
+            // Create an AutoMapper configuration.
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<object, T>();
+            });
+
+            // Create an AutoMapper mapper.
+            var mapper = config.CreateMapper();
+
+            // Convert the object to the target type.
+            return mapper.Map<object, T>(from);
+        }
     }
 }

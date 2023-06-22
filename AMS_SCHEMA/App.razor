@@ -1,4 +1,5 @@
-﻿<Router AppAssembly="@typeof(App).Assembly">
+﻿@using MudBlazor.Extensions.Helper
+<Router AppAssembly="@typeof(App).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -10,3 +11,13 @@
         </LayoutView>
     </NotFound>
 </Router>
+@code
+{
+    [Inject] IJSRuntime JsRuntime { get; set; }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await JsRuntime.InitializeMudBlazorExtensionsAsync();
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}

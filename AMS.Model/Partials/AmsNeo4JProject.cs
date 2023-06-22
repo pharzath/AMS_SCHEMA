@@ -7,8 +7,12 @@ using System.Threading.Tasks;
 
 namespace AMS.Model.Models
 {
-    public partial class AmsNeo4JProject : IHaveId<long>
+    public partial class AmsNeo4JProject : IHaveId<int>
     {
-
+        public bool CanEdit() => true;
+        public override string ToString()
+        {
+            return Namespace;
+        }
     }
 }

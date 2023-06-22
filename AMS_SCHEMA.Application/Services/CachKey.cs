@@ -2,11 +2,11 @@
 
 public class CachKey : IEquatable<CachKey>
 {
-    public Type Type { get; set; }
-    public long? Id { get; set; }
+    public required Type Type { get; init; }
+    public long? Id { get; init; }
     public string? Name { get; set; }
-    public Type[]? RelatedTypes { get; set; }
-    public CachKey[]? RelatedKeys { get; set; }
+    public Type[]? RelatedTypes { get; init; }
+    public CachKey[]? RelatedKeys { get; init; }
 
     public CachKey()
     {

@@ -1,0 +1,82 @@
+﻿@using AMS.Model.Models
+@using AMS.Model
+@using AMS_SCHEMA.Class
+@using AMS_SCHEMA.Pages.Schema.Label.Module
+@using Olive
+@implements IHaveDestinationFilePath
+using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_CONTRACT)).@Label.Name.ToPascalCase();
+
+namespace @Module;
+
+public partial interface I@(Label.Name.ToPascalCase())Grain : @GetGrainKeyType()
+{
+    #region Header Code
+    #endregion
+
+@foreach (var handler in Handlers)
+{
+    <text>
+        Task&lt;@(GetParamType(handler.ReturnType))> @(handler.Name.ToPascalCase())(@GetGrainMethodParameters(handler));
+    </text>
+}
+
+    #region Footer Code
+    #endregion
+}
+
+@code {
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public AmsNeo4JMicroserviceModule Module { get; set; }
+
+    [Parameter]
+    public IEnumerable<HandlerSettingItem> Handlers { get; set; }
+
+    string GetParamType(MethodParameter param)
+    {
+
+        var typeName = "";
+        typeName = param.IsSelfDto ? $"{Label.Name.ToPascalCase()}Dto" : param.Type;
+        if (param.IsCollection)
+            typeName = typeName.WithWrappers("IEnumerable<", ">");
+        return typeName;
+    }
+
+    string GetGrainMethodParameters(HandlerSettingItem handler)
+    {
+        var altKey = Label.Properties.FirstOrDefault(x => x.AlternateGrainKey is true);
+        if (handler.Parameters.Count == 1 &&
+            (handler.Parameters.First().Name.OrEmpty().Equals("key", StringComparison.OrdinalIgnoreCase) ||
+            (altKey is { } && handler.Parameters.First().Name.OrEmpty() == altKey.Name))
+        )
+            return "";
+        var sb = handler.Parameters.Select(parameter => $"{GetParamType(parameter)} {GetParamName(parameter)}");
+        return string.Join(',', sb);
+    }
+
+    string GetParamName(MethodParameter parameter, bool propertyName = false)
+    {
+        var name = parameter.IsSelfDto ? $"{Label.Name}Dto" : parameter.Name;
+        if (parameter.IsCollection) name = name.ToPlural();
+        return propertyName ? name.ToPascalCase() : name.ToCamelCase();
+    }
+
+    string GetGrainKeyType()
+    {
+        var gk = Label.Properties.FirstOrDefault(x => x.AlternateGrainKey is true);
+        if (gk == null)
+            return "IGrainWithGuidKey";
+        return gk.DataType?.ToLower() switch
+        {
+            "string" => "IGrainWithStringKey",
+            "int" => "IGrainWithIntegerKey",
+            _ => "IGrainWithGuidKey"
+        };
+    }
+
+    [Parameter]
+    public string DestFilePath { get; set; }
+}

@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AMS.Model.Models;
 
 public partial class AmsNeo4JNodeLabelProperty
 {
-    public long Id { get; set; }
+    public int Id { get; set; }
 
-    public long? LabelId { get; set; }
+    public int LabelId { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -19,9 +20,12 @@ public partial class AmsNeo4JNodeLabelProperty
 
     public string? ValidationType { get; set; }
 
-    public long? Order { get; set; }
+    public int? Order { get; set; }
 
     public string? Neo4jName { get; set; }
 
-    public string Guid { get; set; } = null!;
+    public Guid Guid { get; set; }
+    public bool? AllowNull { get; set; }
+    public bool? AlternateGrainKey { get; set; }
+    public string? ItemsStringValue { get; set; }
 }

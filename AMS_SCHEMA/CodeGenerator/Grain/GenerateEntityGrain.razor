@@ -1,0 +1,73 @@
+﻿@using AMS.Model
+@using Olive
+@using AMS_SCHEMA.CodeGenerator.Core
+@using AMS_SCHEMA.Pages.Schema.Label.Module
+@implements IHaveDestinationFilePath
+@inherits CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+// CodeGenHints=@_codeGenHint
+<UsingCode>
+using Olive;
+using System.Security.Claims;
+using Orleans.Providers;
+using System.IdentityModel.Tokens.Jwt;
+
+using QOQNOS.CORE.Neo4jRepository;
+
+<UsingCodeItem Type="AmsNeo4JMicroserviceModule.ModuleTypeEnum.MODEL" />
+<UsingCodeItem Type="AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_GRAINS_Interface" />
+<UsingCodeItem Type="AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_CONTRACT" PostFix="@Entity" />
+</UsingCode>
+<NamespaceCode />
+<StorageProviderCode ProviderName="neo4j" />
+<ClassCode Inherits="@($"Grain<{Entity}>")" ImplementsSelfInterface="true" IsPartial="true">
+
+    <RegionCode Name="Header Code" />
+    <RegionCode Name="Fields">
+
+        readonly IGrainFactory _grainFactory;
+        readonly GenericRepository _repo;
+
+    </RegionCode>
+    <RegionCode Name="Properties" />
+    <ConstructorCode WithAtleastParams="@(new[] { "IGrainFactory", "GenericRepository" })">
+        <CodeTemplate>
+
+            public @(Entity)Grain(IGrainFactory grainFactory,GenericRepository repo)
+            {
+            _grainFactory = grainFactory;
+            _repo = repo;
+            }
+
+        </CodeTemplate>
+    </ConstructorCode>
+    <MethodsCode>
+        <CodeTemplate Context="handler">
+        <MethodCode MethodCodeType="MethodCode.MethodCodeTypeEnum.ApplicationGrainMethod" Handler="handler" >
+        throw new NotImplementedException();
+        </MethodCode>
+        </CodeTemplate>
+    </MethodsCode>
+    <RegionCode Name="Footer Code" />
+
+</ClassCode>
+</GeneratorCode>
+
+@code {
+
+    protected override string ClassNameFormat => "{0}Grain";
+
+    protected override string[] GetMethodParameterTypes(HandlerSettingItem handler)
+    {
+        var altKey = Label.Properties.FirstOrDefault(x => x.AlternateGrainKey is true);
+        if (handler.Parameters.Count == 1 &&
+            (handler.Parameters.First().Name.OrEmpty().Equals("key", StringComparison.OrdinalIgnoreCase) ||
+             (altKey is { } && handler.Parameters.First().Name.OrEmpty() == altKey.Name))
+            )
+            return Array.Empty<string>();
+
+        var parameterTypes = handler.Parameters.Select(GetParamType).ToArray();
+        return parameterTypes;
+    }
+
+}

@@ -8,7 +8,7 @@
 
 
 <MudText Typo="Typo.h6" Color="Color.Warning" Class="my-3">
-    Derived PropertiesDict :
+    Derived Properties :
 </MudText>
 <MudDivider />
 
@@ -35,8 +35,8 @@
             </MudTd>
             <MudTd>
                 <MudChip Size="Size.Medium"
-                     Icon="@Utils.GetLabelPropertyIcon(x.Key, context)"
-                     Style="@Utils.GetLabelPropertyBgColor(x.Key, context)">
+                         Icon="@Utils.GetLabelPropertyIcon(x.Key, context)"
+                         Style="@Utils.GetLabelPropertyBgColor(x.Key, context)">
                     @context.Name : @context.DataType
                 </MudChip>
             </MudTd>
@@ -87,24 +87,29 @@
         Dictionary<AmsNeo4JNodeLabel, IEnumerable<AmsNeo4JNodeLabelProperty>> derived = new();
         var allConst = Label.Constraints;
         var allIdx = Label.Indices;
-        var lbl = Label.ParentLabel;
+        var lbl = Label.ParentLabel ?? Label.InheriteFromLabel;
+        var parent = Label;
         while (lbl != null)
         {
-            var properties = GetLabelProperties(lbl);
-            allConst.AddRange(lbl.Constraints);
-            allIdx.AddRange(lbl.Indices);
-            derived.Add(lbl, properties);
+            if (lbl.IsVirtual is true || lbl.IsAbstract is true || (parent?.InheritPropsFromParentLabel ?? false))
+            {
+                var properties = GetLabelProperties(lbl);
+                allConst.AddRange(lbl.Constraints);
+                allIdx.AddRange(lbl.Indices);
+                derived.Add(lbl, properties);
+            }
+            parent = lbl;
             lbl = GetParent(lbl);
         }
-        
 
-        derived.Add(new AmsNeo4JNodeLabel
-            {
-                Name = "EntityBase",
-                Constraints = allConst,
-                Indices = allIdx
-            }
-            , EntityBaseClassDef.Properties);
+
+        // derived.Add(new AmsNeo4JNodeLabel
+        //     {
+        //         Name = "EntityBase",
+        //         Constraints = allConst,
+        //         Indices = allIdx
+        //     }
+        //     , EntityBaseClassDefX.Properties);
 
         return derived;
     }
@@ -120,7 +125,19 @@
 
     AmsNeo4JNodeLabel? GetParent(AmsNeo4JNodeLabel? label)
     {
-        return label == null ? null : DataService.GetLabel(label.ParentLabelId);
+        if (label == null)
+            return null;
+        
+        AmsNeo4JNodeLabel? lbl;
+        if (label is { ParentLabelId: not null,InheritPropsFromParentLabel: true })
+        {
+            lbl = DataService.GetLabel(label.ParentLabelId);
+            return lbl;
+        }
+        if (label.InheriteFromLabelId == null) return null;
+
+        lbl = DataService.GetLabel(label.InheriteFromLabelId);
+        return lbl;
     }
 
 }

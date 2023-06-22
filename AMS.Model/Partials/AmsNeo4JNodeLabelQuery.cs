@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace AMS.Model.Models;
 
-public partial class AmsNeo4JNodeLabelQuery : IHaveId<long>
+public partial class AmsNeo4JNodeLabelQuery : IHaveId<int>
 {
     [JsonIgnore]
     [ForeignKey("LabelId")]

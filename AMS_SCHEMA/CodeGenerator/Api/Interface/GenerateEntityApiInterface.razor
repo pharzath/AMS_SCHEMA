@@ -1,0 +1,48 @@
+﻿@using Olive;
+@using AMS_SCHEMA.CodeGenerator.Core;
+@using AMS.Model
+@using AMS_SCHEMA.Class
+@using AMS_SCHEMA.Pages.Schema.Label.Module
+@inherits AMS_SCHEMA.CodeGenerator.Core.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+    // CodeGenHints=@_codeGenHint
+    <UsingCode>
+        using Microsoft.AspNetCore.Mvc;
+    </UsingCode>
+    <NamespaceCode PostFix="@Entity"></NamespaceCode>
+    <ClassCode Type="ClassCode.ClassTypeEnum.Interface">
+        <RegionCode Name="Header Code" />
+
+        <RegionCode Name="Properties" />
+
+        <MethodsCode>
+            <CodeTemplate Context="handler">
+                <MethodCode @ref="_methodCode" MethodCodeType="MethodCode.MethodCodeTypeEnum.ApiControllerInterfaceMethod"
+                            Handler="handler"
+                            IsTask="true"
+                            ResultWrapperFormat="ActionResult<{0}>"
+                            ResultFormat="{0}Request.Response"
+                            MethodParamsFormat="_methodParamsFormat" />
+            </CodeTemplate>
+        </MethodsCode>
+
+        <RegionCode Name="Footer Code"></RegionCode>
+    </ClassCode>
+</GeneratorCode>
+
+@code {
+    readonly string[] _methodParamsFormat = { "{0}Request request" };
+
+    protected override string ClassNameFormat => "I{0}Controller";
+    protected override string[]? GetMethodParameterTypes(HandlerSettingItem handler)
+    {
+        return new[] { "{0}Request".Fmt(handler.ToString()) };
+    }
+
+    public override string? GetHandlerParameters(HandlerSettingItem handler)
+    {
+        return _methodParamsFormat.Select(str => str.Fmt(handler.ToString())).JOIN(",");
+    }
+
+    MethodCode? _methodCode;
+}

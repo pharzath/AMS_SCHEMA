@@ -56,8 +56,8 @@ namespace AMS_SCHEMA.Pages.Schema.Constraint
 
             var x = formFields.ToList();
 
-            if(Label.ParentLabelId is null)
-                x.AddRange(EntityBaseClassDef.GetEntityBaseProperties());
+            // if(Label.ParentLabelId is null)
+            //     x.AddRange(EntityBaseClassDefX.GetEntityBaseProperties());
 
             return Task.FromResult(x.AsEnumerable())!;
 

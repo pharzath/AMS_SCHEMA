@@ -1,0 +1,22 @@
+﻿@using AMS.Model.Services
+@using AMS.Model.Models
+@foreach (var fnid in _fnIds)
+{
+    <text>
+    FunctionalIds.Default = FunctionalIds.New("@fnid.Name", "@fnid.Prefix", IdFormat.@fnid.Type.ToString(), 0);
+    </text>
+}
+
+@code {
+
+    [Inject]
+    public required DataService DataService { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _fnIds = DataService.GetFunctionalIds();
+        base.OnInitialized();
+    }
+
+    IEnumerable<AmsNeo4JNodeLabelFunctionalId> _fnIds;
+}

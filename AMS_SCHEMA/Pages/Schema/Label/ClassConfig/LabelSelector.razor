@@ -1,0 +1,95 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using Olive
+@if (AutoComplete == false)
+{
+    <MudSelect @bind-Value="SelectedLabel" T="AmsNeo4JNodeLabel?" Label="@Label" Disabled="Disabled" Clearable="Clearable" >
+        @if (_labels != null)
+        {
+            foreach (var lbl in _labels)
+            {
+                <MudSelectItem Value="@lbl"></MudSelectItem>
+            }
+        }
+    </MudSelect>
+}
+else
+{
+    <MudAutocomplete @bind-Value="SelectedLabel" T="AmsNeo4JNodeLabel?" Label="@Label" Disabled="Disabled"
+                     SearchFunc="SearchFunc"
+                     Clearable="Clearable"
+                     CoerceValue="true"
+                     MaxItems="100">
+        <ItemTemplate>
+            <MudStack Row="true" Spacing="0">
+                <MudIcon Icon="@context?.IconContent" Color="Color.Info" Size="Size.Small" Class="mr-2"></MudIcon>
+                @context?.Name
+                <MudSpacer/>
+                @context?.DisplayName
+            </MudStack>
+
+        </ItemTemplate>
+    </MudAutocomplete>
+}
+
+
+@code {
+
+    [Parameter]
+    public bool Clearable { get; set; }
+
+    [Parameter]
+    public IEnumerable<AmsNeo4JNodeLabel?>? Excepts { get; set; }
+
+    [Parameter]
+    public bool AutoComplete { get; set; }
+
+    [Parameter]
+    public string? Label { get; set; }
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel? SelectedLabel
+    {
+        get => _selectedLabel;
+        set
+        {
+            if (_selectedLabel != value)
+                SelectedLabelChanged.InvokeAsync(value);
+            _selectedLabel = value;
+        }
+    }
+
+    [Parameter]
+    public EventCallback<AmsNeo4JNodeLabel?> SelectedLabelChanged { get; set; }
+
+    [Inject]
+    public required DataService DataService { get; set; }
+
+    protected override void OnAfterRender(bool firstRender)
+    { 
+        var labels = DataService.GetLabels();
+        
+        if(Excepts != null)
+            labels = labels.Except(Excepts).ToList();
+        if(labels.First() != null)
+            labels.Insert(0, null);
+        _labels = labels.AsEnumerable();
+        base.OnAfterRender(firstRender);
+    }
+
+
+
+    IEnumerable<AmsNeo4JNodeLabel?>? _labels;
+    AmsNeo4JNodeLabel? _selectedLabel;
+
+    Task<IEnumerable<AmsNeo4JNodeLabel?>?> SearchFunc(string arg)
+    {
+        return Task.FromResult(arg.IsEmpty() 
+            ? _labels?.AsEnumerable() 
+            : _labels?.Where(x => (x?.Name.Contains(arg) ?? false) || (x?.DisplayName?.Contains(arg) ?? false)));
+    }
+
+}

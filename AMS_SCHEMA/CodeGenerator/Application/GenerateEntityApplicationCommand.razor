@@ -1,0 +1,192 @@
+﻿@using AMS.Model.Models
+@using AMS_SCHEMA.Class
+
+@using Olive
+@using System.Web
+@using System.Xml.Linq
+@using AMS.Model
+@using AMS.Model.Services
+@using AMS_SCHEMA.Pages.Schema.Label.Module
+@using Azure.Core
+@implements IHaveDestinationFilePath
+using MediatR;
+using Microsoft.Extensions.Logging;
+using @Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_CONTRACT).@Label.Name.ToPascalCase();
+using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Interface)).@Label.Name.ToPascalCase();
+using COMMON.@(Module.Microservice.Name.ToUpper()).GrainInterfaces;
+
+namespace @(Module).Services.@Label.Name.ToPascalCase();
+
+
+public class @(Handler.Name.ToPascalCase())Command : IRequest&lt;@(GetParamType(Handler.ReturnType))>
+{
+    @foreach (var param in Handler.Parameters){
+        <text>
+        public @GetParamType(param) @GetParamName(param,true) { get; set; }
+        </text>}
+}
+
+public class @(Handler.Name.ToPascalCase())CommandHandler : IRequestHandler&lt;@(Handler.Name.ToPascalCase())Command, @(GetParamType(Handler.ReturnType))>
+{
+    readonly ILogger&lt;@(Handler.Name.ToPascalCase())CommandHandler> _logger;
+    readonly IGrainFactory _client;
+
+    public @(Handler.Name.ToPascalCase())CommandHandler(ILogger&lt;@(Handler.Name.ToPascalCase())CommandHandler> logger, IGrainFactory client)
+    {
+        _logger = logger;
+        _client = client;
+    }
+
+    public async Task&lt;@(GetParamType(Handler.ReturnType))> Handle(@(Handler.Name.ToPascalCase())Command request, CancellationToken cancellationToken)
+    {
+        var @(Label.Name.ToCamelCase())Grain = _client.GetGrain&lt;I@(Label.Name.ToPascalCase())Grain>(@(GrainKey(Handler)));
+        var @GetReturnTypeName(Handler) = await @(Label.Name.ToCamelCase())Grain.@(Handler.Name.ToPascalCase())(@(GetRequestParameters(Handler.Parameters))).ConfigureAwait(false);
+        _logger.LogWarning("@(Handler.Name.ToPascalCase())Command Execution result :  -> " + @GetReturnTypeName(Handler));
+        return @GetReturnTypeName(Handler);
+    }
+}
+
+@code {
+    int i = 0;
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+    [Parameter]
+    public AmsNeo4JMicroserviceModule Module { get; set; }
+
+    [Parameter]
+    public HandlerSettingItem Handler { get; set; }
+
+    // [Parameter]
+    // public List&lt;AmsNeo4JNodeConstraint> Constraints { get; set; }
+
+    string GetParentClass()
+    {
+        if (Label.ParentLabel is { })
+        {
+            return Label.ParentLabel.Name.ToPascalCase();
+        }
+
+        return $"AbstractEntity&lt;{Label.Name.ToPascalCase()}, Guid>";
+    }
+
+    string IsNullable(AmsNeo4JNodeLabelProperty fld)
+    {
+        return fld.Label.Constraints.Any(x => x.Over == fld.Name && (x.Type == "IS NODE KEY" || x.Type == "IS NOT NULL"))
+            ? ""
+            : "?";
+    }
+    string GetToSafeName(AmsNeo4JNodeRelation rel)
+    {
+        if (rel.From.Name == rel.To.Name)
+            return "Sub" + rel.To.Name;
+        return rel.To.Name;
+    }
+
+    string GetParamType(MethodParameter param)
+    {
+
+        var typeName = "";
+        typeName = param.IsSelfDto ? $"{Label.Name.ToPascalCase()}Dto" : param.Type;
+        if (param.IsCollection)
+            typeName = typeName.WithWrappers("IEnumerable<", ">");
+        return typeName;
+    }
+
+    string GetCommandParameters(HandlerSettingItem handler)
+    {
+        var sb = handler.Parameters.Select(parameter => $"{GetParamType(parameter)} {GetParamName(parameter)}");
+        return string.Join(',', sb);
+    }
+
+    string GetParamName(MethodParameter parameter, bool propertyName = false)
+    {
+        var name = parameter.IsSelfDto ? $"{Label.Name.ToPascalCase()}Dto" : parameter.Name;
+        if (parameter.IsCollection) name = name.ToPlural();
+        return propertyName ? name.ToPascalCase() : name.ToCamelCase();
+    }
+
+    string GetReturnTypeName(HandlerSettingItem handler)
+    {
+        return handler.ReturnType.Name.HasValue() 
+            ? handler.ReturnType.Name.ToCamelCase() 
+            : "result";
+    }
+
+
+    string GetGrainMethodParameters(HandlerSettingItem handler)
+    {
+        var sb = handler.Parameters.Select(parameter => 
+            GetParamName(parameter).Equals("key",StringComparison.OrdinalIgnoreCase) ? "" :
+                $"{GetParamType(parameter)} {GetParamName(parameter)}");
+        return string.Join(',', sb);
+    }
+
+    string GetRequestParameters(List<MethodParameter> param)
+    {
+        if (param.Count == 1 && 
+                param.First().Name.ContainsAny(new[] { "Id", "key" }) || 
+                (Label.Properties != null &&
+                Label.Properties.Any(x=>x.AlternateGrainKey is true) && 
+                param.First().Name == Label.Properties.First(x=>x.AlternateGrainKey is true).Name)
+            )
+            return null;
+
+        return string.Join(", ", param.Select(x => "request." + (x.IsSelfDto ? Label.Name.ToPascalCase() + "Dto" : x.Name.ToPascalCase())));
+    }
+
+    string GrainKey(HandlerSettingItem handler)
+    {
+        if (handler.ReturnType.IsSelfDto is true && 
+            handler.ReturnType.IsCollection is true && 
+            handler.Name.Contains("Get", StringComparison.CurrentCultureIgnoreCase))
+        {
+            var grainKeyType = GetGrainKeyType();
+            if (grainKeyType.Contains("Integer"))
+                return "0";
+            if (grainKeyType.Contains("Guid"))
+                return "Guid.Empty";
+            if (grainKeyType.Contains("String"))
+                return "null";
+        }
+        else
+        {
+            var altKey = Label.Properties.FirstOrDefault(x=>x.AlternateGrainKey is true);
+            if(handler.Parameters.Any(x=>x.IsSelfDto))
+            {
+                if (altKey is { })
+                    return $"request.{Label.Name.ToPascalCase()}Dto.{altKey.Name}";
+                return $"request.{Label.Name.ToPascalCase()}Dto.Id";
+            }
+
+            if(handler.Parameters.Count == 1)
+                return $"request.{handler.Parameters.First().Name.OrEmpty().ToPascalCase()}";
+
+            var keyName = handler.Parameters.FirstOrDefault(x => new[] { "id", "key" }.Contains(x.Name.ToLower()));
+            if(keyName is { })
+                return $"request.{keyName.Name.OrEmpty().ToPascalCase()}";
+
+
+            throw new Exception("This handler needs a key to Interact with Grains");
+
+        }
+        throw new Exception("Not supported Grain Type");
+    }
+
+    string GetGrainKeyType()
+    {
+        var gk = Label.Properties.FirstOrDefault(x => x.AlternateGrainKey is true);
+        if (gk == null)
+            return "IGrainWithGuidKey";
+        return gk.DataType?.ToLower() switch
+        {
+            "string" => "IGrainWithStringKey",
+            "int" => "IGrainWithIntegerKey",
+            _ => "IGrainWithGuidKey"
+        };
+    }
+
+    [Parameter]
+    public string DestFilePath { get; set; }
+}

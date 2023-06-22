@@ -1,0 +1,285 @@
+﻿@using AMS.Model.Models
+@using AMS.Model.Services
+@using AMS.Model
+@using AutoMapper
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor.Extensions.Components.ObjectEdit.Options
+@using MudBlazor.Extensions.Options
+@using Neo4jClient.DataAnnotations.Cypher.Functions
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Converters
+@using Newtonsoft.Json.Linq
+@using Nextended.Core.DeepClone
+@using Nextended.Core.Extensions
+@using Olive
+@using FieldType = Nextended.Core.DeepClone.FieldType
+
+<MudGrid>
+    <MudItem md="11" Style="height: 100vh;">
+
+        @if (Label.Microservice is { Modules.Count: > 0 })
+        {
+            <MudTabs Position="Position.Bottom" DisableRipple="true">
+                @foreach (var module in Label.Microservice.Modules.OrderBy(x => x.ModuleType.ToString()))
+                {
+                    <MudTabPanel Text="@module.ModuleType.ToString().Replace("_",".")">
+                        <MudStack Row="false" Spacing="2" Style="min-height: 500px">
+                            <MudStack Row="true" Spacing="2">
+                                <MudSpacer />
+                                <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.TwoTone.Add" OnClick="() => AddSettingTo(module)">
+                                    Add Simple Setting Item
+                                </MudButton>
+                                <MudButton Variant="Variant.Outlined" Color="Color.Default" StartIcon="@Icons.TwoTone.Handyman" OnClick="() => AddHandlerTo(module)">
+                                    Add Handler
+                                </MudButton>
+                            </MudStack>
+
+
+                            <MudTable Items="Label.ModuleSettings?.Where(x=>x.MicroserviceModuleFk == module.Id)">
+                                <HeaderContent>
+                                    <MudTh>Key</MudTh>
+                                    <MudTh>Value</MudTh>
+                                    <MudTh>Description</MudTh>
+                                    <MudTh></MudTh>
+                                    <MudTh></MudTh>
+                                    <MudTh></MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd>@context.Key</MudTd>
+                                    <MudTd>@GetValue(context)</MudTd>
+                                    <MudTd>@context.Description</MudTd>
+                                    <MudTd>
+                                        @if (context.CopiedFromModuleFk == null)
+                                        {
+                                            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.TwoTone.CopyAll" OnClick="() => CopyToAnotherModule(context)">
+                                                Copy
+                                            </MudButton>
+                                        }
+                                    </MudTd>
+                                    <MudTd>
+                                        @if (context.CopiedFromModuleFk == null)
+                                        {
+                                            <MudIconButton Icon="@Icons.TwoTone.Edit" Color="Color.Success" OnClick="() => EditSetting(module,context, true)"></MudIconButton>
+                                        }
+                                    </MudTd>
+                                    <MudTd>
+                                        <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="() => DeleteSetting(context)"></MudIconButton>
+                                    </MudTd>
+                                </RowTemplate>
+                            </MudTable>
+
+                        </MudStack>
+
+                    </MudTabPanel>
+                }
+            </MudTabs>
+
+        }
+    </MudItem>
+    <MudItem md="1">
+
+    </MudItem>
+</MudGrid>
+
+@code {
+
+    [Inject] public DataService DataService { get; set; }
+
+    [Parameter]
+    public AmsNeo4JNodeLabel Label { get; set; }
+
+
+    [Inject]
+    public IDialogService DialogService { get; set; }
+
+    async Task AddSettingTo(AmsNeo4JMicroserviceModule module)
+    {
+        var setting = new AmsNeo4JMicroserviceModuleSetting()
+            {
+                Module = module,
+                Label = Label
+            };
+
+        await EditSetting(module, setting);
+    }
+
+    protected override void OnInitialized()
+    {
+        Label.ModuleSettings = DataService.GetLabelModuleSettings(Label, null);
+        base.OnInitialized();
+    }
+
+    async Task EditSetting(AmsNeo4JMicroserviceModule module, AmsNeo4JMicroserviceModuleSetting setting, bool edit = false)
+    {
+        if (setting.DataValue.IsEmpty())
+        {
+
+            var reference = await DialogService.ShowEx<ModuleSettingDialog>("Setting " + setting.Module, dialog =>
+            {
+                dialog.Setting = setting;
+            }, option =>
+            {
+                option.Animations = null;
+                option.DragMode = MudDialogDragMode.Simple;
+                option.Resizeable = true;
+                option.MaxWidth = MaxWidth.Medium;
+            });
+            var result = await reference.Result;
+            if (!result.Canceled)
+            {
+                Label.ModuleSettings ??= new List<AmsNeo4JMicroserviceModuleSetting>();
+                if (!edit)
+                    Label.ModuleSettings.Add(setting);
+                DataService.SaveMicroserviceModule(setting.Module);
+            }
+        }
+        else
+        {
+            var item = await EditHandlerSettingItem(module, JObject.Parse(setting.DataValue).ToObject<HandlerSettingItem>(), true);
+            setting.DataValue = JObject.FromObject(item).ToString(Formatting.Indented);
+            DataService.SaveModuleSetting(setting);
+            if (item is { })
+            {
+                foreach (var anotherSetting in Label.ModuleSettings.Where(x =>
+                    x.Key == setting.Key &&
+                    x.CopiedFromModuleFk == module.Id))
+                {
+                    anotherSetting.DataValue = JObject.FromObject(item).ToString(Formatting.Indented);
+                    DataService.SaveModuleSetting(anotherSetting);
+                }
+            }
+        }
+    }
+
+    async Task DeleteSetting(AmsNeo4JMicroserviceModuleSetting setting)
+    {
+        var deleteSetting = await DialogService.ShowMessageBoxEx(new MessageBoxOptions()
+            {
+                Title = "Delete Setting",
+                Message = "Are you sure to delete this Setting Item ?",
+            }, DialogOptionsEx.DefaultDialogOptions);
+        if (deleteSetting is true)
+        {
+            Label.ModuleSettings?.Remove(setting);
+            DataService.SaveMicroserviceModule(setting.Module);
+
+        }
+    }
+
+
+    async Task AddHandlerTo(AmsNeo4JMicroserviceModule module)
+    {
+        var handler = new HandlerSettingItem();
+        await EditHandlerSettingItem(module, handler, false);
+
+    }
+
+    AmsNeo4JMicroserviceModule? GetLabelModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum tpy)
+    {
+        return Label.Microservice?.Modules.FirstOrDefault(x => x.ModuleType == tpy);
+    }
+
+    async Task<HandlerSettingItem?> EditHandlerSettingItem(AmsNeo4JMicroserviceModule module, HandlerSettingItem handler, bool edit = false)
+    {
+        var reference = await DialogService.EditObject(handler, $"{module.ModuleType} Handler", new DialogOptionsEx()
+            {
+                CloseButton = true,
+                Resizeable = true,
+                FullWidth = true,
+                MaxWidth = MaxWidth.Large,
+                Animations = null,
+                DragMode = MudDialogDragMode.Simple,
+                MaximizeButton = true
+            });
+
+
+        if (reference.Cancelled)
+            return null;
+
+        var jObject = JObject.FromObject(reference.Result);
+        if (!edit)
+        {
+            var setting = new AmsNeo4JMicroserviceModuleSetting()
+                {
+                    SettingType = SettingTypeEnum.MethodHandler,
+                    Module = module,
+                    Label = Label,
+                    Key = reference.Result.Name,
+                    DataValue = jObject.ToString(Formatting.Indented)
+                };
+            Label.ModuleSettings?.Add(setting);
+
+            await DataService.SaveLabel(Label);
+        }
+
+        return reference.Result;
+    }
+
+    [Inject]
+    ISnackbar Snackbar { get; set; }
+
+    async Task CopyToAnotherModule(AmsNeo4JMicroserviceModuleSetting context)
+    {
+        List<AmsNeo4JMicroserviceModule.ModuleTypeEnum> excepts = new()
+        {
+            context.Module.ModuleType,
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.MOBILE,
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB,
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_SILO,
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB_CORE
+        };
+        excepts.AddRange(
+            DataService.GetLabelModuleSettings(Label, null)
+                .Where(x => x.Key == context.Key)
+                .Select(x => x.Module.ModuleType));
+        var dialogReference = await DialogService.ShowAsync<ModuleTypeSelectorDialog>("Select Modules to Copy",
+
+        new DialogParameters()
+            {
+                ["Orig"] = excepts.ToArray()
+            },
+            new DialogOptions()
+                {
+                    MaxWidth = MaxWidth.Medium,
+                    FullWidth = true
+                }
+        );
+        var result = await dialogReference.Result;
+        if (!result.Canceled)
+        {
+            var selectedTypes = result.Data as HashSet<AmsNeo4JMicroserviceModule.ModuleTypeEnum>;
+            foreach (var module in selectedTypes.Select(type => Label.Microservice.GetModule(type)))
+            {
+                var currentSettings = DataService.GetLabelModuleSettings(Label, module).FirstOrDefault(x => x.Key == context.Key);
+                if (currentSettings is not null)
+                {
+                    Snackbar.Add($"Setting {context.Key} already exist in module : {module}", Severity.Warning);
+                    continue;
+                }
+
+                var clone = new AmsNeo4JMicroserviceModuleSetting
+                    {
+                        CopiedFromModuleFk = context.Module.Id,
+                        MicroserviceModuleFk = module.Id,
+                        LabelFk = Label.Id,
+                        Key = context.Key,
+                        Value = context.Value,
+                        DataValue = context.DataValue,
+                        SettingType = context.SettingType,
+                        Description = context.Description
+                    };
+                DataService.AddNewModuleSetting(clone);
+            }
+        }
+    }
+
+    public static string? GetValue(AmsNeo4JMicroserviceModuleSetting context)
+    {
+        if (context.Value != null)
+            return context.Value;
+        var handler = JObject.Parse(context.DataValue);
+        return handler["Name"]?.ToString().WithWrappers("Handler : ", "");
+    }
+
+}
+

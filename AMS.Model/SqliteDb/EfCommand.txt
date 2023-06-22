@@ -1,0 +1,1 @@
+﻿Scaffold-DbContext "Data Source=E:\PROJ\AMS\AMSCHEMA\AMS_SCHEMA\AMS.Model\SqliteDb\QonosSchema.db" Microsoft.EntityFrameworkCore.Sqlite -OutputDir Models -force
