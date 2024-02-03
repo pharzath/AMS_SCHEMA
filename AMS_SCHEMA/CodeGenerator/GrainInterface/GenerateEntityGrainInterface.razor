@@ -4,7 +4,7 @@
 @using AMS_SCHEMA.Pages.Schema.Label.Module
 @using Olive
 @implements IHaveDestinationFilePath
-using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_CONTRACT)).@Label.Name.ToPascalCase();
+using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.Contracts)).@Label.Name.ToPascalCase();
 
 namespace @Module;
 

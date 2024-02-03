@@ -116,8 +116,8 @@ namespace AMS_SCHEMA.Pages.Schema.Node
         {
             get
             {
-                using var ds = new DataService(new MyDbContext(), new MyCachProvider());
-                var root = Utils.GetNodes(ds, SelectedLabel.Node);
+                //using var ds = new DataService(new MyDbContext(), new MyCachProvider());
+                var root = Utils.GetNodes(DataService, SelectedLabel.Node);
                 _selectedLabel ??= root.FirstOrDefault()?.Label;
                 return root;
             }

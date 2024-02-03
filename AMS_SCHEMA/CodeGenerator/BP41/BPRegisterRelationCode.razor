@@ -7,13 +7,13 @@
 @if (Relation is not null)
 {
     <text>
-        Relations.New(Entities["@Relation.To?.Name"], Entities["@Relation.From?.Name"], "@Relation.From?.Name.ToUpper()_@(Relation.RelType.Name)_@Relation.To?.Name.ToUpper()", "@Relation.RelType.Name")
+        Relations.New(Entities["@Relation.From?.Name"], Entities["@Relation.To?.Name"], "@Relation.From?.Name.ToUpper()_@(Relation.RelType.Name)_@Relation.To?.Name.ToUpper()", "@Relation.RelType.Name")
         @GetSetInProp(Relation)
         @GetSetOutProp(Relation);
     </text>
 }else if(Label is not null)
 @foreach (var rel in GetIncomingRelations(Label)){<text>
-     Relations.New(Entities["@rel.To?.Name"], Entities["@rel.From?.Name"], "@rel.From?.Name.ToUpper()_@(rel.RelType.Name)_@rel.To?.Name.ToUpper()", "@rel.RelType.Name")
+     Relations.New(Entities["@rel.From?.Name"], Entities["@rel.To?.Name"], "@rel.From?.Name.ToUpper()_@(rel.RelType.Name)_@rel.To?.Name.ToUpper()", "@rel.RelType.Name")
      @GetSetInProp(rel)
      @GetSetOutProp(rel);
 </text>}
@@ -38,13 +38,13 @@
                 : null;
     }
 
-    string GetSetOutProp(AmsNeo4JNodeRelation rel)
-    {
-        return $".SetOutProperty(\"{rel.InEntPropName}\", PropertyType.{rel.InEntPropType})".OnlyWhen(rel.InEntPropType != EntPropTypeEnum.None);
-    }
     string GetSetInProp(AmsNeo4JNodeRelation rel)
     {
-        return $".SetInProperty(\"{rel.OutEntPropName}\", PropertyType.{rel.OutEntPropType})".OnlyWhen(rel.OutEntPropType != EntPropTypeEnum.None);
+        return $".SetInProperty(\"{rel.InEntPropName}\", PropertyType.{rel.InEntPropType})".OnlyWhen(rel.InEntPropType != EntPropTypeEnum.None);
+    }
+    string GetSetOutProp(AmsNeo4JNodeRelation rel)
+    {
+        return $".SetOutProperty(\"{rel.OutEntPropName}\", PropertyType.{rel.OutEntPropType})".OnlyWhen(rel.OutEntPropType != EntPropTypeEnum.None);
     }
 
     string GetStandardTypeName(string? idxType)

@@ -18,7 +18,7 @@ namespace AMS.Model.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .UseCollation("Latin1_General_CI_AS")
-                .HasAnnotation("ProductVersion", "7.0.7")
+                .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -66,17 +66,43 @@ namespace AMS.Model.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RootFolder")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SubFolder")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("SortOrder")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MicroserviceFk");
 
                     b.ToTable("AMS_Neo4J_Microservice_Module");
+                });
+
+            modelBuilder.Entity("AMS.Model.AmsNeo4JMicroserviceModuleItemTemplateConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FileSystemItemId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ignored")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ModuleId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NamePolicy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FileSystemItemId");
+
+                    b.HasIndex("ModuleId");
+
+                    b.ToTable("AmsNeo4JMicroserviceModuleItemTemplateConfigs");
                 });
 
             modelBuilder.Entity("AMS.Model.AmsNeo4JMicroserviceModuleSetting", b =>
@@ -171,6 +197,38 @@ namespace AMS.Model.Migrations
                     b.ToTable("AMS_Neo4J_Microservice_Module_Setting_Template");
                 });
 
+            modelBuilder.Entity("AMS.Model.FileSystemItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("FileSystemItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FullPath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsExpanded")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FileSystemItemId");
+
+                    b.ToTable("FileSystemItem");
+                });
+
             modelBuilder.Entity("AMS.Model.Models.AmsNeo4JDepartment", b =>
                 {
                     b.Property<int>("DepartmentId")
@@ -212,7 +270,6 @@ namespace AMS.Model.Migrations
                         .HasColumnType("int");
 
                     b.Property<int?>("LabelId")
-                        .IsRequired()
                         .HasColumnType("int")
                         .HasColumnName("LabelID");
 
@@ -286,12 +343,10 @@ namespace AMS.Model.Migrations
                         .HasDefaultValueSql("((0))");
 
                     b.Property<int?>("DepartmentId")
-                        .IsRequired()
                         .HasColumnType("int")
                         .HasColumnName("DepartmentID");
 
                     b.Property<int?>("NodeId")
-                        .IsRequired()
                         .HasColumnType("int")
                         .HasColumnName("NodeID");
 
@@ -326,7 +381,6 @@ namespace AMS.Model.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<int?>("RelTypeId")
-                        .IsRequired()
                         .HasColumnType("int")
                         .HasColumnName("RelTypeID");
 
@@ -533,7 +587,6 @@ namespace AMS.Model.Migrations
                         .HasColumnType("nvarchar(512)");
 
                     b.Property<int?>("LabelId")
-                        .IsRequired()
                         .HasColumnType("int")
                         .HasColumnName("LabelID");
 
@@ -726,6 +779,9 @@ namespace AMS.Model.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
+                    b.Property<string>("MicroservicesPath")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
@@ -765,6 +821,25 @@ namespace AMS.Model.Migrations
                     b.Navigation("Microservice");
                 });
 
+            modelBuilder.Entity("AMS.Model.AmsNeo4JMicroserviceModuleItemTemplateConfig", b =>
+                {
+                    b.HasOne("AMS.Model.FileSystemItem", "FileSystemItem")
+                        .WithMany()
+                        .HasForeignKey("FileSystemItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AMS.Model.AmsNeo4JMicroserviceModule", "Module")
+                        .WithMany()
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FileSystemItem");
+
+                    b.Navigation("Module");
+                });
+
             modelBuilder.Entity("AMS.Model.AmsNeo4JMicroserviceModuleSetting", b =>
                 {
                     b.HasOne("AMS.Model.AmsNeo4JMicroserviceModule", "CopiedFromModule")
@@ -801,6 +876,13 @@ namespace AMS.Model.Migrations
                     b.Navigation("Module");
                 });
 
+            modelBuilder.Entity("AMS.Model.FileSystemItem", b =>
+                {
+                    b.HasOne("AMS.Model.FileSystemItem", null)
+                        .WithMany("Children")
+                        .HasForeignKey("FileSystemItemId");
+                });
+
             modelBuilder.Entity("AMS.Model.Models.AmsNeo4JDepartment", b =>
                 {
                     b.HasOne("AMS.Model.Models.AmsNeo4JProject", "Project")
@@ -814,9 +896,7 @@ namespace AMS.Model.Migrations
                 {
                     b.HasOne("AMS.Model.Models.AmsNeo4JNodeLabel", "Label")
                         .WithMany()
-                        .HasForeignKey("LabelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("LabelId");
 
                     b.Navigation("Label");
                 });
@@ -840,15 +920,11 @@ namespace AMS.Model.Migrations
                 {
                     b.HasOne("AMS.Model.Models.AmsNeo4JDepartment", "Department")
                         .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("DepartmentId");
 
                     b.HasOne("AMS.Model.Models.AmsNeo4JNode", "Node")
                         .WithMany("Departments")
-                        .HasForeignKey("NodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("NodeId");
 
                     b.Navigation("Department");
 
@@ -865,9 +941,7 @@ namespace AMS.Model.Migrations
 
                     b.HasOne("AMS.Model.Models.AmsNeo4JNodeRelationType", "RelType")
                         .WithMany("Indices")
-                        .HasForeignKey("RelTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("RelTypeId");
 
                     b.Navigation("Label");
 
@@ -923,9 +997,7 @@ namespace AMS.Model.Migrations
                 {
                     b.HasOne("AMS.Model.Models.AmsNeo4JNodeLabel", "Label")
                         .WithMany()
-                        .HasForeignKey("LabelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("LabelId");
 
                     b.Navigation("Label");
                 });
@@ -982,6 +1054,11 @@ namespace AMS.Model.Migrations
             modelBuilder.Entity("AMS.Model.AmsNeo4JMicroservice", b =>
                 {
                     b.Navigation("Modules");
+                });
+
+            modelBuilder.Entity("AMS.Model.FileSystemItem", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("AMS.Model.Models.AmsNeo4JNode", b =>

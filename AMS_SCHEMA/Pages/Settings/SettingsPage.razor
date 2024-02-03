@@ -4,312 +4,312 @@
 @using AMS.Model
 @using MudBlazor.Extensions.Components.ObjectEdit.Options
 @using MudBlazor.Extensions.Options
+@using Nextended.Core.Extensions
 
 <MudStack Row="false" Spacing="4">
 
 
-    <MudTable Items="projects" Hover="true" Dense="true">
-        <ToolBarContent>
-            <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.TwoTone.Add" OnClick="()=> EditProject(null)">
-                New Project
-            </MudButton>
+	<MudTable Items="projects" Hover="true" Dense="true">
+		<ToolBarContent>
+			<MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.TwoTone.Add" OnClick="()=> EditProject(null)">
+				New Project
+			</MudButton>
 
-        </ToolBarContent>
-        <HeaderContent>
-            <MudTh></MudTh>
-            <MudTh>Name</MudTh>
-            <MudTh>Display Name</MudTh>
-            <MudTh>Namespace</MudTh>
-            <MudTh>Root Path</MudTh>
-            <MudTh>Description</MudTh>
-            <MudTh></MudTh>
-            <MudTh></MudTh>
+		</ToolBarContent>
+		<HeaderContent>
+			<MudTh></MudTh>
+			<MudTh>Name</MudTh>
+			<MudTh>Display Name</MudTh>
+			<MudTh>Namespace</MudTh>
+			<MudTh>Root Path</MudTh>
+			<MudTh>Description</MudTh>
+			<MudTh></MudTh>
+			<MudTh></MudTh>
 
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.TwoTone.Check" OnClick="() => SelectProject(context)">
-                    Select Project
-                </MudButton>
-            </MudTd>
-            <MudTd DataLabel="Name">@context.Name</MudTd>
-            <MudTd DataLabel="Display Name">@context.DisplayName</MudTd>
-            <MudTd DataLabel="Namespace">@context.Namespace</MudTd>
-            <MudTd DataLabel="Root Path">@context.RootPath</MudTd>
-            <MudTd DataLabel="Description">@context.Description</MudTd>
-            <MudTd>
-                <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Edit" OnClick="() => EditProject(context)">
-                    Edit Project
-                </MudButton>
-            </MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteProject(context)"></MudIconButton>
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
-
-
-    <MudTable Items="microservices" SelectOnRowClick="true" Hover="true" Dense="true">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">
-                Microservice for the @SelectedProject.Name Project
-            </MudText>
-            <MudSpacer />
-            <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.TwoTone.Add" OnClick="() => EditMicroservice(null)">
-                New Microservice in @SelectedProject.Name
-            </MudButton>
+		</HeaderContent>
+		<RowTemplate>
+			<MudTd>
+				<MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.TwoTone.Check" OnClick="() => SelectProject(context)">
+					Select Project
+				</MudButton>
+			</MudTd>
+			<MudTd DataLabel="Name">@context.Name</MudTd>
+				<MudTd DataLabel="Display Name">@context.DisplayName</MudTd>
+				<MudTd DataLabel="Namespace">@context.Namespace</MudTd>
+				<MudTd DataLabel="Root Path">@context.RootPath</MudTd>
+				<MudTd DataLabel="Description">@context.Description</MudTd>
+				<MudTd>
+					<MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Edit" OnClick="() => EditProject(context)">
+						Edit Project
+					</MudButton>
+				</MudTd>
+				<MudTd>
+					<MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteProject(context)"></MudIconButton>
+				</MudTd>
+			</RowTemplate>
+		</MudTable>
 
 
-        </ToolBarContent>
-        <HeaderContent>
-            <MudTh></MudTh>
-            <MudTh>Name</MudTh>
-            <MudTh>Folder</MudTh>
-            <MudTh>Project</MudTh>
-            <MudTh></MudTh>
-            <MudTh></MudTh>
-
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.TwoTone.Check" OnClick="()=>SelectMicroservice(context)">
-                    Select Microservice
-                </MudButton>
-            </MudTd>
-            <MudTd>@context.Name</MudTd>
-            <MudTd>@context.Folder</MudTd>
-            <MudTd>@context.Project.Namespace</MudTd>
-            <MudTd>
-                <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Edit" OnClick="()=>EditMicroservice(context)">
-                    Edit Microservice
-                </MudButton>
-            </MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteMicroservice(context)"></MudIconButton>
-            </MudTd>
-
-        </RowTemplate>
-    </MudTable>
-
-    <MudTable Items="microserviceModules" SelectOnRowClick="true" Hover="true" Dense="true">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">
-                Modules of @SelectedMicroservice.Name Microservice [@SelectedMicroservice.Project.Namespace]
-            </MudText>
-            <MudSpacer/>
-            <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.TwoTone.NewLabel" OnClick="CreateAllModules">
-                Create All Modules
-            </MudButton>
-
-            <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.TwoTone.Add" OnClick="()=>EditMicroserviceModule(null)">
-                New Microservice Module in @SelectedMicroservice.Name
-            </MudButton>
-        </ToolBarContent>
-        <HeaderContent>
-            <MudTh></MudTh>
-            <MudTh>Name</MudTh>
-            <MudTh>Root Folder</MudTh>
-            <MudTh>Parent Microservice</MudTh>
-            <MudTh></MudTh>
-            <MudTh></MudTh>
-
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd>
-                <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.TwoTone.Check" OnClick="()=>SelectMicroserviceModule(context)">
-                    Select Microservice Module
-                </MudButton>
-            </MudTd>
-            <MudTd>@context.Name</MudTd>
-            <MudTd>@context.RootFolder</MudTd>
-            <MudTd>@context.Microservice.Name</MudTd>
-            <MudTd>
-                <MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Edit" OnClick="()=>EditMicroserviceModule(context)">
-                    Edit Microservice Module
-                </MudButton>
-            </MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteMicroserviceModule(context)"></MudIconButton>
-            </MudTd>
-
-        </RowTemplate>
-    </MudTable>
-
-</MudStack>
+		<MudTable Items="microservices" SelectOnRowClick="true" Hover="true" Dense="true">
+			<ToolBarContent>
+				<MudText Typo="Typo.h6">
+					Microservice for the @SelectedProject.Name Project
+			</MudText>
+			<MudSpacer />
+			<MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.TwoTone.Add" OnClick="() => EditMicroservice(null)">
+				New Microservice in @SelectedProject.Name
+			</MudButton>
 
 
-@code {
+		</ToolBarContent>
+		<HeaderContent>
+			<MudTh></MudTh>
+			<MudTh>Name</MudTh>
+			<MudTh>Folder</MudTh>
+			<MudTh>Project</MudTh>
+			<MudTh></MudTh>
+			<MudTh></MudTh>
 
-    [Inject] DataService DataService { get; set; }
+		</HeaderContent>
+		<RowTemplate>
+			<MudTd>
+				<MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.TwoTone.Check" OnClick="()=>SelectMicroservice(context)">
+					Select Microservice
+				</MudButton>
+			</MudTd>
+			<MudTd>@context.Name</MudTd>
+				<MudTd>@context.Folder</MudTd>
+				<MudTd>@context.Project.Namespace</MudTd>
+				<MudTd>
+					<MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Edit" OnClick="()=>EditMicroservice(context)">
+						Edit Microservice
+					</MudButton>
+				</MudTd>
+				<MudTd>
+					<MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteMicroservice(context)"></MudIconButton>
+				</MudTd>
 
-    AmsNeo4JProject? SelectedProject { get; set; }
-    AmsNeo4JMicroservice? SelectedMicroservice { get; set; }
-    AmsNeo4JMicroserviceModule? SelectedMicroserviceModule { get; set; }
+			</RowTemplate>
+		</MudTable>
 
+		<MudTable Items="microserviceModules?.OrderBy(x=>x.Name)" SelectOnRowClick="true" Hover="true" Dense="true">
+			<ToolBarContent>
+				<MudText Typo="Typo.h6">
+					Modules of @SelectedMicroservice.Name Microservice [@SelectedMicroservice.Project.Namespace]
+			</MudText>
+			<MudSpacer />
+			<MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.TwoTone.NewLabel" OnClick="CreateAllModules">
+				Create All Modules
+			</MudButton>
 
-    List<AmsNeo4JProject>? projects;
-    List<AmsNeo4JMicroservice>? microservices;
-    List<AmsNeo4JMicroserviceModule>? microserviceModules;
+			<MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.TwoTone.Add" OnClick="()=>EditMicroserviceModule(null)">
+				New Microservice Module in @SelectedMicroservice.Name
+			</MudButton>
+		</ToolBarContent>
+		<HeaderContent>
+			<MudTh></MudTh>
+			<MudTh>Name</MudTh>
+			<MudTh>Root Folder</MudTh>
+			<MudTh>Parent Microservice</MudTh>
+			<MudTh></MudTh>
+			<MudTh></MudTh>
 
-    protected override Task OnInitializedAsync()
-    {
-        DataService.ClearCach();
-        projects = DataService.GetProjects().ToList();
-        return base.OnInitializedAsync();
-    }
+		</HeaderContent>
+		<RowTemplate>
+			<MudTd>
+				<MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.TwoTone.Check" OnClick="()=>SelectMicroserviceModule(context)">
+					Select Microservice Module
+				</MudButton>
+			</MudTd>
+			<MudTd>@context.Name</MudTd>
+			<MudTd>@context.FullPath</MudTd>
+			<MudTd>@context.Microservice.Name</MudTd>
+			<MudTd>
+				<MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.TwoTone.Edit" OnClick="()=>EditMicroserviceModule(context)">
+					Edit Microservice Module
+				</MudButton>
+			</MudTd>
+			<MudTd>
+				<MudIconButton Icon="@Icons.TwoTone.Delete" Color="Color.Error" OnClick="()=>DeleteMicroserviceModule(context)"></MudIconButton>
+			</MudTd>
 
-    void SelectProject(AmsNeo4JProject prj)
-    {
-        SelectedProject = prj;
-        microservices = DataService.GetMiroservices(SelectedProject.Id)?.ToList();
-    }
+			</RowTemplate>
+		</MudTable>
 
-
-    [Inject] public required IDialogService DialogService { get; set; }
-
-    readonly DialogOptionsEx _dialogOptionsEx = new DialogOptionsEx()
-        {
-            //DragMode = MudDialogDragMode.Simple,
-            //Modal = true,
-            MaxWidth = MaxWidth.Large,
-            //Resizeable = true,
-            MaximizeButton = true, 
-            CloseButton = true, 
-
-            Position = DialogPosition.CenterRight, 
-            Animations = new []{ AnimationType.SlideIn } , 
-            AnimationDuration = TimeSpan.FromMilliseconds(500),
-            FullHeight = true
-        };
-
-    async Task EditProject(AmsNeo4JProject? prj)
-    {
-        prj ??= new AmsNeo4JProject { RootPath = "E:\\QOQNOS", Namespace = "QOQNOS" };
-
-        var editObject = await DialogService.EditObject(prj, $"Project : {prj.Name}", _dialogOptionsEx);
-
-        if (!editObject.Cancelled)
-        {
-            if (prj.Id == 0)
-                projects.Add(editObject.Result);
-
-            DataService.SaveProject(editObject.Result);
-        }
-
-    }
-
-    void SelectMicroservice(AmsNeo4JMicroservice microservice)
-    {
-        SelectedMicroservice = microservice;
-        microserviceModules = DataService.GetMiroserviceModules(SelectedMicroservice.Id)?.ToList();
-    }
-
-    void SelectMicroserviceModule(AmsNeo4JMicroserviceModule msm)
-    {
-        SelectedMicroserviceModule = msm;
-    }
-
-
-    async Task EditMicroservice(AmsNeo4JMicroservice? ms)
-    {
-        ms ??= new AmsNeo4JMicroservice { Name = null, Folder = null, Project = SelectedProject };
-
-        var editObject = await DialogService.EditObject(ms, $"Microservice : {ms.Name}", _dialogOptionsEx);
-
-        if (!editObject.Cancelled)
-        {
-            if (ms.Id == 0)
-                microservices.Add(editObject.Result);
-
-            DataService.SaveMicroservice(editObject.Result);
-        }
-
-    }
-
-    async Task EditMicroserviceModule(AmsNeo4JMicroserviceModule? msm)
-    {
-        msm ??= new AmsNeo4JMicroserviceModule { Name = null, RootFolder = null , Microservice = SelectedMicroservice};
-        var editObject = await DialogService.ShowEx<MicroserviceModuleDialog>("Module", dialog =>
-        {
-            dialog.Module = msm;
-        }, _dialogOptionsEx);
-        //var editObject = await DialogService.EditObject(msm, $"Microservice Module : {msm.Name}", _dialogOptionsEx);
-        var editObjectResult = await editObject.Result;
-        if (!editObjectResult.Canceled)
-        {
-            if (msm.Id == 0)
-                microserviceModules.Add((AmsNeo4JMicroserviceModule)editObjectResult.Data);
-
-            DataService.SaveMicroserviceModule((AmsNeo4JMicroserviceModule)editObjectResult.Data);
-        }
+	</MudStack>
 
 
-    }
+	@code {
 
-    async Task DeleteProject(AmsNeo4JProject prj)
-    {
-        var confirmDeleteProject = await DialogService.ShowConfirmationDialogAsync("Delete Project " + prj.Name, "Are you Confirm to delete this project?" ,"Yes" , "No !" , Icons.TwoTone.Warning ,new DialogOptionsEx()
-        {
-            Modal = true,
-            DragMode = MudDialogDragMode.Simple
-        });
-        if (confirmDeleteProject)
-        {
-            projects.Remove(prj);
-            DataService.DeleteProject(prj);
-        }
-    }
+	[Inject] DataService DataService { get; set; }
 
-    async Task DeleteMicroservice(AmsNeo4JMicroservice ms)
-    {
-        var confirmDeleteProject = await DialogService.ShowConfirmationDialogAsync("Delete Microservice " + ms.Name, "Are you Confirm to delete this Microservice ?", "Yes", "No !", Icons.TwoTone.Warning, new DialogOptionsEx()
-            {
-                Modal = true,
-                DragMode = MudDialogDragMode.Simple
-            });
-        if (confirmDeleteProject)
-        {
-            microservices.Remove(ms);
-            DataService.DeleteMicroservice(ms);
-        }
+	AmsNeo4JProject? SelectedProject { get; set; }
+	AmsNeo4JMicroservice? SelectedMicroservice { get; set; }
+	AmsNeo4JMicroserviceModule? SelectedMicroserviceModule { get; set; }
 
-    }
 
-    async Task DeleteMicroserviceModule(AmsNeo4JMicroserviceModule msm)
-    {
-        var confirmDeleteProject = await DialogService.ShowConfirmationDialogAsync("Delete Microservice Module " + msm.Name, "Are you Confirm to delete this Microservice Module?", "Yes", "No !", Icons.TwoTone.Warning, new DialogOptionsEx()
-        {
-            Modal = true,
-            DragMode = MudDialogDragMode.Simple
-        });
-        if (confirmDeleteProject)
-        {
-            microserviceModules.Remove(msm);
-            DataService.DeleteMicroserviceModule(msm);
-        }
+	List<AmsNeo4JProject>? projects;
+	List<AmsNeo4JMicroservice>? microservices;
+	List<AmsNeo4JMicroserviceModule>? microserviceModules;
 
-        
-    }
+	protected override Task OnInitializedAsync()
+	{
+		DataService.ClearCache();
+		projects = DataService.GetProjects()!.ToList();
+		return base.OnInitializedAsync();
+	}
 
-    [Inject]
-    ISnackbar Snackbar { get; set; }
+	void SelectProject(AmsNeo4JProject prj)
+	{
+		SelectedProject = prj;
+		microservices = DataService.GetMiroservices(SelectedProject.Id)?.ToList();
+	}
 
-    void CreateAllModules()
-    {
-        foreach (var type in Enum.GetValues<AmsNeo4JMicroserviceModule.ModuleTypeEnum>())
-        {
-            var name = type.ToString().Replace("_",".");
-            var module = new AmsNeo4JMicroserviceModule()
-            {
-                Microservice = SelectedMicroservice,
-                Name = name,
-                ModuleType = type,
-                    RootFolder = Path.Combine(SelectedMicroservice.Project.RootPath, SelectedMicroservice.Folder, name),
-            };
-            DataService.SaveMicroserviceModule(module);
-        }
-        Snackbar.Add("All Modules Created Successfully", Severity.Success);    
-        StateHasChanged();
-    }
+
+	[Inject] public required IDialogService DialogService { get; set; }
+
+	readonly DialogOptionsEx _dialogOptionsEx = new DialogOptionsEx()
+		{
+			//DragMode = MudDialogDragMode.Simple,
+			//Modal = true,
+			MaxWidth = MaxWidth.Large,
+			//Resizeable = true,
+			MaximizeButton = true,
+			CloseButton = true,
+
+			Position = DialogPosition.CenterRight,
+			Animations = new[] { AnimationType.SlideIn },
+			AnimationDuration = TimeSpan.FromMilliseconds(500),
+			FullHeight = true
+		};
+
+	async Task EditProject(AmsNeo4JProject? prj)
+	{
+		prj ??= new AmsNeo4JProject { RootPath = "E:\\QOQNOS", Namespace = "QOQNOS" };
+
+		var editObject = await DialogService.EditObject(prj, $"Project : {prj.Name}", _dialogOptionsEx);
+
+		if (!editObject.Cancelled)
+		{
+			if (prj.Id == 0)
+				projects.Add(editObject.Result);
+
+			DataService.SaveProject(editObject.Result);
+		}
+
+	}
+
+	void SelectMicroservice(AmsNeo4JMicroservice microservice)
+	{
+		SelectedMicroservice = microservice;
+		microserviceModules = DataService.GetMiroserviceModules(SelectedMicroservice.Id)?.OrderBy(x => x.SortOrder).ToList();
+	}
+
+	void SelectMicroserviceModule(AmsNeo4JMicroserviceModule msm)
+	{
+		SelectedMicroserviceModule = msm;
+	}
+
+
+	async Task EditMicroservice(AmsNeo4JMicroservice? ms)
+	{
+		ms ??= new AmsNeo4JMicroservice { Name = null, Folder = null, Project = SelectedProject };
+
+		var editObject = await DialogService.EditObject(ms, $"Microservice : {ms.Name}", _dialogOptionsEx);
+
+		if (!editObject.Cancelled)
+		{
+			if (ms.Id == 0)
+				microservices.Add(editObject.Result);
+
+			DataService.SaveMicroservice(editObject.Result);
+		}
+
+	}
+
+	async Task EditMicroserviceModule(AmsNeo4JMicroserviceModule? msm)
+	{
+		msm ??= new AmsNeo4JMicroserviceModule { Name = null, Microservice = SelectedMicroservice };
+		var editObject = await DialogService.ShowEx<MicroserviceModuleDialog>("Module", dialog =>
+		{
+			dialog.Module = msm;
+		}, _dialogOptionsEx);
+		//var editObject = await DialogService.EditObject(msm, $"Microservice Module : {msm.Name}", _dialogOptionsEx);
+		var editObjectResult = await editObject.Result;
+		if (!editObjectResult.Canceled)
+		{
+			if (msm.Id == 0)
+				microserviceModules.Add((AmsNeo4JMicroserviceModule)editObjectResult.Data);
+
+			DataService.SaveMicroserviceModule((AmsNeo4JMicroserviceModule)editObjectResult.Data);
+		}
+
+
+	}
+
+	async Task DeleteProject(AmsNeo4JProject prj)
+	{
+		var confirmDeleteProject = await DialogService.ShowConfirmationDialogAsync("Delete Project " + prj.Name, "Are you Confirm to delete this project?", "Yes", "No !", Icons.TwoTone.Warning, new DialogOptionsEx()
+			{
+				Modal = true,
+				DragMode = MudDialogDragMode.Simple
+			});
+		if (confirmDeleteProject)
+		{
+			projects.Remove(prj);
+			DataService.DeleteProject(prj);
+		}
+	}
+
+	async Task DeleteMicroservice(AmsNeo4JMicroservice ms)
+	{
+		var confirmDeleteProject = await DialogService.ShowConfirmationDialogAsync("Delete Microservice " + ms.Name, "Are you Confirm to delete this Microservice ?", "Yes", "No !", Icons.TwoTone.Warning, new DialogOptionsEx()
+			{
+				Modal = true,
+				DragMode = MudDialogDragMode.Simple
+			});
+		if (confirmDeleteProject)
+		{
+			microservices.Remove(ms);
+			DataService.DeleteMicroservice(ms);
+		}
+
+	}
+
+	async Task DeleteMicroserviceModule(AmsNeo4JMicroserviceModule msm)
+	{
+		var confirmDeleteProject = await DialogService.ShowConfirmationDialogAsync("Delete Microservice Module " + msm.Name, "Are you Confirm to delete this Microservice Module?", "Yes", "No !", Icons.TwoTone.Warning, new DialogOptionsEx()
+			{
+				Modal = true,
+				DragMode = MudDialogDragMode.Simple
+			});
+		if (confirmDeleteProject)
+		{
+			microserviceModules.Remove(msm);
+			DataService.DeleteMicroserviceModule(msm);
+		}
+
+
+	}
+
+	[Inject]
+	ISnackbar Snackbar { get; set; }
+
+	void CreateAllModules()
+	{
+		foreach (var type in Enum.GetValues<AmsNeo4JMicroserviceModule.ModuleTypeEnum>())
+		{
+			var name = type.ToString().Replace("_", ".");
+			var module = new AmsNeo4JMicroserviceModule()
+				{
+					Microservice = SelectedMicroservice,
+					Name = name,
+					ModuleType = type,
+				};
+			DataService.SaveMicroserviceModule(module);
+		}
+		Snackbar.Add("All Modules Created Successfully", Severity.Success);
+		StateHasChanged();
+	}
 
 }

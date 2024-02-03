@@ -3,7 +3,8 @@
 @using AMS_SCHEMA.Pages.Schema.TestData.Dialogs
 @using Neo4jClient
 @using QOQNOS.Core
-@using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic
+@using AMS.Model
+
 <MudDialog>
 
     <DialogContent>
@@ -75,7 +76,7 @@
 
         _nodes.AddRange(res.Select(obj => CustomTreeService.CreateNode(
             null,
-            new GenericRepository.NodeRelation
+            new GenericRepository.NodeRelation2
                 {
                     Labels = labels,
                     JObj = obj,

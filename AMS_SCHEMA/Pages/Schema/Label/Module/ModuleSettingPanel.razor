@@ -223,10 +223,7 @@
         List<AmsNeo4JMicroserviceModule.ModuleTypeEnum> excepts = new()
         {
             context.Module.ModuleType,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.MOBILE,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_SILO,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB_CORE
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI,
         };
         excepts.AddRange(
             DataService.GetLabelModuleSettings(Label, null)

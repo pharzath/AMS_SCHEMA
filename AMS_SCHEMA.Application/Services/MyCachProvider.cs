@@ -131,6 +131,7 @@ public class MyCachProvider : MemoryCache
 
         foreach (var cachKey in _keys) 
             Remove(cachKey);
+
         _keys.Clear();
     }
 }

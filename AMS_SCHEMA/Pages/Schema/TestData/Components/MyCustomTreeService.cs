@@ -1,4 +1,5 @@
-﻿using AMS.Model.Models;
+﻿using AMS.Model;
+using AMS.Model.Models;
 using AMS.Model.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -6,7 +7,6 @@ using Neo4jClient;
 using Neo4jClient.Cypher;
 using Neo4jClient.DataAnnotations.Extensions.Driver;
 using Newtonsoft.Json.Linq;
-using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic;
 
 namespace AMS_SCHEMA.Pages.Schema.TestData.Components
 {
@@ -57,7 +57,7 @@ namespace AMS_SCHEMA.Pages.Schema.TestData.Components
             return _dataService.GetParentLabelsAndThis(label);
         }
 
-        public MyNode? CreateNode(MyNode? parentNode, GenericRepository.NodeRelation relation, RelationshipDirection direction)
+        public MyNode? CreateNode(MyNode? parentNode, GenericRepository.NodeRelation2 relation, RelationshipDirection direction)
         {
             var relationNodeOrder = relation.NodeOrder ?? 999;
             var opacity = 1d;

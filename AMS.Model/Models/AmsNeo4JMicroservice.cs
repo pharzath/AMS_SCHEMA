@@ -13,4 +13,6 @@ public partial class AmsNeo4JMicroservice
 
     public required string Folder { get; set; }
 
+
+
 }

@@ -307,17 +307,14 @@
     {
         List<AmsNeo4JMicroserviceModule.ModuleTypeEnum> excepts = new()
         {
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.API,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.MOBILE,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_SILO,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB_CORE
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Endpoint,
+            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI,
         };
 
         foreach (var label in labels)
         {
 
-            var apiModuleLabel = label.Microservice.Modules.First(mod => mod.ModuleType == AmsNeo4JMicroserviceModule.ModuleTypeEnum.API);
+            var apiModuleLabel = label.Microservice.Modules.First(mod => mod.ModuleType == AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Endpoint);
             var apiModuleLabelSetting = DataService.GetLabelModuleSettings(label, apiModuleLabel)
                 .FirstOrDefault(x => x.Key == rawSetting.Key);
             if (apiModuleLabelSetting == null)

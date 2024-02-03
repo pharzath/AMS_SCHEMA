@@ -50,7 +50,7 @@ public partial class SchemaNodeExplorerPage : IDisposable
         {
             _selectedProjectObject = value;
             DataService.SelectedProject = SelectedProjectObject as AmsNeo4JProject;
-            DataService.ClearCach();
+            DataService.ClearCache();
             SearchSchema(SearchText).Wait();
         }
     }
@@ -100,14 +100,14 @@ public partial class SchemaNodeExplorerPage : IDisposable
             ;
 
 
-
         base.OnInitialized();
     }
 
     protected override async Task OnInitializedAsync()
     {
         //_departments = await DataService.GetDepartments().ToListAsync();
-        _projects = await DataService.GetProjects()?.ToListAsync()!;
+        var amsNeo4JProjects = DataService.GetProjects();
+        _projects = amsNeo4JProjects?.ToList();
         await SearchSchema(null);
         await base.OnInitializedAsync();
     }
@@ -625,7 +625,7 @@ foreach (var n in _nodes)
 
     void ClearCachClick()
     {
-        DataService.ClearCach();
+        DataService.ClearCache();
     }
 
     string GetReferenceLabelColor(AmsNeo4JNodeLabel label)
@@ -641,7 +641,7 @@ foreach (var n in _nodes)
         var project = new AmsNeo4JProject
         {
             Name = "New Project",
-            RootPath = "E:\\QOQNOS",
+            RootPath = "D:\\QOQNOS",
             Namespace = "QOQNOS"
         };
         OpenProjectDialog(project);

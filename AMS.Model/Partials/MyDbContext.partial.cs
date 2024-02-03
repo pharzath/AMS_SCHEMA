@@ -13,11 +13,11 @@ namespace AMS.Model.Models
     {
         public override void Dispose()
         {
-            Console.WriteLine(new string('*',100));
-            base.Dispose();
-        }
+	        Console.WriteLine(" DISPOSED ! " + new string('#', 100));
+            //base.Dispose();
+		}
 
-        public override ValueTask DisposeAsync()
+		public override ValueTask DisposeAsync()
         {
             //var caller = new StackTrace().GetFrames();
             // foreach (var frame in caller)
@@ -29,7 +29,7 @@ namespace AMS.Model.Models
             //     Console.WriteLine("The caller method is: " + methodBase.Name);
             // }
 
-            Console.WriteLine(" DISPOSED ! "  +new string('#', 100));
+            Console.WriteLine(" DISPOSED Async ! "  +new string('#', 100));
             //return base.DisposeAsync();
             return ValueTask.CompletedTask;
         }

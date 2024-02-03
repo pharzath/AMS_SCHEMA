@@ -1,11 +1,10 @@
 ﻿using AMS.Model;
 using AMS.Model.Models;
 using AMS_SCHEMA.Class;
-using Grpc.Net.Client.Configuration;
+using CommunityToolkit.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace AMS_SCHEMA.CodeGenerator;
 
@@ -122,14 +121,14 @@ public static class CodeGeneratorExtensionMethods
         if (module.ModuleType != moduleType)
             throw new Exception($"Needs to specify a {moduleType} Module to generate this file type");
 
-        var moduleRootFolder = module.RootFolder!;
+        var moduleRootFolder = module.FullPath!;
         var fileName = Path.Combine(moduleRootFolder, className.TrimStart('\\'));
         return fileName;
     }
 
     public static string Model_GetEntityFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
     {
-        var fileName = GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.MODEL, label.Name.ToPascalCase()) + ".cs";
+        var fileName = GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.Model, label.Name.ToPascalCase()) + ".cs";
 
         var fileInfo = new FileInfo(fileName);
         if (!fileInfo.Directory?.Exists ?? false)
@@ -143,10 +142,10 @@ public static class CodeGeneratorExtensionMethods
 
     public static string Model_GetEntityPartialFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
     {
-        if (module.ModuleType != AmsNeo4JMicroserviceModule.ModuleTypeEnum.MODEL)
+        if (module.ModuleType != AmsNeo4JMicroserviceModule.ModuleTypeEnum.Model)
             throw new Exception($"Needs to specify a MODEL Module to generate this file type");
 
-        var fileName = Path.Combine(module?.RootFolder ?? "", "Partials", label.Name.ToPascalCase()) + ".partial.cs";
+        var fileName = Path.Combine(module?.FullPath ?? "", "Partials", label.Name.ToPascalCase()) + ".partial.cs";
 
         var fileInfo = new FileInfo(fileName);
         if (!fileInfo.Directory?.Exists ?? false)
@@ -158,7 +157,7 @@ public static class CodeGeneratorExtensionMethods
 
     public static string Application_Contract_GetEntityDtoFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
     {
-        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_CONTRACT,
+        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.Contracts,
             $"Dto\\{label.Name}\\{label.Name.ToPascalCase()}Dto")}.cs";
 
         var fileInfo = new FileInfo(fileName);
@@ -228,8 +227,8 @@ public static class CodeGeneratorExtensionMethods
 
     public static string Api_GetApiControllerFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
     {
-
-        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.API,
+        
+        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Endpoint,
             $"\\Controllers\\{label.Name.ToPascalCase()}Controller")}.cs";
 
         var fileInfo = new FileInfo(fileName);
@@ -242,7 +241,7 @@ public static class CodeGeneratorExtensionMethods
     public static string Api_GetApiControllerPartialFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
     {
 
-        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.API,
+        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Endpoint,
             $"\\Controllers\\{label.Name.ToPascalCase()}Controller")}.partial.cs";
 
         var fileInfo = new FileInfo(fileName);
@@ -255,7 +254,7 @@ public static class CodeGeneratorExtensionMethods
     public static string Application_GetApplicationServiceFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
     {
 
-        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION,
+        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.Application,
             $"Services\\{label.Name.ToPascalCase()}\\{label.Name.ToPascalCase()}Service")}.cs";
 
         var fileInfo = new FileInfo(fileName);
@@ -268,7 +267,7 @@ public static class CodeGeneratorExtensionMethods
     public static string Application_GetApplicationServicePartialFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
     {
 
-        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION,
+        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.Application,
             $"Services\\{label.Name.ToPascalCase()}\\{label.Name.ToPascalCase()}Service")}.partial.cs";
 
         var fileInfo = new FileInfo(fileName);
@@ -281,7 +280,7 @@ public static class CodeGeneratorExtensionMethods
     public static string Application_GetApplicationCommandFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label, string? request)
     {
 
-        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION,
+        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.Application,
             $"Services\\{label.Name.ToPascalCase()}\\{request}Command")}.cs";
 
         var fileInfo = new FileInfo(fileName);
@@ -294,7 +293,7 @@ public static class CodeGeneratorExtensionMethods
     public static string Grain_GetGrainInterfaceFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
     {
 
-        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_GRAINS_Interface,
+        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.Grain_Interface,
             $"I{label.Name.ToPascalCase()}Grain")}.cs";
 
         var fileInfo = new FileInfo(fileName);
@@ -306,7 +305,7 @@ public static class CodeGeneratorExtensionMethods
     public static string Grain_GetGrainFileName(this AmsNeo4JMicroserviceModule module, AmsNeo4JNodeLabel label)
     {
 
-        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_GRAINS,
+        var fileName = $"{GetMe(module, AmsNeo4JMicroserviceModule.ModuleTypeEnum.Grain_Interface,
             $"{label.Name.ToPascalCase()}Grain")}.cs";
 
         var fileInfo = new FileInfo(fileName);

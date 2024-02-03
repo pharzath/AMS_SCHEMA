@@ -15,10 +15,11 @@ public partial class AmsNeo4JMicroserviceModule
     public int MicroserviceFk { get; set; }
     
     public string? Name { get; set; }
+    //public string? FullName { get; set; }
 
-    public string? RootFolder { get; set; }
+    //public string? RootFolder { get; set; }
 
-    public string? SubFolder { get; set; }
+    //public string? SubFolder { get; set; }
 
-
+    public int? SortOrder { get; set; }
 }

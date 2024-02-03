@@ -376,7 +376,7 @@ public class CodeGeneratorService
 
         switch (module.ModuleType)
         {
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.API:
+            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Endpoint:
                 GenerateAPIController(label, module, fromRelations, handlers, false);
 
                 Console.WriteLine($" =================> Generating {module.ModuleType}: ({module.Name})   for  ({label.Name}) ");
@@ -396,38 +396,32 @@ public class CodeGeneratorService
                 Console.WriteLine($" =================> Generating {module.ModuleType}: ({module.Name})   for  ({label.Name}) ");
 
                 break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_CONTRACT:
+            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.Contracts:
                 GenerateApplicationContractDto(label, module);
 
                 Console.WriteLine($" =================> Generating {module.ModuleType}: ({module.Name})   for  ({label.Name}) ");
                 break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION:
+            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.Application:
 
                 GenerateApplicationService(label, module, handlers, false);
                 foreach (var handler in handlers)
                     GenerateApplicationCommand(label, module, handler, false);
 
                 break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_GRAINS:
+            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.Grain:
                 GenerateGrain(label, module, handlers);
                 break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_GRAINS_Interface:
+            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.Grain_Interface:
                 GenerateGrainInterface(label, module, handlers);
                 break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.APPLICATION_SILO:
+            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.Domain:
                 break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.DOMAIN:
-                break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.MODEL:
+            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.Model:
                 GenerateEntity(label, relations, module);
                 GenerateEntityPartial(label, fromRelations, toRelations, module);
                 Console.WriteLine($" =================> Generating Module: ({module.Name})   for  ({label.Name}) ");
                 break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.MOBILE:
-                break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB:
-                break;
-            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI_WEB_CORE:
+            case AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI:
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

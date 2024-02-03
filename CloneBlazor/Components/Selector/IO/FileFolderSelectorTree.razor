@@ -1,0 +1,258 @@
+﻿@using AMS.Model
+@using AMS.Model.Models
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor.Extensions
+@using MudBlazor.Extensions.Options
+@if (rootFolder != null)
+{
+	<MudTreeView Items="@rootFolder" Hover="true" @bind-SelectedValue="SelectedNode">
+		<ItemTemplate Context="item">
+			<MudTreeViewItem @bind-Expanded="@item.IsExpanded" Items="@item.Children" Icon="@item.Icon">
+				<BodyContent>
+					<div style="display: grid; grid-template-columns: 1fr auto; align-items: center; width: 100%;color: @GetItemColor(item)">
+						
+						<MudText Style="justify-self: start;">
+							<MudStack Row="true">
+								<MudText Typo="Typo.body1">
+									@item.Name
+								</MudText>
+								@if (item.Config is { NamePolicy.Length: > 0 })
+								{
+									<MudChip Size="Size.Small" Label="true" Color="Color.Dark">
+										policy :
+										<MudChip Size="Size.Medium" Color="Color.Info">
+											@item.Config.NamePolicy
+										</MudChip>
+									</MudChip>
+								}
+							</MudStack>
+							
+						</MudText>
+						
+						
+
+						<div style="justify-self: end;">
+							@if (item.Config is null or { Ignored : false })
+							{
+								<MudIconButton Icon="@Icons.Material.Filled.Settings" Size="Size.Medium" Color="Color.Inherit" OnClick="() => SetModuleTemplateConfig(item)"/>
+								@if (item.Type == FileSystemItemType.File)
+								{
+									<MudIconButton Icon="@Icons.Material.Filled.ChromeReaderMode" Size="Size.Medium" Color="Color.Inherit" OnClick="() => SetModuleTemplateConfig(item)"/>
+								}
+
+							}
+
+							@if (item.Config is null)
+							{
+								<MudIconButton Icon="@Icons.Material.Filled.HideSource" Size="Size.Medium" Color="Color.Inherit" OnClick="()=>IgnoreItem(item)"/>
+
+							}
+							
+							@if (item.Config != null)
+							{
+								<MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium" Color="Color.Inherit" OnClick="() => DeleteConfig(item)"></MudIconButton>
+							}
+						</div>
+					</div>
+				</BodyContent>
+
+			</MudTreeViewItem>
+		</ItemTemplate>
+	</MudTreeView>
+}
+
+@code {
+
+	[Inject] MyDbContext DbContext { get; set; }
+
+	FileSystemItem? SelectedNode;
+	string[] excludedFolders = ["bin", "obj"];
+
+	[Parameter]
+	public string? RootPath { get; set; }
+
+	private HashSet<FileSystemItem>? rootFolder;
+
+	protected override void OnParametersSet()
+	{
+		if (RootPath != null)
+			rootFolder = GetFolderStructure(RootPath , null);
+	}
+
+	private HashSet<FileSystemItem> GetFolderStructure(string folderPath, FileSystemItem? parent)
+	{
+
+		var root = new HashSet<FileSystemItem>();
+
+		foreach (var directory in Directory.GetDirectories(folderPath))
+		{
+			if (excludedFolders.Any(directory.EndsWith))
+				continue;
+
+			var dirConfig = DbContext.AmsNeo4JMicroserviceModuleItemTemplateConfigs
+				.Include(config => config.FileSystemItem)
+				.FirstOrDefault(x => x.FileSystemItem.FullPath == directory);
+
+			FileSystemItem? folder;
+			if (dirConfig != null)
+			{
+				folder = dirConfig.FileSystemItem;
+				folder.Config = dirConfig;
+				folder.Parent = parent;
+			}
+			else
+			{
+				folder = new FileSystemItem
+					{
+						Name = Path.GetFileName(directory),
+						FullPath = directory,
+						Type = FileSystemItemType.Folder,
+						Parent = parent
+					};
+			}
+
+			folder.Children = GetFolderStructure(directory , folder);
+			folder.IsExpanded = folder.Config == null || !folder.Config.Ignored;
+			root.Add(folder);
+
+		}
+
+		foreach (var file in Directory.GetFiles(folderPath))
+		{
+			var fileName = Path.GetFileName(file);
+
+			var fileConfig = DbContext.AmsNeo4JMicroserviceModuleItemTemplateConfigs
+				.Include(config => config.FileSystemItem)
+				.FirstOrDefault(x => x.FileSystemItem.FullPath == file);
+			FileSystemItem fileItem;
+			if (fileConfig != null)
+			{
+				
+				fileItem = fileConfig.FileSystemItem;
+				fileItem.Config = fileConfig;
+			}
+			else
+			{
+				fileItem = new FileSystemItem
+					{
+						Name = fileName,
+						FullPath = file,
+						Type = FileSystemItemType.File,
+					};
+			}
+
+			fileItem.Parent = parent;
+
+			root.Add(fileItem);
+		}
+
+		return root;
+	}
+
+	private HashSet<FileSystemItem> GetChildren(FileSystemItem item)
+	{
+		return item.Children;
+	}
+
+
+	[Inject] IDialogService DialogService { get; set; }
+
+	[CascadingParameter]
+	AmsNeo4JMicroserviceModule Module { get; set; }
+
+	private async Task SetModuleTemplateConfig(FileSystemItem item)
+	{
+		var dialogParameters = new DialogParameters<ItemTemplateConfigDialog> {
+			{ x=>x.FileSystemItem, item },
+			{ x=>x.Module , Module}
+		};
+
+		var dialogReference = await DialogService.ShowAsync<ItemTemplateConfigDialog>("File/Folder Config",
+			dialogParameters,
+			new DialogOptions()
+			{
+				MaxWidth = MaxWidth.Large,
+				CloseOnEscapeKey = true,
+				CloseButton = true,
+				DisableBackdropClick = false
+			});
+		var result = await dialogReference.Result;
+		if (!result.Canceled)
+		{
+			var config = (AmsNeo4JMicroserviceModuleItemTemplateConfig)result.Data;
+			DbContext.Update(config);
+			var parent = item.Parent;
+			while (parent != null)
+			{
+				if (parent.Config == null)
+				{
+					parent.Config = new AmsNeo4JMicroserviceModuleItemTemplateConfig()
+					{
+						FileSystemItem = parent,
+						Module = Module,
+						NamePolicy = Path.GetFileNameWithoutExtension(parent.FullPath)
+					};
+					DbContext.Update(parent.Config);
+				}
+
+				parent = parent.Parent;
+			}
+
+			await DbContext.SaveChangesAsync();
+			item.Config = config;
+		}
+	}
+
+	private string GetItemColor(FileSystemItem item)
+	{
+		if (item.Config == null)
+			return "silver";
+
+		if (item.Config.Ignored)
+			return "#e0e0e0;text-decoration: line-through;";
+
+		return "black";
+	}
+
+	private async Task DeleteConfig(FileSystemItem item)
+	{
+		if (item.Parent is { Config.Ignored: true })
+		{
+			await DialogService.ShowMessageBox("Can not Remove Ignore Flag", "This item is Ignores to exisit in the Template, and also it's parent is ignored too, So you can not use it in the template when it's parent is still ignored.");
+			return;
+		}
+		var messageBox = await DialogService.ShowMessageBox("Delete Config", "Are you sure to delete this config ?", "Yes", "No");
+		if (messageBox is true)
+		{
+			DbContext.Remove(item.Config);
+			await DbContext.SaveChangesAsync();
+			item.Config = null;
+		}
+
+	}
+
+	private void IgnoreItem(FileSystemItem item)
+	{
+		if (item.Config == null)
+		{
+			item.Config = new AmsNeo4JMicroserviceModuleItemTemplateConfig()
+			{
+				Module = Module,
+				FileSystemItem = item,
+				Ignored = true
+			};
+		}
+		else
+		{
+			item.Config.Ignored = true;
+		}
+
+		DbContext.Update(item.Config);
+		DbContext.SaveChanges();
+		foreach (var itemChild in item.Children)
+		{
+			IgnoreItem(itemChild);
+		}
+	}
+
+}

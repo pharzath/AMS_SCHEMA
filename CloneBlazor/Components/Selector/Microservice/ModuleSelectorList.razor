@@ -1,0 +1,61 @@
+﻿@using AMS.Model
+<div>
+	@if (SourceMicroservice is not null)
+	{
+		<MudTable @ref="mdTable"
+				  T="AmsNeo4JMicroserviceModule"
+				  Items="SourceMicroservice?.Modules.OrderBy(x => x.Name)"
+				  @bind-SelectedItem="SelectedModule"
+				  Hover="true"
+				  RowClass="cursor-pointer" 
+				  RowClassFunc="@SelectedRowClassModuleFunc">
+				<RowTemplate>
+					<MudTd>@context</MudTd>
+					<MudTd>
+						<MudIcon Icon="@(context.IsFolderExist() ? Icons.Material.Filled.Check : Icons.Material.Filled.Cancel)"></MudIcon>
+						@context.FullPath
+					</MudTd>
+				</RowTemplate>
+			</MudTable>
+	}
+</div>
+
+@code {
+	[Parameter]
+	public AmsNeo4JMicroservice? SourceMicroservice { get; set; }
+
+	[Parameter]
+	public AmsNeo4JMicroserviceModule? SelectedModule
+	{
+		get => _selectedModule;
+		set
+		{
+			if (_selectedModule == value) return;
+			_selectedModule = value;
+			SelectedModuleChanged.InvokeAsync(_selectedModule);
+		}
+	}
+
+	[Parameter]
+	public EventCallback<AmsNeo4JMicroserviceModule?> SelectedModuleChanged { get; set; }
+
+
+	private int selectedMdRowNumber = -1;
+	private MudTable<AmsNeo4JMicroserviceModule> mdTable;
+	private AmsNeo4JMicroserviceModule? _selectedModule;
+
+	private string SelectedRowClassModuleFunc(AmsNeo4JMicroserviceModule element, int rowNumber)
+	{
+		if (selectedMdRowNumber == rowNumber ||
+			mdTable.SelectedItem == null ||
+			!mdTable.SelectedItem.Equals(element))
+		{
+			selectedMdRowNumber = -1;
+			return string.Empty;
+		}
+
+		selectedMdRowNumber = rowNumber;
+		return "selected";
+	}
+
+}

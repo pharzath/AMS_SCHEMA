@@ -1,0 +1,77 @@
+﻿@using AMS.Model
+@using AMS.Model.Models
+@using Microsoft.EntityFrameworkCore
+<div>
+		<MudText Typo="Typo.h5">@Title</MudText>
+		<MudTable @ref="msTable"
+		          Items="Microservices"
+		          @bind-SelectedItem="SelectedMicroservice"
+		          Hover="true"
+		          RowClass="cursor-pointer" RowClassFunc="@SelectedRowClassFunc">
+			<RowTemplate>
+				<MudTd>
+					<MudText Typo="Typo.body1">@context</MudText>
+					<MudText Typo="Typo.h6">
+						<MudText Typo="Typo.caption">@context.GetFullPath()</MudText>
+					</MudText>
+				</MudTd>
+			</RowTemplate>
+		</MudTable>
+</div>
+	@code {
+	private int selectedMsRowNumber = -1;
+
+	[Parameter]
+	public AmsNeo4JMicroservice? SelectedMicroservice
+	{
+		get => _selectedMicroservice;
+		set
+		{
+			if (_selectedMicroservice == value)
+				return;
+			_selectedMicroservice = value;
+			SelectedMicroserviceChanged.InvokeAsync(_selectedMicroservice);
+
+		}
+	}
+
+	[Parameter]
+	public EventCallback<AmsNeo4JMicroservice> SelectedMicroserviceChanged { get; set; }
+
+	private MudTable<AmsNeo4JMicroservice> msTable;
+
+	private List<AmsNeo4JMicroservice> Microservices;
+	private AmsNeo4JMicroservice? _selectedMicroservice;
+	[Inject] public MyDbContext DbContext { get; set; }
+
+	[Parameter]
+	public string Title { get; set; }
+
+
+
+	protected override void OnInitialized()
+	{
+		Microservices = DbContext.AmsNeo4JMicroservices
+			.Include(x => x.Project)
+			.Include(x => x.Modules)
+			.OrderBy(x => x.Name)
+			.ToList();
+	}
+
+	private string SelectedRowClassFunc(AmsNeo4JMicroservice element, int rowNumber)
+	{
+		if (selectedMsRowNumber == rowNumber ||
+			msTable.SelectedItem == null ||
+			!msTable.SelectedItem.Equals(element))
+		{
+			selectedMsRowNumber = -1;
+			return string.Empty;
+		}
+
+
+		selectedMsRowNumber = rowNumber;
+		return "selected";
+
+	}
+
+}

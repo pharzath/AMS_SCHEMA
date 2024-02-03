@@ -1,3 +1,4 @@
+using AMS.Model;
 using AMS.Model.Models;
 using AMS.Model.Services;
 using AMS_SCHEMA.Application.Services;
@@ -14,7 +15,7 @@ using MudBlazor;
 using MudBlazor.Extensions;
 using MudBlazor.Services;
 using Neo4jClient;
-using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic;
+
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,7 +57,7 @@ builder.Services.AddScoped<IGraphClient>(s =>
     return graphClient;
 });
 
-builder.Services.AddDbContext<MyDbContext>(options =>
+builder.Services.AddDbContextFactory<MyDbContext>(options =>
 {
     options.EnableSensitiveDataLogging();
     options.ConfigureWarnings(configurationBuilder =>
@@ -64,25 +65,29 @@ builder.Services.AddDbContext<MyDbContext>(options =>
         configurationBuilder.Ignore(CoreEventId.NavigationBaseIncludeIgnored);
     });
 
-    options.UseSqlServer(builder.Configuration["ConnectionString"], optionsBuilder =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("AMS12"), 
+	    optionsBuilder =>
     {
         optionsBuilder.EnableRetryOnFailure(4);
     });
-});
+},ServiceLifetime.Singleton);
+
+builder.Services.AddScoped<DataService>();
 
 builder.Services.AddHotKeys2();
 
-builder.Services.AddScoped<DataService>();
 
 
 
 var app = builder.Build();
 
+/*
 using (var serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope())
 {
     var context = serviceScope.ServiceProvider.GetRequiredService<MyDbContext>();
     context.Database.EnsureCreated();
 }
+*/
 
 
 // Configure the HTTP request pipeline.

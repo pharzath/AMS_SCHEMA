@@ -16,4 +16,6 @@ public partial class AmsNeo4JProject
     public required string Namespace { get; set; } // QOQNOS
 
     public string? Description { get; set; }
+
+    public string? MicroservicesPath { get; set;}
 }

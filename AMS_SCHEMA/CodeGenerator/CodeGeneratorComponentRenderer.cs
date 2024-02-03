@@ -136,7 +136,7 @@ public class CodeGeneratorComponentRenderer<T> where T : IComponent, IHaveDestin
 
     void BackupOldFile(string fileName)
     {
-        var backupFolder = @"E:\QOQNOS\BackupGen\" + _module.Name;
+        var backupFolder = @"D:\QOQNOS\BackupGen\" + _module.Name;
         if (!Directory.Exists(backupFolder)) 
             Directory.CreateDirectory(backupFolder);
 

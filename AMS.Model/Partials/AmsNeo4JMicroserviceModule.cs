@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using QOQNOS.Core;
+using static ServiceStack.Svg;
 
 namespace AMS.Model;
 
@@ -19,22 +20,91 @@ public partial class AmsNeo4JMicroserviceModule : IHaveId<int>
 
     public enum ModuleTypeEnum
     {
-        API,
-        APPLICATION,
-        APPLICATION_GRAINS,
-        APPLICATION_GRAINS_Interface,
-        APPLICATION_SILO,
-        DOMAIN,
-        MODEL,
-        MOBILE,
-        UI_WEB,
-        UI_WEB_CORE,
-        API_Interface,
-        APPLICATION_CONTRACT
+	    API_Interface,
+		API_Endpoint,
+        API_Web,
+        Application,
+        Contracts,
+        Domain,
+        Grain,
+        Grain_Interface,
+        Infrastructure,
+        Model,
+        SharedKernel,
+        Usecase,
+        UI,
+        UI_Blazor,
     }
+
     public override string ToString()
     {
         return Name;
     }
 
+
+    [NotMapped]
+    public string FullPath => GetFullPath();
+
+    public DirectoryInfo RootDirectory()
+    {
+	    return new DirectoryInfo(GetFullPath());
+    }
+
+    public string GetFullPath()
+    {
+	    return Path.Combine(this.Microservice.GetFullPath(), GetFullname());
+    }
+
+    public string GetFullname()
+    {
+	    return $"{Microservice.Fullname}.{Name}";
+    }
+
+    public bool IsFolderExist()
+    {
+	    return Directory.Exists(GetFullPath());
+    }
+}
+
+public class FileSystemItem : IHaveId<int>
+{
+	public int Id { get; set; }
+	public string Name { get; set; }
+	public string FullPath { get; set; }
+	public FileSystemItemType Type { get; set; }
+	public HashSet<FileSystemItem> Children { get; set; } = new HashSet<FileSystemItem>();
+	public bool IsExpanded { get; set; }
+	public string Icon => Type == FileSystemItemType.Folder ? MudBlazor.Icons.Material.Filled.Folder : GetFileIcon();
+
+	[NotMapped] public AmsNeo4JMicroserviceModuleItemTemplateConfig? Config { get; set; }
+	[NotMapped] public FileSystemItem? Parent { get; set; }
+
+	private string GetFileIcon()
+	{
+		var fileInfo = new FileInfo(FullPath);
+		return fileInfo.Extension switch
+		{
+			".cs" => MudBlazor.Icons.Material.Filled.Numbers,
+			".csproj" => MudBlazor.Icons.Material.Filled.Workspaces,
+			_ => MudBlazor.Icons.Material.Filled.FilePresent
+		};
+	}
+
+}
+
+public partial class AmsNeo4JMicroserviceModuleItemTemplateConfig : IHaveId<int>
+{
+	public int Id { get; set; }
+
+	public AmsNeo4JMicroserviceModule Module { get; set; }
+	public FileSystemItem FileSystemItem { get; set; }
+
+	public bool Ignored { get; set; } = false;
+	public string? NamePolicy { get; set; } // Role -> {EntityName}
+}
+
+public enum FileSystemItemType
+{
+	File,
+	Folder
 }

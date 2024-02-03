@@ -1,4 +1,5 @@
-﻿using AMS.Model.Models;
+﻿using AMS.Model;
+using AMS.Model.Models;
 using AMS.Model.Services;
 using AMS_SCHEMA.Application.ExtensionMethods;
 using AMS_SCHEMA.Pages.Schema.Node;
@@ -9,7 +10,6 @@ using MudBlazor;
 using Neo4jClient;
 using Newtonsoft.Json.Linq;
 using QOQNOS.Core;
-using QOQNOS.Neo4j.TEST.Application.AMS.Domain.Repository.Generic;
 
 namespace AMS_SCHEMA.Pages.Schema.TestData.Components
 {

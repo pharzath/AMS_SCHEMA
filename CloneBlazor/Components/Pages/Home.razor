@@ -1,0 +1,56 @@
+﻿@page "/"
+@using AMS.Model.Models
+@using CloneBlazor.Components.Selector.IO
+@using CloneBlazor.Components.Selector.Microservice
+@using Microsoft.EntityFrameworkCore
+@using AMS.Model
+
+<PageTitle>Home</PageTitle>
+<MudTabs>
+	<MudTabPanel Text="@SourceMicroservice?.Fullname">
+		<MicroserviceSelectorList Title="Select Source Microservice" @bind-SelectedMicroservice="SourceMicroservice"></MicroserviceSelectorList>
+	</MudTabPanel>
+	<MudTabPanel Text="@SelectedModule?.GetFullname()">
+		<ModuleSelectorList SourceMicroservice="SourceMicroservice" @bind-SelectedModule="SelectedModule"></ModuleSelectorList>
+	</MudTabPanel>
+	<MudTabPanel Text="@(SelectedModule?.GetFullname() + " Directory Structure")">
+		<CascadingValue Value="SelectedModule">
+			<FileFolderSelectorTree RootPath="@SelectedModule?.GetFullPath()"></FileFolderSelectorTree>
+		</CascadingValue>
+	</MudTabPanel>
+</MudTabs>
+
+
+@code
+{
+	bool _showMicroserviceSelector = true;
+
+	private AmsNeo4JMicroservice? _sourceMicroservice;
+	private AmsNeo4JMicroserviceModule? _selectedModule;
+
+	AmsNeo4JMicroservice? SourceMicroservice
+	{
+		get => _sourceMicroservice;
+		set
+		{
+			_sourceMicroservice = value;
+			_showMicroserviceSelector = false;
+		}
+	}
+
+
+	AmsNeo4JMicroserviceModule? SelectedModule
+	{
+		get => _selectedModule;
+		set
+		{
+			_selectedModule = value;
+			//Console.Beep();
+		}
+	}
+
+	[Inject] public MyDbContext DbContext { get; set; }
+
+
+
+}

@@ -2,23 +2,24 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace AMS.Model.Models;
 
 public partial class MyDbContext : DbContext 
 {
-    public MyDbContext()
-    {
-    }
+	private readonly IConfiguration m_Configuration;
 
-    public MyDbContext(DbContextOptions<MyDbContext> options)
+    public MyDbContext(DbContextOptions<MyDbContext> options , IConfiguration configuration)
         : base(options)
     {
+	    m_Configuration = configuration;
     }
 
     
     public virtual DbSet<AmsNeo4JMicroservice> AmsNeo4JMicroservices { get; set; }
     public virtual DbSet<AmsNeo4JMicroserviceModule> AmsNeo4JMicroserviceModules { get; set; }
+    public virtual DbSet<AmsNeo4JMicroserviceModuleItemTemplateConfig> AmsNeo4JMicroserviceModuleItemTemplateConfigs { get; set; }
     public virtual DbSet<AmsNeo4JMicroserviceModuleSetting> AmsNeo4JMicroserviceModuleSettings { get; set; }
     public virtual DbSet<AmsNeo4JMicroserviceModuleSettingTemplate> AmsNeo4JMicroserviceModuleSettingTemplates { get; set; }
     public virtual DbSet<AmsNeo4JMicroserviceModuleSettingDefault> AmsNeo4JMicroserviceModuleSettingDefaults { get; set; }
@@ -51,12 +52,17 @@ public partial class MyDbContext : DbContext
 
     public virtual DbSet<AmsNeo4JProject> AmsNeo4JProjects { get; set; }
 
+    /*
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer(
-            //"Data Source=DESKTOP-1744E47\\MYSQLS;Initial Catalog=AMS12;User ID=sa;Password=baronix4353!;TrustServerCertificate=True"
-            "Data Source=DESKTOP-1744E47\\MYSQLS;Initial Catalog=QOQNOSE_SCHEMA;User ID=sa;Password=baronix4353!;TrustServerCertificate=True"
-            );
+    {
+	    // Get the connection string from the configuration file by its name
+	    //var connectionString = m_Configuration.GetConnectionString("QOQNOSE_SCHEMA");
+	    var connectionString = m_Configuration.GetConnectionString("AMS12");
+
+		//optionsBuilder.UseSqlServer("Data Source=DESKTOP-1744E47\\MYSQLS;Initial Catalog=QOQNOSE_SCHEMA;User ID=sa;Password=baronix4353!;TrustServerCertificate=True");
+		optionsBuilder.UseSqlServer(connectionString);
+    }
+    */
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

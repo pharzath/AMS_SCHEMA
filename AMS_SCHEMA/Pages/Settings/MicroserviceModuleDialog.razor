@@ -22,11 +22,11 @@
                 </MudText>
             </MudItem>
             <MudItem sm="12" md="12">
-                <MudTextField @bind-Value="Module.RootFolder" Label="Root Folder" Adornment="Adornment.End" AdornmentIcon="@Icons.TwoTone.Update" OnAdornmentClick="UpdateFolder" >
-                    
-                </MudTextField>
+                @* <MudTextField @bind-Value="Module.FullPath" Label="Root Folder" Adornment="Adornment.End" AdornmentIcon="@Icons.TwoTone.Update" OnAdornmentClick="UpdateFolder" > *@
+                @*      *@
+                @* </MudTextField> *@
                 <MudText Typo="Typo.caption" Color="Color.Default">
-                    original value:  @_moduleOrig?.RootFolder
+                    original value:  @_moduleOrig?.FullPath
                 </MudText>
 
             </MudItem>
@@ -121,7 +121,7 @@
             return;
         }
 
-        Module.RootFolder = Path.Combine(Module.Microservice.Project.RootPath, Module.Microservice.Folder, Module.Name);
+        //Module.FullPath = Path.Combine(Module.Microservice.Project.RootPath, Module.Microservice.Folder, Module.Name);
     }
 
 }
