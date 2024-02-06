@@ -11,8 +11,8 @@
 @implements IHaveDestinationFilePath
 using MediatR;
 using Microsoft.Extensions.Logging;
-using @Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.Contracts).@Label.Name.ToPascalCase();
-using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Interface)).@Label.Name.ToPascalCase();
+using @Module.Microservice.GetModule(ModuleTypeEnum.Contracts).@Label.Name.ToPascalCase();
+using @(Module.Microservice.GetModule(ModuleTypeEnum.API_Interface)).@Label.Name.ToPascalCase();
 using COMMON.@(Module.Microservice.Name.ToUpper()).GrainInterfaces;
 
 namespace @(Module).Services.@Label.Name.ToPascalCase();

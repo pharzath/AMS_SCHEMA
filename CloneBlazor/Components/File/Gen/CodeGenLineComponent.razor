@@ -1,0 +1,206 @@
+﻿@using System.Net
+@using Olive
+<MudStack Row="true" Spacing="0">
+	@if (AllowDelete())
+	{
+		@if (LineItem.Status != LineStatausEnum.Deleted)
+		{
+			<MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="DeleteLine"></MudIconButton>
+		}
+		else
+		{
+			<MudIconButton Icon="@Icons.Material.Filled.Undo" Size="Size.Small" OnClick="UdoRemove"></MudIconButton>
+		}
+	}
+	else
+	{
+		<MudIconButton Icon="@Icons.Material.Outlined.ShapeLine" Size="Size.Small" Color="Color.Transparent"></MudIconButton>
+	}
+	<MudChip Label="true" Size="Size.Small" Style="min-width: 80px;">
+		<MudIconButton Icon="@Icons.Material.Sharp.ArrowUpward" Size="Size.Small" OnClick="()=>GeneratorContext.MoveUpLine(LineItem)"></MudIconButton>
+		@LineNumber
+		<MudIconButton Icon="@Icons.Material.Sharp.ArrowDownward" Size="Size.Small" OnClick="()=>GeneratorContext.MoveDownLine(LineItem)"></MudIconButton>
+	</MudChip>
+
+	@StatusIcon
+
+	<MudMenu Dense="true" ActivationEvent="@MouseEvent.RightClick">
+		<ActivatorContent>
+			<div style="padding-left: @LineIndentPx(); color: @LineItem.Color; @ExtraStyles()">
+				@LineItem.Content
+			</div>
+		</ActivatorContent>
+		<ChildContent>
+			<MudMenuItem OnClick="@(()=>AddEmptyLine("before"))" Icon="@Icons.Material.Filled.NavigateBefore">Add Empty Line Before</MudMenuItem>
+			<MudMenuItem OnClick="@(()=>AddEmptyLine("after"))" Icon="@Icons.Material.Filled.NavigateNext">Add Empty Line After</MudMenuItem>
+			<MudDivider />
+			<MudMenuItem OnClick="CopySourceLines" Icon="@Icons.Material.Filled.CopyAll">Copy Selected GenLines Here</MudMenuItem>
+			<MudDivider />
+			<MudMenuItem OnClick="DeleteFromSource" Icon="@Icons.Material.Filled.Delete">Delete</MudMenuItem>
+		</ChildContent>
+	</MudMenu>
+
+
+	<MudSpacer />
+	@if (DebugStatus)
+	{
+		<MudChip Size="Size.Small" Label="true"> @LineItem.CodeGenSectionRole </MudChip>
+		@if (LineItem.CodeGenSectionRole != CodeGenSectionRoleEnum.None)
+		{
+			<MudTooltip>
+				<ChildContent>
+					<MudChip Size="Size.Small"> @LineItem.CodeGenSection</MudChip>
+					</ChildContent>
+					<TooltipContent>
+						@foreach (var prop in LineItem.Properties)
+					{
+						<MudText Typo="Typo.body1">@prop.Key = @prop.Value</MudText>
+					}
+				</TooltipContent>
+			</MudTooltip>
+			<MudChip Size="Size.Small">@LineItem.Scope</MudChip>
+		}
+	}
+	<MudIconButton Icon="@Icons.Material.Outlined.Settings" Color="Color.Info" Size="Size.Small" OnClick="EditLine"></MudIconButton>
+</MudStack>
+
+@code
+{
+
+	[CascadingParameter] bool DebugStatus { get; set; }
+
+	[CascadingParameter] GeneratorContext GeneratorContext { get; set; }
+
+	[Parameter] public CodeGenLineItem LineItem { get; set; }
+	[Parameter] public int LineNumber { get; set; }
+
+	RenderFragment StatusIcon => __builder =>
+	{
+		@switch (LineItem.Status)
+		{
+			case LineStatausEnum.Default:
+				<MudIconButton Size="Size.Small" Icon="@Icons.Material.Outlined.Check"></MudIconButton>
+				break;
+			case LineStatausEnum.Added:
+				<MudIconButton Size="Size.Small" Icon="@Icons.Material.Outlined.Add"></MudIconButton>
+				break;
+			case LineStatausEnum.Updated:
+				<MudIconButton Size="Size.Small" Icon="@Icons.Material.Outlined.Update"></MudIconButton>
+				break;
+			case LineStatausEnum.Deleted:
+				<MudIconButton Size="Size.Small" Icon="@Icons.Material.Outlined.RemoveDone" Color="Color.Transparent"></MudIconButton>
+				break;
+			default:
+				throw new ArgumentOutOfRangeException();
+		}
+	};
+
+	string LineIndentPx()
+	{
+		var space = 0;
+		var i = 0;
+		if (LineItem.Content is null || LineItem.Content.Length == 0) return "0px";
+		while (LineItem.Content[i].IsWhiteSpace())
+		{
+			if (LineItem.Content[i] == '\t')
+				space += 4;
+			if (LineItem.Content[i] == ' ')
+				space++;
+			if (LineItem.Content.Length - 1 == i) break;
+			i++;
+		}
+
+		return (space * 8) + "px";
+	}
+
+	[Inject] IDialogService DialogService { get; set; }
+
+	private void EditLine()
+	{
+		DialogService.ShowAsync<CodeGenLineEditorDialog>("Edit Code Gen Line", new DialogParameters<CodeGenLineEditorDialog>()
+				{
+					{ x => x.LineItem, LineItem },
+					{ x => x.LineNumber, LineNumber }
+				},
+			new DialogOptions()
+				{
+					MaxWidth = MaxWidth.Medium,
+					CloseButton = true
+				});
+	}
+
+	string? ExtraStyles()
+	{
+		List<string> styles = [];
+		if (LineItem.Status == LineStatausEnum.Deleted)
+		{
+			styles.Add("text-decoration:line-through");
+			styles.Add("color:red");
+		}
+
+		if (LineItem.Status is LineStatausEnum.Added or LineStatausEnum.Updated)
+			styles.Add("font-weight: bold");
+
+		if (LineItem.Content.IsEmpty() || LineItem.Content.Length < 4)
+			styles.Add("width: 150px;height:25px;");
+
+		return string.Join(";", styles);
+	}
+
+	bool AllowDelete()
+	{
+		return LineItem.CodeGenSectionRole != CodeGenSectionRoleEnum.End &&
+						LineItem.CodeGenSection != CodeGenSectionEnum.GeneratorCode;
+	}
+
+	private void DeleteLine()
+	{
+		if (LineItem.CodeGenSectionRole == CodeGenSectionRoleEnum.Start)
+		{
+			var lines = GeneratorContext.GetSectionLines(LineItem).ToArray();
+			foreach (var line in lines)
+			{
+				line.Remove();
+			}
+		}
+		else
+			LineItem.Remove();
+
+		GeneratorContext.OnUpdate();
+	}
+
+	private void UdoRemove()
+	{
+		if (LineItem.CodeGenSectionRole == CodeGenSectionRoleEnum.Start)
+		{
+			var lines = GeneratorContext.GetSectionLines(LineItem).ToArray();
+			foreach (var line in lines)
+			{
+				line.UndoRemove();
+			}
+		}
+		else
+			LineItem.UndoRemove();
+
+		GeneratorContext.OnUpdate();
+	}
+
+
+	private void DeleteFromSource()
+	{
+		GeneratorContext.DeleteLine(LineItem);
+	}
+
+	private void AddEmptyLine(string beforeAfter)
+	{
+		GeneratorContext.InsertNewLine(LineItem, beforeAfter);
+	}
+
+
+	private void CopySourceLines()
+	{
+		GeneratorContext.CopySelectedSourceLinesHere(LineItem);
+	}
+}
+
+

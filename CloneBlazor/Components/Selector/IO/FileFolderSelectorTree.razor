@@ -1,5 +1,6 @@
 ﻿@using AMS.Model
 @using AMS.Model.Models
+@using CloneBlazor.Components.Dialogs
 @using Microsoft.EntityFrameworkCore
 @using MudBlazor.Extensions
 @using MudBlazor.Extensions.Options
@@ -10,7 +11,7 @@
 			<MudTreeViewItem @bind-Expanded="@item.IsExpanded" Items="@item.Children" Icon="@item.Icon">
 				<BodyContent>
 					<div style="display: grid; grid-template-columns: 1fr auto; align-items: center; width: 100%;color: @GetItemColor(item)">
-						
+
 						<MudText Style="justify-self: start;">
 							<MudStack Row="true">
 								<MudText Typo="Typo.body1">
@@ -26,28 +27,28 @@
 									</MudChip>
 								}
 							</MudStack>
-							
+
 						</MudText>
-						
-						
+
+
 
 						<div style="justify-self: end;">
-							@if (item.Config is null or { Ignored : false })
+							@if (item.Config is null or { Ignored: false })
 							{
-								<MudIconButton Icon="@Icons.Material.Filled.Settings" Size="Size.Medium" Color="Color.Inherit" OnClick="() => SetModuleTemplateConfig(item)"/>
+								<MudIconButton Icon="@Icons.Material.Filled.Settings" Size="Size.Medium" Color="Color.Inherit" OnClick="() => SetModuleTemplateConfig(item)" />
 								@if (item.Type == FileSystemItemType.File)
 								{
-									<MudIconButton Icon="@Icons.Material.Filled.ChromeReaderMode" Size="Size.Medium" Color="Color.Inherit" OnClick="() => SetModuleTemplateConfig(item)"/>
+									<MudIconButton Icon="@Icons.Material.Filled.ChromeReaderMode" Size="Size.Medium" Color="Color.Inherit" OnClick="() => OpenSourceCodeGenDef(item)" />
 								}
 
 							}
 
 							@if (item.Config is null)
 							{
-								<MudIconButton Icon="@Icons.Material.Filled.HideSource" Size="Size.Medium" Color="Color.Inherit" OnClick="()=>IgnoreItem(item)"/>
+								<MudIconButton Icon="@Icons.Material.Filled.HideSource" Size="Size.Medium" Color="Color.Inherit" OnClick="()=>IgnoreItem(item)" />
 
 							}
-							
+
 							@if (item.Config != null)
 							{
 								<MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Medium" Color="Color.Inherit" OnClick="() => DeleteConfig(item)"></MudIconButton>
@@ -76,7 +77,7 @@
 	protected override void OnParametersSet()
 	{
 		if (RootPath != null)
-			rootFolder = GetFolderStructure(RootPath , null);
+			rootFolder = GetFolderStructure(RootPath, null);
 	}
 
 	private HashSet<FileSystemItem> GetFolderStructure(string folderPath, FileSystemItem? parent)
@@ -111,7 +112,7 @@
 					};
 			}
 
-			folder.Children = GetFolderStructure(directory , folder);
+			folder.Children = GetFolderStructure(directory, folder);
 			folder.IsExpanded = folder.Config == null || !folder.Config.Ignored;
 			root.Add(folder);
 
@@ -127,7 +128,7 @@
 			FileSystemItem fileItem;
 			if (fileConfig != null)
 			{
-				
+
 				fileItem = fileConfig.FileSystemItem;
 				fileItem.Config = fileConfig;
 			}
@@ -170,12 +171,12 @@
 		var dialogReference = await DialogService.ShowAsync<ItemTemplateConfigDialog>("File/Folder Config",
 			dialogParameters,
 			new DialogOptions()
-			{
-				MaxWidth = MaxWidth.Large,
-				CloseOnEscapeKey = true,
-				CloseButton = true,
-				DisableBackdropClick = false
-			});
+				{
+					MaxWidth = MaxWidth.Large,
+					CloseOnEscapeKey = true,
+					CloseButton = true,
+					DisableBackdropClick = false
+				});
 		var result = await dialogReference.Result;
 		if (!result.Canceled)
 		{
@@ -187,11 +188,11 @@
 				if (parent.Config == null)
 				{
 					parent.Config = new AmsNeo4JMicroserviceModuleItemTemplateConfig()
-					{
-						FileSystemItem = parent,
-						Module = Module,
-						NamePolicy = Path.GetFileNameWithoutExtension(parent.FullPath)
-					};
+						{
+							FileSystemItem = parent,
+							Module = Module,
+							NamePolicy = Path.GetFileNameWithoutExtension(parent.FullPath)
+						};
 					DbContext.Update(parent.Config);
 				}
 
@@ -236,11 +237,11 @@
 		if (item.Config == null)
 		{
 			item.Config = new AmsNeo4JMicroserviceModuleItemTemplateConfig()
-			{
-				Module = Module,
-				FileSystemItem = item,
-				Ignored = true
-			};
+				{
+					Module = Module,
+					FileSystemItem = item,
+					Ignored = true
+				};
 		}
 		else
 		{
@@ -253,6 +254,20 @@
 		{
 			IgnoreItem(itemChild);
 		}
+	}
+
+	private async Task OpenSourceCodeGenDef(FileSystemItem item)
+	{
+		await DialogService.ShowAsync<SourceCodeGenDefDialog>("Generator Settings " + item.FullPath, new DialogParameters<SourceCodeGenDefDialog>()
+			{
+				{ x=>x.Module , Module},
+				{ x=>x.FileSystemItem , item}
+			},
+			new DialogOptions()
+				{
+					FullScreen = true,
+					CloseButton = true
+				});
 	}
 
 }

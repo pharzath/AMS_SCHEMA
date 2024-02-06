@@ -13,7 +13,7 @@
                 <MudTextField @bind-Value="Module.Microservice.Name" Label="Microservce" ReadOnly="true"></MudTextField>
             </MudItem>
             <MudItem sm="12" md="4">
-                <MudExEnumSelect @bind-Value="ModuleType" TEnum="AmsNeo4JMicroserviceModule.ModuleTypeEnum" Label="Module Type"></MudExEnumSelect>
+                <MudExEnumSelect @bind-Value="ModuleType" TEnum="ModuleTypeEnum" Label="Module Type"></MudExEnumSelect>
             </MudItem>
             <MudItem sm="12" md="6">
                 <MudTextField @bind-Value="Module.Name" Label="Name" Adornment="Adornment.End" AdornmentIcon="@Icons.TwoTone.Update" OnAdornmentClick="UpdateName"></MudTextField>
@@ -80,7 +80,7 @@
         DialogInstance.Close(DialogResult.Ok(Module));
     }
 
-    void ValueChanged(AmsNeo4JMicroserviceModule.ModuleTypeEnum obj)
+    void ValueChanged(ModuleTypeEnum obj)
     {
         if (_moduleOrig == null)
         {
@@ -90,7 +90,7 @@
     }
 
     [Parameter]
-    public AmsNeo4JMicroserviceModule.ModuleTypeEnum ModuleType
+    public ModuleTypeEnum ModuleType
     {
         get => _moduleType;
         set
@@ -100,7 +100,7 @@
         }
     }
 
-    AmsNeo4JMicroserviceModule.ModuleTypeEnum _moduleType;
+    ModuleTypeEnum _moduleType;
     AmsNeo4JMicroserviceModule _module;
 
     [Inject]

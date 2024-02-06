@@ -82,7 +82,7 @@
                             Types to Generate
                         </MudText>
                         <MudPaper>
-                            @foreach (var type in Enum.GetValues<AmsNeo4JMicroserviceModule.ModuleTypeEnum>().OrderBy(x => x.ToString()))
+                            @foreach (var type in Enum.GetValues<ModuleTypeEnum>().OrderBy(x => x.ToString()))
                             {
                                 <MudButton Class="m-2" Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.TwoTone.ForkRight" OnClick="() => GenerateModule(type)">
                                     @type.ToString().Replace("_", ".")
@@ -202,7 +202,7 @@
         Snackbar?.Add("All Selected Labels Done");
     }
 
-    void GenerateModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum type)
+    void GenerateModule(ModuleTypeEnum type)
     {
         if (_tableRef.SelectedItems is { Count: 0 })
         {
@@ -305,16 +305,16 @@
 
     async Task CopyToAnotherModule(AmsNeo4JMicroserviceModuleSettingTemplate rawSetting, IEnumerable<AmsNeo4JNodeLabel> labels)
     {
-        List<AmsNeo4JMicroserviceModule.ModuleTypeEnum> excepts = new()
+        List<ModuleTypeEnum> excepts = new()
         {
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Endpoint,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI,
+            ModuleTypeEnum.API_Endpoint,
+            ModuleTypeEnum.UI,
         };
 
         foreach (var label in labels)
         {
 
-            var apiModuleLabel = label.Microservice.Modules.First(mod => mod.ModuleType == AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Endpoint);
+            var apiModuleLabel = label.Microservice.Modules.First(mod => mod.ModuleType == ModuleTypeEnum.API_Endpoint);
             var apiModuleLabelSetting = DataService.GetLabelModuleSettings(label, apiModuleLabel)
                 .FirstOrDefault(x => x.Key == rawSetting.Key);
             if (apiModuleLabelSetting == null)
@@ -330,7 +330,7 @@
                 }
             }
 
-            var selectedTypes = Enum.GetValues<AmsNeo4JMicroserviceModule.ModuleTypeEnum>()
+            var selectedTypes = Enum.GetValues<ModuleTypeEnum>()
                 .Except(excepts);
             foreach (var module in selectedTypes.Select(type => label.Microservice.GetModule(type)))
             {

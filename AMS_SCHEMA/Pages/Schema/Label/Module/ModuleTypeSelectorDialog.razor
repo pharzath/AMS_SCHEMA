@@ -35,12 +35,12 @@
     [CascadingParameter]
     public MudDialogInstance DialogInstance { get; set; }
 
-    MudTable<AmsNeo4JMicroserviceModule.ModuleTypeEnum> _table;
+    MudTable<ModuleTypeEnum> _table;
 
     [Parameter]
-    public AmsNeo4JMicroserviceModule.ModuleTypeEnum[] Orig { get; set; }
+    public ModuleTypeEnum[] Orig { get; set; }
 
-    IEnumerable<AmsNeo4JMicroserviceModule.ModuleTypeEnum> Types => Enum.GetValues<AmsNeo4JMicroserviceModule.ModuleTypeEnum>()
+    IEnumerable<ModuleTypeEnum> Types => Enum.GetValues<ModuleTypeEnum>()
         .Except(Orig);
 
 

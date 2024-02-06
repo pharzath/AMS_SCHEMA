@@ -6,11 +6,11 @@
 @using AMS.Model
 
 <PageTitle>Home</PageTitle>
-<MudTabs>
+<MudTabs @ref="tabs">
 	<MudTabPanel Text="@SourceMicroservice?.Fullname">
 		<MicroserviceSelectorList Title="Select Source Microservice" @bind-SelectedMicroservice="SourceMicroservice"></MicroserviceSelectorList>
 	</MudTabPanel>
-	<MudTabPanel Text="@SelectedModule?.GetFullname()">
+	<MudTabPanel Text="@(SelectedModule?.Name)">
 		<ModuleSelectorList SourceMicroservice="SourceMicroservice" @bind-SelectedModule="SelectedModule"></ModuleSelectorList>
 	</MudTabPanel>
 	<MudTabPanel Text="@(SelectedModule?.GetFullname() + " Directory Structure")">
@@ -24,7 +24,7 @@
 @code
 {
 	bool _showMicroserviceSelector = true;
-
+	MudTabs tabs;
 	private AmsNeo4JMicroservice? _sourceMicroservice;
 	private AmsNeo4JMicroserviceModule? _selectedModule;
 
@@ -35,6 +35,7 @@
 		{
 			_sourceMicroservice = value;
 			_showMicroserviceSelector = false;
+			tabs.ActivatePanel(tabs.ActivePanelIndex + 1);
 		}
 	}
 
@@ -45,7 +46,7 @@
 		set
 		{
 			_selectedModule = value;
-			//Console.Beep();
+			tabs.ActivatePanel(tabs.ActivePanelIndex + 1);
 		}
 	}
 

@@ -31,12 +31,12 @@
 </GeneratorCode>
 
 @code {
-    readonly string[] _methodParamsFormat = { "{0}Request request" };
+    readonly string[] _methodParamsFormat = ["{0}Request request"];
 
     protected override string ClassNameFormat => "I{0}Controller";
     protected override string[]? GetMethodParameterTypes(HandlerSettingItem handler)
     {
-        return new[] { "{0}Request".Fmt(handler.ToString()) };
+        return ["{0}Request".Fmt(handler.ToString())];
     }
 
     public override string? GetHandlerParameters(HandlerSettingItem handler)

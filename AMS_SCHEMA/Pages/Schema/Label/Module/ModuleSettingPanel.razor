@@ -174,7 +174,7 @@
 
     }
 
-    AmsNeo4JMicroserviceModule? GetLabelModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum tpy)
+    AmsNeo4JMicroserviceModule? GetLabelModule(ModuleTypeEnum tpy)
     {
         return Label.Microservice?.Modules.FirstOrDefault(x => x.ModuleType == tpy);
     }
@@ -220,10 +220,10 @@
 
     async Task CopyToAnotherModule(AmsNeo4JMicroserviceModuleSetting context)
     {
-        List<AmsNeo4JMicroserviceModule.ModuleTypeEnum> excepts = new()
+        List<ModuleTypeEnum> excepts = new()
         {
             context.Module.ModuleType,
-            AmsNeo4JMicroserviceModule.ModuleTypeEnum.UI,
+            ModuleTypeEnum.UI,
         };
         excepts.AddRange(
             DataService.GetLabelModuleSettings(Label, null)
@@ -244,7 +244,7 @@
         var result = await dialogReference.Result;
         if (!result.Canceled)
         {
-            var selectedTypes = result.Data as HashSet<AmsNeo4JMicroserviceModule.ModuleTypeEnum>;
+            var selectedTypes = result.Data as HashSet<ModuleTypeEnum>;
             foreach (var module in selectedTypes.Select(type => Label.Microservice.GetModule(type)))
             {
                 var currentSettings = DataService.GetLabelModuleSettings(Label, module).FirstOrDefault(x => x.Key == context.Key);

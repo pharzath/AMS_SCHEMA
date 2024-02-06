@@ -1,0 +1,37 @@
+﻿@using File = System.IO.File
+@using Olive
+@using AMS.Model
+@using System.Text.RegularExpressions
+@implements IDisposable
+<MudContainer Class="" Style="max-height:550px;overflow-y: auto">
+	@if (GeneratorContext.GenLines.Any())
+	{
+		for (var i = 0; i < GeneratorContext.GenLines.Count; i++)
+		{
+			<CodeGenLineComponent LineItem="@GeneratorContext.GenLines[i]" LineNumber="@(i+1)"></CodeGenLineComponent>
+		}
+	}
+</MudContainer>
+
+@code {
+
+	[CascadingParameter] GeneratorContext GeneratorContext { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		GeneratorContext.Update += GeneratorContextOnUpdate;
+		StateHasChanged();
+	}
+
+
+	private void GeneratorContextOnUpdate(object? sender, EventArgs e)
+	{
+		InvokeAsync(StateHasChanged);
+	}
+
+	public void Dispose()
+	{
+		GeneratorContext.Update -= GeneratorContextOnUpdate;
+	}
+
+}

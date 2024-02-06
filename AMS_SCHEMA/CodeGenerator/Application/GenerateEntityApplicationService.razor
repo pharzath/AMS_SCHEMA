@@ -9,8 +9,8 @@
 @using System.Text
 @implements IHaveDestinationFilePath
 using MediatR;
-using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Interface)).@Label.Name.ToPascalCase();
-using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.Contracts)).@Label.Name.ToPascalCase();
+using @(Module.Microservice.GetModule(ModuleTypeEnum.API_Interface)).@Label.Name.ToPascalCase();
+using @(Module.Microservice.GetModule(ModuleTypeEnum.Contracts)).@Label.Name.ToPascalCase();
 
 using QOQNOS.CORE;
 

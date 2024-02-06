@@ -1,0 +1,91 @@
+﻿@using HighlightBlazor
+@using System.Net
+@using CloneBlazor.Components.File.Gen
+@using Olive
+@implements IDisposable
+
+<MudStack Row="true" Style="overflow-x: auto" Spacing="0">
+	<MudChip Label="true" Size="Size.Small" Style="min-width:50px;">@SourceLineItem.LineNumber</MudChip>
+	<MudCheckBox @bind-Value="SourceLineItem.Selected" />
+	@if (Highlight)
+	{
+		<CodeHighlight Code="@EncodeContent" CodeLanguage="cs" Indent="false" />
+	}
+	else
+	{
+		<div style="padding-left: @LineIndentPx()">
+			@SourceLineItem.Content
+		</div>
+	}
+	<MudSpacer />
+
+	@GetMenuItems
+
+</MudStack>
+
+@code {
+
+
+	RenderFragment GetMenuItems => __builder =>
+	{
+		var suggestions = SourceLineItem.GetSuggestions();
+		@if (suggestions.Any())
+		{
+			<MudMenu Dense="true">
+				<ActivatorContent>
+					<MudIconButton Size="Size.Small" Icon="@Icons.Material.Filled.Menu"></MudIconButton>
+				</ActivatorContent>
+				<ChildContent>
+					@foreach (var suggestion in suggestions)
+					{
+						<MudMenuItem OnClick="()=>SourceLineItem.DoSuggestion(suggestion)" Disabled="suggestion.Complete">@suggestion.Title - @suggestion.Parameter</MudMenuItem>
+					}
+				</ChildContent>
+			</MudMenu>
+		}
+
+	};
+
+	protected override void OnInitialized()
+	{
+		GeneratorContext.Update += GeneratorContextOnUpdate;
+	}
+	public void Dispose()
+	{
+		GeneratorContext.Update -= GeneratorContextOnUpdate;
+	}
+
+	private void GeneratorContextOnUpdate(object? sender, EventArgs e)
+	{
+		InvokeAsync(StateHasChanged);
+	}
+
+
+	[CascadingParameter] GeneratorContext GeneratorContext { get; set; }
+	[Parameter] public required SourceLineItem SourceLineItem { get; set; }
+	[Parameter] public bool Highlight { get; set; } = true;
+
+	public string? EncodeContent =>
+		SourceLineItem.Content?.Replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+
+	string LineIndentPx()
+	{
+		var space = 0;
+		var i = 0;
+		if (SourceLineItem.Content is null || SourceLineItem.Content.Length == 0) return "0px";
+		while (SourceLineItem.Content[i].IsWhiteSpace())
+		{
+			if (SourceLineItem.Content[i] == '\t')
+				space += 4;
+			if (SourceLineItem.Content[i] == ' ')
+				space++;
+			if (SourceLineItem.Content.Length - 1 == i) break;
+			i++;
+		}
+
+		return (space * 8) + "px";
+	}
+
+}
+
+

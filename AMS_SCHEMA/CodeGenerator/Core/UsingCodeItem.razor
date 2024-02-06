@@ -6,7 +6,7 @@ using @(CodeGen.Module.Microservice.GetModule(Type))@(PostFix.WithWrappers(".",n
     public CodeGeneratorTemplate CodeGen { get; set; }
 
     [Parameter]
-    public AmsNeo4JMicroserviceModule.ModuleTypeEnum Type { get; set; }
+    public ModuleTypeEnum Type { get; set; }
 
     [Parameter]
     public string PostFix { get; set; }

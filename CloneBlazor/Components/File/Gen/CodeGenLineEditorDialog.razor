@@ -1,0 +1,47 @@
+﻿<MudDialog>
+	<DialogContent>
+		<MudTextField Label="Code" @bind-Value="LineItem.Content" FullWidth="true" />
+		@if (LineItem.CodeGenSection != CodeGenSectionEnum.None)
+		{
+			<MudCard Outlined="true" Class="my-4 p-4">
+				<MudCardHeader>
+					<MudText Typo="Typo.subtitle1" Class="mt-2">Properties :</MudText>
+				</MudCardHeader>
+				<MudCardContent>
+					@foreach (var prop in LineItem.AllProperties)
+					{
+						<MudTextField Class="m-4" Label="@prop" @bind-Value="LineItem.Properties[prop]" FullWidth="true"/>
+					}
+				</MudCardContent>
+
+			</MudCard>
+		}
+	</DialogContent>
+	<DialogActions>
+		<MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveLine">
+			Save
+		</MudButton>
+
+		<MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Close" OnClick="CloseDialog">
+			Close
+		</MudButton>
+
+	</DialogActions>
+</MudDialog>
+@code {
+
+	[Parameter] public CodeGenLineItem LineItem { get; set; }
+	[Parameter] public int LineNumber { get; set; }
+
+	[CascadingParameter] MudDialogInstance DialogInstance { get; set; }
+	private void CloseDialog()
+	{
+		DialogInstance.Cancel();
+	}
+
+	private void SaveLine()
+	{
+		DialogInstance.Close(DialogResult.Ok(LineItem));
+	}
+
+}

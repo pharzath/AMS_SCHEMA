@@ -1,0 +1,16 @@
+﻿@using Olive
+@using CloneBlazor.Components.File.Gen
+<MudContainer Class="" Style="max-height:550px;overflow-y: auto">
+	@foreach (var line in GeneratorContext.SourceLines)
+	{
+		<SourceLineComponent SourceLineItem="line" Highlight="@Highlight"></SourceLineComponent>
+	}
+</MudContainer>
+
+@code {
+
+	[CascadingParameter] GeneratorContext GeneratorContext { get; set; }
+
+	[Parameter] public bool Highlight { get; set; } = true;
+
+}

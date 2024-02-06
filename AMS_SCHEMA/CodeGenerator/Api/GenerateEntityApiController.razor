@@ -11,8 +11,8 @@
 @implements IHaveDestinationFilePath
 
 using Microsoft.AspNetCore.Mvc;
-using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Interface)).@(Label.Name.ToPascalCase());
-using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.Application)).Services.@(Label.Name.ToPascalCase());
+using @(Module.Microservice.GetModule(ModuleTypeEnum.API_Interface)).@(Label.Name.ToPascalCase());
+using @(Module.Microservice.GetModule(ModuleTypeEnum.Application)).Services.@(Label.Name.ToPascalCase());
 
 namespace @(Module.Name).@(Label.Name.ToPascalCase());
 

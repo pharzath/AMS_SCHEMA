@@ -297,7 +297,7 @@
 
 	void CreateAllModules()
 	{
-		foreach (var type in Enum.GetValues<AmsNeo4JMicroserviceModule.ModuleTypeEnum>())
+		foreach (var type in Enum.GetValues<ModuleTypeEnum>())
 		{
 			var name = type.ToString().Replace("_", ".");
 			var module = new AmsNeo4JMicroserviceModule()

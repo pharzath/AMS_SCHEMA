@@ -1,0 +1,115 @@
+﻿@using CloneBlazor.Components.File
+@using AMS.Model
+@using CloneBlazor.Components.File.Gen
+
+<MudDialog ContentStyle="max-height:800px;">
+	<DialogContent>
+		<CascadingValue Value="Module">
+			<CascadingValue Value="_generatorContext">
+				<CascadingValue Value="DebugStatus">
+					<MudToolBar Class="m-4" Dense="true">
+						<MudStack Row="true" Class="btn-outline-info" Spacing="1" >
+							<MudNumericField Label="Select From" @bind-Value="SelectSourceFrom" Clearable="true" Style="width: 120px;" />
+							<MudNumericField Label="Select To" @bind-Value="SelectSourceTo" Clearable="true" Style="width: 120px;" />
+							<MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.SelectAll" OnClick="SelectSourceLines">
+								Select
+							</MudButton>
+							<MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Default" StartIcon="@Icons.Material.Filled.SelectAll" OnClick="UnSelectSourceLines">
+								Unselect all
+							</MudButton>
+							
+							<MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.SettingsSuggest" OnClick="ApplySuggestions">
+								Apply Suggestions
+							</MudButton>
+
+						</MudStack>
+						<MudSpacer />
+						<MudToggleGroup T="bool" @bind-Value="DebugStatus" Style="width: 300px;" Delimiters="true" Dense="true" Rounded="true" CheckMark="true">
+							<MudToggleItem Value="@(true)">Show Debug</MudToggleItem>
+							<MudToggleItem Value="@(false)">Hide Debug</MudToggleItem>
+						</MudToggleGroup>
+						<MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveSourceGenerator">
+							Save Source Senerator
+						</MudButton>
+
+					</MudToolBar>
+					<MudGrid>
+						<MudItem sm="6">
+							<SourceFileContentComponent />
+						</MudItem>
+						<MudItem sm="6">
+							<CodeGenContentComponent />
+						</MudItem>
+					</MudGrid>
+				</CascadingValue>
+			</CascadingValue>
+		</CascadingValue>
+	</DialogContent>
+	<DialogActions>
+		<MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Close" OnClick="Close">
+			Close
+		</MudButton>
+
+	</DialogActions>
+</MudDialog>
+
+@code {
+	int SelectSourceFrom { get; set; }
+	int SelectSourceTo { get; set; }
+	bool DebugStatus;
+
+
+	[Parameter] public AmsNeo4JMicroserviceModule Module { get; set; }
+
+	[Parameter] public FileSystemItem FileSystemItem { get; set; }
+
+	[CascadingParameter] MudDialogInstance DialogInstance { get; set; }
+
+	GeneratorContext _generatorContext;
+
+	protected override void OnInitialized()
+	{
+		_generatorContext = new GeneratorContext(Module, FileSystemItem);
+		base.OnInitialized();
+	}
+
+	private void Close()
+	{
+		DialogInstance.Cancel();
+	}
+
+	[Inject] IDialogService DialogService { get; set; }
+
+
+	private void SaveSourceGenerator()
+	{
+		_generatorContext.DeleteMarkedLines();
+		var result = _generatorContext.SaveSourceGenerator();
+		_snackbar.Add(result, result.StartsWith("-") ? Severity.Error : Severity.Success);
+	}
+
+	private void SelectSourceLines()
+	{
+		_generatorContext.SelectSourceLines(SelectSourceFrom, SelectSourceTo);
+	}
+
+	private void UnSelectSourceLines()
+	{
+		_generatorContext.UnselectSourceLines();
+	}
+
+	private void ApplySuggestions()
+	{
+		foreach (var sourceLine in _generatorContext.SourceLines)
+		{
+			var suggestions = sourceLine.GetSuggestions();
+			if(suggestions.Any())
+			{
+				var suggestion = suggestions.First();
+				sourceLine.DoSuggestion(suggestion);
+			}
+		}
+	}
+
+
+}

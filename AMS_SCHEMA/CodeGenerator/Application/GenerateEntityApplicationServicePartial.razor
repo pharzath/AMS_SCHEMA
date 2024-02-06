@@ -6,7 +6,7 @@
 @using AMS.Model
 @using AMS.Model.Services
 using MediatR;
-using @(Module.Microservice.GetModule(AmsNeo4JMicroserviceModule.ModuleTypeEnum.API_Interface)).@Label.Name.ToPascalCase();
+using @(Module.Microservice.GetModule(ModuleTypeEnum.API_Interface)).@Label.Name.ToPascalCase();
 
 namespace @(Module).Services.@Label.Name.ToPascalCase();
 

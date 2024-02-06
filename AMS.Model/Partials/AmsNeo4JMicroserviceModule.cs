@@ -18,24 +18,6 @@ public partial class AmsNeo4JMicroserviceModule : IHaveId<int>
 
     public ModuleTypeEnum ModuleType { get; set; }
 
-    public enum ModuleTypeEnum
-    {
-	    API_Interface,
-		API_Endpoint,
-        API_Web,
-        Application,
-        Contracts,
-        Domain,
-        Grain,
-        Grain_Interface,
-        Infrastructure,
-        Model,
-        SharedKernel,
-        Usecase,
-        UI,
-        UI_Blazor,
-    }
-
     public override string ToString()
     {
         return Name;
@@ -64,6 +46,24 @@ public partial class AmsNeo4JMicroserviceModule : IHaveId<int>
     {
 	    return Directory.Exists(GetFullPath());
     }
+}
+
+public enum ModuleTypeEnum
+{
+	API_Interface,
+	API_Endpoint,
+	API_Web,
+	Application,
+	Contracts,
+	Domain,
+	Grain,
+	GrainInterface,
+	Infrastructure,
+	Model,
+	SharedKernel,
+	UseCases,
+	UI,
+	UI_Blazor,
 }
 
 public class FileSystemItem : IHaveId<int>
