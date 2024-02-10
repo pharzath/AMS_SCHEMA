@@ -1,0 +1,48 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.DependencyInjection;
+<UsingCodeItem Type="ModuleTypeEnum.Application" PostFix="Services"/>
+<UsingCodeItem Type="ModuleTypeEnum.Infrastructure"/>
+<UsingCodeItem Type="ModuleTypeEnum.Infrastructure" PostFix="Context"/>
+<UsingCodeItem Type="ModuleTypeEnum.Infrastructure" PostFix="Data"/>
+<UsingCodeItem Type="ModuleTypeEnum.Infrastructure" PostFix="IdentityImplementations"/>
+<UsingCodeItem Type="ModuleTypeEnum.Infrastructure" PostFix="Services"/>
+<UsingCodeItem Type="ModuleTypeEnum.Model" PostFix="Entity"/>
+using QOQNOS.Infrastructure.Logging;
+using QOQNOS.SharedKernel;
+using QOQNOS.SharedKernel.Constants;
+using System.Text;
+	</UsingCode>
+
+<NamespaceCode  PostFix="ExtensionMethods" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"  IsStatic="true"  >
+		<ClassInheritance>
+
+		</ClassInheritance>
+		<ClassContent>
+
+			<RegionCode Name="Header Code" />
+
+			<RegionCode Name="Properties" />
+
+
+
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+
+@code {
+protected override string ClassNameFormat => "{ModuleName}ServiceRegisterationExtension";
+
+
+}

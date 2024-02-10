@@ -1,0 +1,30 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using Ardalis.Specification.EntityFrameworkCore;
+<UsingCodeItem Type="ModuleTypeEnum.Infrastructure" PostFix="Context"/>
+using QOQNOS.SharedKernel;
+	</UsingCode>
+
+<NamespaceCode  PostFix="Data" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"   >
+		<ClassInheritance>
+ : RepositoryBase&lt;T>, IReadRepository&lt;T>, IRepository&lt;T> where T : class, IAggregateRoot
+		</ClassInheritance>
+		<ClassContent>
+			<RegionCode Name="Header Code" />
+			<RegionCode Name="Properties" />
+    public Ef@(Module.Microservice.Name)Repository(@(Module.Microservice.Name)DbContext dbContext) : base(dbContext)  { }
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+@code {
+protected override string ClassNameFormat => "Ef{MicroserviceName}Repository<T>";
+}

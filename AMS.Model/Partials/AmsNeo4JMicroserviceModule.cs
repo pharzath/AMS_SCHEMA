@@ -50,7 +50,7 @@ public partial class AmsNeo4JMicroserviceModule : IHaveId<int>
 
 public enum ModuleTypeEnum
 {
-	API_Interface,
+	//API_Interface,
 	API_Endpoint,
 	API_Web,
 	Application,
@@ -71,9 +71,11 @@ public class FileSystemItem : IHaveId<int>
 	public int Id { get; set; }
 	public string Name { get; set; }
 	public string FullPath { get; set; }
+	public string RelativePath { get; set; }
 	public FileSystemItemType Type { get; set; }
-	public HashSet<FileSystemItem> Children { get; set; } = new HashSet<FileSystemItem>();
+	public HashSet<FileSystemItem> Children { get; set; } = [];
 	public bool IsExpanded { get; set; }
+
 	public string Icon => Type == FileSystemItemType.Folder ? MudBlazor.Icons.Material.Filled.Folder : GetFileIcon();
 
 	[NotMapped] public AmsNeo4JMicroserviceModuleItemTemplateConfig? Config { get; set; }
@@ -96,11 +98,19 @@ public partial class AmsNeo4JMicroserviceModuleItemTemplateConfig : IHaveId<int>
 {
 	public int Id { get; set; }
 
+	public int ModuleId { get; set; }
+	
+	[ForeignKey(nameof(ModuleId))]
 	public AmsNeo4JMicroserviceModule Module { get; set; }
+
 	public FileSystemItem FileSystemItem { get; set; }
+
+	//public string? RelativePath { get; set; }
+	public string? GeneratorTemplatePath { get; set; }
 
 	public bool Ignored { get; set; } = false;
 	public string? NamePolicy { get; set; } // Role -> {EntityName}
+	public string? FileExtension { get; set; } 
 }
 
 public enum FileSystemItemType

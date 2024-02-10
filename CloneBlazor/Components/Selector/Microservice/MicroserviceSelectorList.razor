@@ -2,7 +2,6 @@
 @using AMS.Model.Models
 @using Microsoft.EntityFrameworkCore
 <div>
-		<MudText Typo="Typo.h5">@Title</MudText>
 		<MudTable @ref="msTable"
 		          Items="Microservices"
 		          @bind-SelectedItem="SelectedMicroservice"
@@ -43,9 +42,6 @@
 	private List<AmsNeo4JMicroservice> Microservices;
 	private AmsNeo4JMicroservice? _selectedMicroservice;
 	[Inject] public MyDbContext DbContext { get; set; }
-
-	[Parameter]
-	public string Title { get; set; }
 
 
 

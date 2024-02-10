@@ -5,12 +5,12 @@
 @using MudBlazor.Extensions.Options
 @using AMS.Model
 @using AMS_SCHEMA.Class
-@using AMS_SCHEMA.CodeGenerator
 @using AMS_SCHEMA.Pages.Schema.Label.Module
 @using Blueprint41
 @using Newtonsoft.Json
 @using Newtonsoft.Json.Linq
 @using System.Text
+@using CodeGenerator.Gens
 @using Microsoft.AspNetCore.Components
 
 <style>
@@ -431,12 +431,12 @@
     string? _generatedCode;
     HashSet<AmsNeo4JNodeLabel> _selectedEntities;
 
-    string? GenerateDataStoreCode(HashSet<AmsNeo4JNodeLabel> selectedLabels)
-    {
-        var code = CodeGeneratorService?.GenerateBPDataStore(selectedLabels,new List<AmsNeo4JNodeRelation>());
-
-        return code;
-    }
+    // string? GenerateDataStoreCode(HashSet<AmsNeo4JNodeLabel> selectedLabels)
+    // {
+    //     var code = CodeGeneratorService?.GenerateBPDataStore(selectedLabels,new List<AmsNeo4JNodeRelation>());
+    //
+    //     return code;
+    // }
 
     HashSet<AmsNeo4JNodeLabel> SelectedEntities
     {
@@ -444,7 +444,7 @@
         set
         {
             _selectedEntities = value;
-            _generatedCode = GenerateDataStoreCode(_tableRef.SelectedItems);
+            //_generatedCode = GenerateDataStoreCode(_tableRef.SelectedItems);
 
         }
     }

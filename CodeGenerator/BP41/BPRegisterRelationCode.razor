@@ -1,0 +1,77 @@
+﻿@using AMS.Model.Services
+@using AMS.Model.Models
+@using Neo4jClient.DataAnnotations.Cypher.Functions
+@using Olive
+@using System.Collections
+@if (Relation is not null)
+{
+    <text>
+        Relations.New(Entities["@Relation.From?.Name"], Entities["@Relation.To?.Name"], "@Relation.From?.Name.ToUpper()_@(Relation.RelType.Name)_@Relation.To?.Name.ToUpper()", "@Relation.RelType.Name")
+        @GetSetInProp(Relation)
+        @GetSetOutProp(Relation);
+    </text>
+}else if(Label is not null)
+@foreach (var rel in GetIncomingRelations(Label)){<text>
+     Relations.New(Entities["@rel.From?.Name"], Entities["@rel.To?.Name"], "@rel.From?.Name.ToUpper()_@(rel.RelType.Name)_@rel.To?.Name.ToUpper()", "@rel.RelType.Name")
+     @GetSetInProp(rel)
+     @GetSetOutProp(rel);
+</text>}
+@code {
+
+
+    [Parameter]
+    public DataService DataService { get; set; }
+
+    [Parameter]
+    public required AmsNeo4JNodeRelation? Relation { get; set; }
+
+    [Parameter]
+    public required AmsNeo4JNodeLabel? Label { get; set; }
+
+    string? GetIndexConstrain(AmsNeo4JNodeLabelProperty prop)
+    {
+        var idx = Label.Constraints.FirstOrDefault(x=>x.Over == prop.Name);
+        return 
+            idx != null
+                ? ", IndexType." + GetStandardTypeName(idx.Type)
+                : null;
+    }
+
+    string GetSetInProp(AmsNeo4JNodeRelation rel)
+    {
+        return $".SetInProperty(\"{rel.InEntPropName}\", PropertyType.{rel.InEntPropType})".OnlyWhen(rel.InEntPropType != EntPropTypeEnum.None);
+    }
+    string GetSetOutProp(AmsNeo4JNodeRelation rel)
+    {
+        return $".SetOutProperty(\"{rel.OutEntPropName}\", PropertyType.{rel.OutEntPropType})".OnlyWhen(rel.OutEntPropType != EntPropTypeEnum.None);
+    }
+
+    string GetStandardTypeName(string? idxType)
+    {
+        return idxType switch
+        {
+            "IS NODE KEY" => "Unique",
+            "IS UNIQUE" => "Indexed",
+            "IS NOT NULL" => "None",
+            _ => "BAD_idxType"
+            };
+    }
+
+    string? GetLabelParent()
+    {
+        if (Label.ParentLabel is { })
+            return $"Entities[\"{Label.ParentLabel.Name}\"]";
+        
+        if (Label.InheriteFromLabel is { })
+            return $"Entities[\"{Label.InheriteFromLabel.Name}\"]";
+
+        return null;
+    }
+
+    IEnumerable<AmsNeo4JNodeRelation> GetIncomingRelations(AmsNeo4JNodeLabel label)
+    {
+        var incoming = DataService.GetLabelRelationTos(label);
+        return incoming;
+    }
+
+}

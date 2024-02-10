@@ -84,8 +84,14 @@ namespace AMS.Model.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("FileExtension")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("FileSystemItemId")
                         .HasColumnType("int");
+
+                    b.Property<string>("GeneratorTemplatePath")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("Ignored")
                         .HasColumnType("bit");
@@ -216,6 +222,10 @@ namespace AMS.Model.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RelativePath")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

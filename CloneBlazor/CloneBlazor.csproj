@@ -24,6 +24,7 @@
   
   <ItemGroup>
     <ProjectReference Include="..\AMS.Model\AMS.Model.csproj" />
+    <ProjectReference Include="..\CodeGenerator\CodeGenerator.csproj" />
   </ItemGroup>
   
 </Project>

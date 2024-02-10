@@ -1,0 +1,35 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using Elsa.Extensions;
+using Elsa.MassTransit.Features;
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Commands"/>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Events"/>
+	</UsingCode>
+
+<NamespaceCode  PostFix="Extensions" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"  IsStatic="true"  >
+		<ClassContent>
+
+			<RegionCode Name="Header Code" />
+
+    public static MassTransitFeature RegisterMasstransitQoqnosAuthEvents(this MassTransitFeature feature)
+    {
+        feature.AddMessageType&lt;SuccessfullLoginEvent>()
+                .AddMessageType&lt;FailedLoginEvent>()
+				;
+		return feature;
+    }
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+@code {
+protected override string ClassNameFormat => "{ModuleName}RegisterEvents";
+}

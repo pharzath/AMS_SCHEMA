@@ -1,0 +1,143 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using System.Text.Json.Serialization;
+using Elsa.Extensions;
+using FastEndpoints;
+using FastEndpoints.Swagger;
+using Microsoft.OpenApi.Models;
+using QOQNOS;
+<UsingCodeItem Type="ModuleTypeEnum.API_Endpoint" PostFix="ExtensionMethods"/>
+<UsingCodeItem Type="ModuleTypeEnum.API_Endpoint" PostFix="User"/>
+<UsingCodeItem Type="ModuleTypeEnum.API_Web"/>
+using QOQNOS.Common.Classes;
+	</UsingCode>
+var builder = WebApplication.CreateBuilder(args);
+
+var disableElsa = false;
+
+QoqnosEndpointSecurityOptions.SecurityIsEnabled = false;
+
+// Configures QOQNOS.AUTH Api Endpoints
+builder.ConfigureQoqnosAuthApiEndpoints();
+
+// Configuring all Elsa dependencies
+if (disableElsa == false)
+{
+	// TODO : WARNING ⚠️
+	// Should remove
+	// Elsa Identity Conflicts With the QOQNOS Identity (Microsoft Identity) , All requested Apis are return 404 
+	// We have to implement comlete Custom Identity service for QOQNOS in Elsa using Elsa.Identitty Module
+	Elsa.EndpointSecurityOptions.DisableSecurity();
+	builder.Services.ConfigureElsaServer(builder.Configuration);
+}
+else
+{
+	builder.Services
+		.AddFastEndpoints(options =>
+		{
+			options.Assemblies = new[] { typeof(Login).Assembly };
+		});
+}
+
+
+// It should register the API of Swagger (if removed Swagger will not work)
+builder.Services.SwaggerDocument();
+
+
+builder.Services.AddCors(cors => cors
+	.AddDefaultPolicy(policy => policy
+		.AllowAnyOrigin() // For demo purposes only. Use a specific origin instead.
+		.AllowAnyHeader()
+		.AllowAnyMethod()
+		.WithExposedHeaders("x-elsa-workflow-instance-id"))); // Required for Elsa Studio in order to support running workflows from the designer. Alternatively, you can use the `*` wildcard to expose all headers.
+
+
+
+
+builder.Services.AddSwaggerGen(c =>
+{
+	c.SwaggerDoc("v1", new OpenApiInfo { Title = "QOQNOS AUTH API" });
+	//c.EnableAnnotations();
+	//c.SchemaFilter&lt;CustomSchemaFilters>();
+	c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+	{
+		Description = @@"JWT Authorization header using the Bearer scheme. &lt;br/>
+                      Enter 'Bearer' [space] and then your token in the text input below.&lt;br/> 
+					  Example: &lt;br/>
+					  Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InBoYXJ6YXRoIiwibmJmIjoxNzA0NjU0OTM5LCJleHAiOjE3MDUyNTk3MzksImlhdCI6MTcwNDY1NDkzOX0.AhzAR0YdDdgyirt5NMsPE92eQhHgp7iiBNa8llZR4ic",
+		Name = "Authorization",
+		In = ParameterLocation.Header,
+		Type = SecuritySchemeType.ApiKey,
+		Scheme = "Bearer"
+	});
+
+	c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+	{
+		{
+			new OpenApiSecurityScheme
+			{
+				Reference = new OpenApiReference
+				{
+					Type = ReferenceType.SecurityScheme,
+					Id = "Bearer"
+				},
+				Scheme = "oauth2",
+				Name = "Bearer",
+				In = ParameterLocation.Header,
+
+			},
+			new List&lt;string>()
+		}
+	});
+});
+
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+	// app.UseSwagger();
+	// app.UseSwaggerUI();
+	// app.UseSwaggerGen();
+}
+
+//app.UseHttpsRedirection();
+
+app.UseCors();
+app.UseRouting(); // Required for SignalR.
+app.UseAuthentication();
+app.UseAuthorization();
+//app.UseWorkflowsApi("q/api"); // Use Elsa API endpoints.
+
+if (disableElsa == false)
+{
+	app.UseWorkflowsApi("q/api"); // Use Elsa API endpoints.
+	app.UseWorkflows(); // Use Elsa middleware to handle HTTP requests mapped to HTTP Endpoint activities.
+	app.UseWorkflowsSignalRHubs(); // Optional SignalR integration. Elsa Studio uses SignalR to receive real-time updates from the server. 
+}
+else
+{
+	app.UseFastEndpoints(config =>
+	{
+
+		config.Serializer.Options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+		config.Endpoints.RoutePrefix = "q/api";
+
+		config.Versioning.Prefix = "v";
+		config.Versioning.DefaultVersion = 1;  //   /api/auth/v1/&lt;Group>/&lt;SubGroup>
+		config.Versioning.PrependToRoute = true;
+	});
+}
+
+app.UseSwaggerGen();
+
+app.Run();
+</GeneratorCode>
+@code {
+}

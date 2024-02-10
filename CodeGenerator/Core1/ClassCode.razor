@@ -1,0 +1,35 @@
+﻿@using Olive
+@using AMS_SCHEMA.Class
+@Accessor @("static".OnlyWhen(IsStatic)) @("partial".OnlyWhen(IsPartial)) @Type.ToString().ToLower() @(CodeGen.ClassName)@ClassDef
+@ClassInheritance
+{
+    @ClassContent
+}
+@code {
+    public enum ClassTypeEnum { Class, Interface, Struct, Enum, Record }
+
+    [CascadingParameter] public CodeGeneratorTemplate CodeGen { get; set; }
+
+    [CascadingParameter(Name = nameof(CodeGenHints))] public bool CodeGenHints { get; set; } = false;
+
+    [Parameter] public RenderFragment? ClassDef { get; set; }
+    [Parameter] public RenderFragment? ClassInheritance { get; set; }
+    [Parameter] public RenderFragment ClassContent { get; set; }
+
+
+
+    [Parameter] public ClassTypeEnum Type { get; set; } = ClassTypeEnum.Class;
+
+    [Parameter] public string Accessor { get; set; } = "public";
+
+    [Parameter] public bool IsPartial { get; set; } = true;
+    
+    [Parameter] public bool IsStatic { get; set; } = false;
+
+    [Parameter] public string? Inherits { get; set; }
+
+    //[Parameter] public bool ImplementsSelfInterface { get; set; }
+
+    [Parameter] public string[]? Interfaces { get; set; }
+
+}

@@ -1,0 +1,47 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+{
+  "baseUrls": {
+    "authApiBase": "https://localhost:7001",
+    "webBase": "https://localhost:1234"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Trace",
+      "Quartz": "Information",
+      "Orleans.Runtime.SafeTimer": "Warning",
+      "Microsoft.AspNetCore": "Warning",
+      "QOQNOS": "Trace"
+    }
+  },
+  "Qoqnos": {
+    "Crypto": {
+      "ValidationCodeKey": "F1F67980-7FCF-41CA-9DAF-CD7C137665BE"
+    }
+  },
+  "Backend": {
+    "BaseUrl": "https://localhost:7001",
+    "Url": "https://localhost:7001/q/api"
+  },
+  "Webhooks": {
+    "Endpoints": [
+      {
+        "EventTypes": [
+          "RunTask"
+        ],
+        "Url": "https://localhost:7001/api/webhooks/run-task"
+      }
+    ]
+  },
+  "ConnectionStrings": {
+    "IdentityConnection": "Data Source=localhost;Initial Catalog=QOQNOS.APP.IDENTITY;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False",
+    "GrainsConnection": "Data Source=localhost;Initial Catalog=QOQNOS.GrainStore;Integrated Security=False;Persist Security Info=False;User ID=sa;Password=baronix4353!;Connect Timeout=60;Encrypt=False;Current Language=English;",
+    "AuthWfConnection": "Data Source=localhost;Initial Catalog=QOQNOS.AUTH.Workflow;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False"
+  },
+  "AllowedHosts": "*"
+}
+</GeneratorCode>

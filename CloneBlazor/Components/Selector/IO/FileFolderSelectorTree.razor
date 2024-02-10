@@ -258,7 +258,9 @@
 
 	private async Task OpenSourceCodeGenDef(FileSystemItem item)
 	{
-		await DialogService.ShowAsync<SourceCodeGenDefDialog>("Generator Settings " + item.FullPath, new DialogParameters<SourceCodeGenDefDialog>()
+		
+		await DialogService.ShowAsync<SourceCodeGenDefDialog>($"Generator Settings {item.FullPath}", 
+			new DialogParameters<SourceCodeGenDefDialog>()
 			{
 				{ x=>x.Module , Module},
 				{ x=>x.FileSystemItem , item}

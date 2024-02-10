@@ -1,0 +1,64 @@
+﻿@using AMS_SCHEMA.Class
+@using Olive
+@switch (MethodCodeType)
+{
+    case MethodCodeTypeEnum.ApplicationGrainMethod:
+        <text>
+@Accessor @("async".OnlyWhen(IsTask && IsAsync)) @("Task<".OnlyWhen(IsTask))@(CodeGen.GetParamType(Handler.ReturnType))@(">".OnlyWhen(IsTask)) @(Handler.Name.ToPascalCase())(@CodeGen.GetHandlerParameters(Handler))
+{
+@ChildContent
+}
+        </text>
+        break;
+    case MethodCodeTypeEnum.ApiControllerInterfaceMethod:
+@if (ChildContent == null)
+{
+<text>
+@(string.Format(IsTask ? "Task<{0}>" : "{0}", string.Format(ResultWrapperFormat, string.Format(ResultFormat , Handler)))) @(Handler)(@CodeGen.GetHandlerParameters(Handler));
+</text>
+        }
+        else
+        {
+@ChildContent
+        }
+        break;
+}
+@code {
+
+    public enum MethodCodeTypeEnum
+    {
+        ApplicationGrainMethod,
+        ApiControllerInterfaceMethod
+    }
+
+    [Parameter]
+    public string[] MethodParamsFormat { get; set; } = {""};
+
+    [Parameter]
+    public string ResultWrapperFormat { get; set; } = "{0}";
+
+    [Parameter]
+    public string ResultFormat { get; set; } = "{0}";
+
+    [Parameter]
+    public MethodCodeTypeEnum MethodCodeType { get; set; }
+
+    [CascadingParameter]
+    public required CodeGeneratorTemplate CodeGen { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public required HandlerSettingItem Handler { get; set; }
+
+    [Parameter]
+    public string Accessor { get; set; } = "public";
+
+    [Parameter]
+    public bool IsTask { get; set; } = true;
+
+    [Parameter]
+    public bool IsAsync { get; set; } = true;
+
+}

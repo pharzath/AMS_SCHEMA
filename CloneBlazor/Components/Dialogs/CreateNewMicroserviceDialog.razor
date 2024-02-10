@@ -1,0 +1,61 @@
+﻿@using AMS.Model.Models
+@using Microsoft.EntityFrameworkCore
+@using AMS.Model
+<MudDialog>
+	<DialogContent>
+
+		<MudGrid>
+			<MudItem md="6">
+				<MudSelect Label="New Microservice" @bind-Value="SelectedMicroservice">
+					@foreach (var ms in Microservices)
+					{
+						<MudSelectItem Value="ms">@ms.Fullname</MudSelectItem>
+					}
+				</MudSelect>
+			</MudItem>
+			<MudItem md="6">
+
+			</MudItem>
+		</MudGrid>
+	</DialogContent>
+	<DialogActions>
+		<MudButton Variant="Variant.Text" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Close" OnClick="CloseClick">
+			Close
+		</MudButton>
+		<MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.Material.Filled.Create" OnClick="CreateClick">
+			Create
+		</MudButton>
+
+	</DialogActions>
+</MudDialog>
+@code {
+	AmsNeo4JMicroservice? SelectedMicroservice;
+	List<AmsNeo4JMicroservice> Microservices;
+
+	[Inject] MyDbContext DbContext { get; set; }
+
+	[CascadingParameter] MudDialogInstance DialogInstance { get; set; }
+
+	protected override void OnInitialized()
+	{
+		Microservices = DbContext
+			.AmsNeo4JMicroservices
+			.Include(x => x.Project)
+			.Include(x => x.Modules)
+			.ToList();
+	}
+
+	private void CloseClick(MouseEventArgs obj)
+	{
+		DialogInstance.Cancel();
+	}
+
+	private void CreateClick()
+	{
+		if (SelectedMicroservice != null)
+			DialogInstance.Close(DialogResult.Ok(SelectedMicroservice));
+		else
+			_snackbar.Add("Select a Microservice");
+	}
+
+}

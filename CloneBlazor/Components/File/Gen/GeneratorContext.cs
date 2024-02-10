@@ -12,7 +12,7 @@ namespace CloneBlazor.Components.File.Gen;
 public sealed class GeneratorContext
 {
 	private const string BasePath = @"D:\PROJ\AMS\AMSCHEMA\AMS_SCHEMA\AMS_SCHEMA\CODEGEN\\";
-	private const string templateRazorPath = @"D:\PROJ\AMS\AMSCHEMA\AMS_SCHEMA\AMS_SCHEMA\CODEGEN\template.razor";
+	private string templateRazorPath = @"D:\PROJ\AMS\AMSCHEMA\AMS_SCHEMA\AMS_SCHEMA\CODEGEN\template.{0}.razor";
 
 	public event EventHandler? Update;
 
@@ -23,6 +23,8 @@ public sealed class GeneratorContext
 	public List<SourceLineItem> SourceLines { get; set; } = new();
 
 	private string? Entity;
+	private string FileExtension;
+
 	private bool? IsPlural;
 
 	public GeneratorContext(AmsNeo4JMicroserviceModule module, FileSystemItem fsPath)
@@ -30,10 +32,7 @@ public sealed class GeneratorContext
 		Module = module;
 		FilePath = fsPath.FullPath;
 
-		List<string> stack =
-		[
-			Path.GetExtension(FilePath)
-		];
+		List<string> stack =[];
 
 		var f = fsPath;
 		var regex = new Regex(@"(\w+)(\{(\w+)(?:\|(\w+))?\})?(\w+)?");
@@ -43,35 +42,51 @@ public sealed class GeneratorContext
 			{
 				if (f.Config != null && f.Config.NamePolicy.OrEmpty().Equals("{Entity}", StringComparison.OrdinalIgnoreCase))
 					Entity = f.Name;
-
-				var match = regex.Match(f.Config!.NamePolicy);
-				if (match.Success)
+				/*
+				if (f.Config.NamePolicy.Contains("{ModuleFullName}", StringComparison.OrdinalIgnoreCase))
 				{
-					var prefix = match.Groups[1].Value;
-					var entitySection = match.Groups[3].Value;
-					var func = match.Groups[4].Value;
-					var postfix = match.Groups[5].Value;
-					if (func.Equals("Plural", StringComparison.OrdinalIgnoreCase))
-					{
-						entitySection = entitySection.ToPlural().ToTitleCase();
-						IsPlural = true;
-					}
-
-					var fileName = $"{prefix}{entitySection}{postfix}";
+					var fileName = f.Config.NamePolicy.Replace("{ModuleFullName}", Module.GetFullname());
 					stack.Add(fileName);
 				}
+				else
+				{
+
+					var match = regex.Match(f.Config!.NamePolicy);
+					if (match.Success)
+					{
+						var prefix = match.Groups[1].Value;
+						var entitySection = match.Groups[3].Value;
+						var func = match.Groups[4].Value;
+						var postfix = match.Groups[5].Value;
+						if (func.Equals("Plural", StringComparison.OrdinalIgnoreCase))
+						{
+							entitySection = entitySection.ToPlural().ToTitleCase();
+							IsPlural = true;
+						}
+
+						var fileName = $"{prefix}{entitySection}{postfix}";
+						stack.Add(fileName);
+					}
+				}
+				*/
+				stack.Add(f.Config.NamePolicy);
+			}
+			else
+			{
+				stack.Add(f.Name);
 			}
 
 			f = f.Parent;
 		}
 
 		stack.Reverse();
+		 stack[^1] += FileExtension = Path.GetExtension(FilePath);
 		var path = string.Join('\\',stack);
 
-
+		
 		//var tempPath = FilePath.RemoveBefore(Module.Name);
 
-		var destTempPath = Path.Combine(BasePath, path + ".razor");
+		var destTempPath = Path.Combine(BasePath, Module.Name , path + ".razor");
 
 		if (!System.IO.File.Exists(destTempPath))
 		{
@@ -81,6 +96,7 @@ public sealed class GeneratorContext
 				Directory.CreateDirectory(directoryPath);
 			}
 
+			templateRazorPath = string.Format(templateRazorPath, (FileExtension.Equals(".cs") ? "cs" : "all"));
 			var tempRazorContent = System.IO.File.ReadAllText(templateRazorPath);
 			System.IO.File.WriteAllText(destTempPath, tempRazorContent);
 		}
@@ -92,7 +108,7 @@ public sealed class GeneratorContext
 		{
 
 			scopeStack.TryPeek(out var scope);
-			CodeGenLineItem lineItem = new(line, scope, LineStatausEnum.Default);
+			CodeGenLineItem lineItem = new(line, scope, LineStatausEnum.Default, this);
 
 			if (lineItem.CodeGenSectionRole == CodeGenSectionRoleEnum.Start)
 				scopeStack.Push(lineItem.CodeGenSection);
@@ -114,9 +130,9 @@ public sealed class GeneratorContext
 
 	}
 
-	public void DoCommand(
-		CodeGenSectionEnum suggestionSection,
+	public void DoCommand(CodeGenSectionEnum suggestionSection,
 		string suggestionCode,
+		string suggestionParameter,
 		SuggestionActionTypeEnum suggestionActionType)
 	{
 		switch (suggestionActionType)
@@ -129,7 +145,7 @@ public sealed class GeneratorContext
 						var indexOf = GenLines.IndexOf(lineItem);
 						if (indexOf >= 0)
 						{
-							GenLines.Insert(indexOf, new CodeGenLineItem(suggestionCode, lineItem.Scope, LineStatausEnum.Added));
+							GenLines.Insert(indexOf, new CodeGenLineItem(suggestionCode, lineItem.Scope, LineStatausEnum.Added, this));
 							OnUpdate();
 						}
 
@@ -143,25 +159,48 @@ public sealed class GeneratorContext
 				{
 					var indexOf = GenLines.IndexOf(lineItem2);
 					DeleteLine(lineItem2);
-					GenLines.Insert(indexOf, new CodeGenLineItem(suggestionCode, lineItem2.Scope, LineStatausEnum.Updated));
+					GenLines.Insert(indexOf, new CodeGenLineItem(suggestionCode, lineItem2.Scope, LineStatausEnum.Updated, this));
 					OnUpdate();
 				}
 				else
 				{
-					(string, CodeGenSectionEnum)[] locations = GetDefaultLocation(suggestionSection);
-					foreach (var (pos, section) in locations)
+					if (suggestionSection == CodeGenSectionEnum.CodeSection)
 					{
-						CodeGenLineItem? lineItem3 = GetLineNumber(pos, section);
-						if (lineItem3 != null)
+						var lineItem = GenLines.FirstOrDefault(x=>x is { Content: not null, Scope: CodeGenSectionEnum.None } && x.Content.Contains(suggestionParameter));
+						if (lineItem != null)
+							lineItem.Content = PrepareContent(suggestionCode);
+						else
 						{
-							var indexOf = GenLines.IndexOf(lineItem3);
-							GenLines.Insert(indexOf,
-								new CodeGenLineItem(suggestionCode, lineItem3.Scope, LineStatausEnum.Added));
-
-							OnUpdate();
-							break;
+							var index = GenLines.FindIndex(x => x.Content != null && x.Content.Contains("@code"));
+							if (index > -1)
+							{
+								GenLines.Insert(index +2 ,new CodeGenLineItem(suggestionCode , CodeGenSectionEnum.None , LineStatausEnum.Added , this));
+							}
+							else
+							{
+								GenLines.Add(new CodeGenLineItem("@code {", CodeGenSectionEnum.None , LineStatausEnum.Added , this));
+								GenLines.Add(new CodeGenLineItem(suggestionCode, CodeGenSectionEnum.None, LineStatausEnum.Added, this));
+								GenLines.Add(new CodeGenLineItem("}", CodeGenSectionEnum.None , LineStatausEnum.Added , this));
+							}
 						}
+					}
+					else
+					{
+						(string, CodeGenSectionEnum)[] locations = GetDefaultLocation(suggestionSection);
+						foreach (var (pos, section) in locations)
+						{
+							CodeGenLineItem? lineItem3 = GetLineNumber(pos, section);
+							if (lineItem3 != null)
+							{
+								var indexOf = GenLines.IndexOf(lineItem3);
+								GenLines.Insert(indexOf,
+									new CodeGenLineItem(suggestionCode, lineItem3.Scope, LineStatausEnum.Added, this));
 
+								OnUpdate();
+								break;
+							}
+
+						}
 					}
 				}
 				break;
@@ -221,6 +260,14 @@ public sealed class GeneratorContext
 				return [(after, CodeGenSectionEnum.NamespaceCode),
 					(after, CodeGenSectionEnum.UsingCode),
 					(inside, CodeGenSectionEnum.GeneratorCode)];
+			
+			case CodeGenSectionEnum.ClassInheritance:
+				return [(before, CodeGenSectionEnum.ClassContent),
+						(inside, CodeGenSectionEnum.ClassCode)];
+			
+			case CodeGenSectionEnum.ClassContent:
+				return [(after, CodeGenSectionEnum.ClassInheritance),
+						(inside, CodeGenSectionEnum.ClassCode)];
 
 			case CodeGenSectionEnum.RegionCode:
 				return [(inside, CodeGenSectionEnum.ClassCode)];
@@ -350,24 +397,25 @@ public sealed class GeneratorContext
 		OnUpdate();
 	}
 
-	public void InsertNewLine(CodeGenLineItem lineItem, string beforeAfter)
+	public CodeGenLineItem InsertNewLine(CodeGenLineItem lineItem, string beforeAfter, string content = "")
 	{
 		var indexOf = GenLines.IndexOf(lineItem);
+		var codeGenLineItem = new CodeGenLineItem(content, lineItem.Scope, LineStatausEnum.Added, this);
 		switch (beforeAfter)
 		{
 			case "before":
 				if (indexOf > 1)
-					GenLines.Insert(indexOf, new CodeGenLineItem(" PLACE HOLDER", lineItem.Scope, LineStatausEnum.Added));
+					GenLines.Insert(indexOf, codeGenLineItem);
 				break;
 			case "after":
 				if (indexOf < GenLines.Count)
-					GenLines.Insert(indexOf + 1, new CodeGenLineItem(" PLACE HOLDER", lineItem.Scope, LineStatausEnum.Added));
+					GenLines.Insert(indexOf + 1, codeGenLineItem);
 				break;
 		}
 
 		UpdateScopes();
 		OnUpdate();
-
+		return codeGenLineItem;
 	}
 
 	public void CopySelectedSourceLinesHere(CodeGenLineItem lineItem)
@@ -375,9 +423,13 @@ public sealed class GeneratorContext
 		var indexOf = GenLines.IndexOf(lineItem);
 		foreach (var item in SourceLines.Where(x => x.Selected))
 		{
-			var itemContent = item.Content.Replace("<", "< ");
-			GenLines.Insert(indexOf++, new CodeGenLineItem(itemContent, lineItem.Scope, LineStatausEnum.Added));
+			var itemContent = item.Content;
+			if(!item.Content.Trim().StartsWith("<"))
+				itemContent = item.Content.Replace("<", "&lt;");
+
+			GenLines.Insert(indexOf++, new CodeGenLineItem(itemContent, lineItem.Scope, LineStatausEnum.Added, this));
 		}
+
 		UpdateScopes();
 		OnUpdate();
 	}
@@ -393,6 +445,38 @@ public sealed class GeneratorContext
 	public void UnselectSourceLines()
 	{
 		SourceLines.ForEach(x => x.Selected = false);
+	}
+
+	public string PrepareContent(string content)
+	{
+
+		if (content.Contains("ProjectReference Include"))
+		{
+			var msFullName = Module.Microservice.Fullname;
+			if (content.Contains(msFullName))
+			{
+				return content.Replace(msFullName , "@(Module.Microservice.Fullname)");
+			}
+
+		}
+
+		if (Entity == null)
+		{
+			return content;
+		}
+
+		return content.Replace(Entity,
+			content.Trim().StartsWith("<") || content.Contains("=")
+				? "{Entity}"
+				: "@(Entity)"); 
+	}
+
+	public void ClearContentFrom(CodeGenLineItem lineItem)
+	{
+		var start = GenLines.IndexOf(lineItem);
+		var end = GenLines.IndexOf(GenLines.FirstOrDefault(x => x.CodeGenSection == lineItem.CodeGenSection && x.CodeGenSectionRole == CodeGenSectionRoleEnum.End));
+		GenLines.RemoveRange(start + 1, end - (start+1));
+		OnUpdate();
 	}
 }
 

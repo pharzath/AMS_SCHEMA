@@ -1,0 +1,31 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+	</UsingCode>
+
+<NamespaceCode  PostFix="Dtos.{Entity}" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"   >
+		<ClassContent>
+			<RegionCode Name="Header Code" />
+
+			<RegionCode Name="Properties" />
+	public Guid Id { get; set; }
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+
+@code {
+protected override string ClassNameFormat => "{Entity}Dto";
+}

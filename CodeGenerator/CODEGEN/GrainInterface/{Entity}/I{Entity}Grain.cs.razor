@@ -1,0 +1,38 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using System.ComponentModel;
+using Orleans;
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Dtos"/>
+using QOQNOS.SharedKernel;
+	</UsingCode>
+
+<NamespaceCode  PostFix="Interface.{Entity}" />
+[GrainActivity("@(Module.Microservice.Fullname)" , Category = "@(Module.Microservice.Fullname).Grains" , Description = "@Entity grain to perform all usages of Qoqnos @Entity",DisplayName = "@Entity Grain")]
+<ClassCode Type="ClassCode.ClassTypeEnum.Interface" Accessor="public"   >
+		<ClassInheritance>
+ : IGrainWithStringKey
+		</ClassInheritance>
+		<ClassContent>
+
+			<RegionCode Name="Header Code" />
+
+			<RegionCode Name="Properties" />
+
+
+
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+
+@code {
+protected override string ClassNameFormat => "ITestGrain";
+
+
+}

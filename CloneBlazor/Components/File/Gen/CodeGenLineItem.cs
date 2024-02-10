@@ -5,12 +5,13 @@ namespace CloneBlazor.Components.File.Gen;
 
 public class CodeGenLineItem
 {
+	private readonly GeneratorContext _generatorContext;
 	public string? Content { get; set; }
 	public CodeGenSectionEnum CodeGenSection { get; set; }
 	public CodeGenSectionRoleEnum CodeGenSectionRole { get; set; }
 
 	public Dictionary<string, string> Properties { get; } = new();
-	public List<string>? AllProperties => 
+	public List<string>? AllProperties =>
 		_sectionProps.TryGetValue(CodeGenSection, out var props) ? props : null;
 
 	public CodeGenSectionEnum Scope { get; set; }
@@ -27,6 +28,8 @@ public class CodeGenLineItem
 		{ CodeGenSectionEnum.UsingCodeItem  , "#c2188b"},
 		{ CodeGenSectionEnum.NamespaceCode  , "#47a437"},
 		{ CodeGenSectionEnum.ClassCode  , "#1351ca"},
+		{ CodeGenSectionEnum.ClassInheritance  , "#1351ca"},
+		{ CodeGenSectionEnum.ClassContent  , "#1351ca"},
 		{ CodeGenSectionEnum.RegionCode  , "#747a87"},
 		{ CodeGenSectionEnum.MethodsCode  , "#d77b15"},
 		{ CodeGenSectionEnum.CodeTemplate  , "#9027f4"},
@@ -35,10 +38,13 @@ public class CodeGenLineItem
 	private readonly LineStatausEnum _origStatus;
 	private readonly string _origContent;
 
-	public CodeGenLineItem(string line, CodeGenSectionEnum scope, LineStatausEnum status)
+	public CodeGenLineItem(string line, CodeGenSectionEnum scope, LineStatausEnum status,
+		GeneratorContext generatorContext)
 	{
+		_generatorContext = generatorContext;
 		InitPropsDef();
 		Content = _origContent = line;
+		Content = _generatorContext.PrepareContent(Content);
 		Status = _origStatus = status;
 		Scope = scope;
 		GetSectionIfAny(line);
@@ -48,7 +54,7 @@ public class CodeGenLineItem
 	{
 		_sectionProps.Add(CodeGenSectionEnum.GeneratorCode, ["CodeGen", "CodeGenHints"]);
 		_sectionProps.Add(CodeGenSectionEnum.NamespaceCode, ["PostFix"]);
-		_sectionProps.Add(CodeGenSectionEnum.ClassCode, ["Type"]);
+		_sectionProps.Add(CodeGenSectionEnum.ClassCode, ["Type","Accessor"]);
 		_sectionProps.Add(CodeGenSectionEnum.RegionCode, ["Name"]);
 		_sectionProps.Add(CodeGenSectionEnum.CodeTemplate, ["Context"]);
 	}
@@ -88,7 +94,7 @@ public class CodeGenLineItem
 						}
 					}
 
-					foreach (var prop in _sectionProps[CodeGenSection]) 
+					foreach (var prop in _sectionProps[CodeGenSection])
 						Properties.TryAdd(prop, string.Empty);
 				}
 			}
@@ -140,5 +146,16 @@ public enum CodeGenSectionRoleEnum
 
 public enum CodeGenSectionEnum
 {
-	None, CodeSection, GeneratorCode, UsingCode, UsingCodeItem, NamespaceCode, ClassCode, RegionCode, MethodsCode, CodeTemplate
+	None,
+	CodeSection,
+	GeneratorCode,
+	UsingCode,
+	UsingCodeItem,
+	NamespaceCode,
+	ClassCode,
+	ClassInheritance,
+	ClassContent,
+	RegionCode,
+	MethodsCode,
+	CodeTemplate
 }

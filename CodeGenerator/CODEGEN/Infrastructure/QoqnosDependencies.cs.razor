@@ -1,0 +1,54 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+<UsingCodeItem Type="ModuleTypeEnum.Infrastructure" PostFix="Context"/>
+	</UsingCode>
+
+<NamespaceCode  />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"  IsStatic="true"  >
+		<ClassInheritance>
+
+		</ClassInheritance>
+		<ClassContent>
+
+			<RegionCode Name="Header Code" />
+
+			<RegionCode Name="Properties" />
+    public static void ConfigureIdentityServices(IConfiguration configuration, IServiceCollection services)
+    {
+        var useOnlyInMemoryDatabase = false;
+        if (configuration["UseOnlyInMemoryDatabase"] != null)
+        {
+            useOnlyInMemoryDatabase = bool.Parse(configuration["UseOnlyInMemoryDatabase"]!);
+        }
+
+        if (useOnlyInMemoryDatabase)
+        {
+
+            services.AddDbContext&lt;AppIdentityDbContext>(options =>
+                options.UseInMemoryDatabase("Identity"));
+        }
+        else
+        {
+
+            // Add Identity DbContext
+            services.AddDbContext&lt;AppIdentityDbContext>(options =>
+                options.UseSqlServer(configuration.GetConnectionString("IdentityConnection")));
+        }
+    }
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+@code {
+protected override string ClassNameFormat => "QoqnosDependencies";
+}

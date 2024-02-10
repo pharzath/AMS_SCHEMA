@@ -19,10 +19,12 @@ Welcome to Schema Explorer.
 </MudButton>
 
 
+@*
 <MudButton Variant="Variant.Text" Color="Color.Success" StartIcon="@Icons.TwoTone.Add" OnClick="AddMethodToFile">
     Add Method To File
     
 </MudButton>
+*@
 
 
 
@@ -90,14 +92,16 @@ Welcome to Schema Explorer.
         NavigationManager.NavigateTo("/ModuleSettings");
     }
 
+    /*
     async Task AddMethodToFile()
     {
-        await @"E:\QOQNOS\ACCOUNT\QOQNOS.ACCOUNT.APPLICATION.GRAINS\ApplicationGrainMethod.cs".AddMethodToFile(@"
+        await @"E:\QOQNOS\ACCOUNT\QOQNOS.ACCOUNT.APPLICATION.GRAINS\ApplicationGrainMethod.cs"
+	        .AddMethodToFile(@"
     public void MyInjectedMethod()
     { 
         Console.WriteLine(""Hello, World!"");
     }
 ");
-    }
+    }*/
 
 }

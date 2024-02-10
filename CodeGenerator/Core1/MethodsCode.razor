@@ -1,0 +1,46 @@
+﻿
+@using Olive
+@foreach (var handler in CodeGen.Handlers)
+{
+    @if (CodeGen.MethodExists(handler))
+    {
+        var region = CodeGen.MethodWrapedByRegion(handler);
+        @if (region == null)
+        {
+<text>
+    @($"\t// {DateTime.Now} : Original Method [{handler.Name}] placed here, Not overwritten by Code Generator.".OnlyWhen(CodeGenHints))
+    @CodeGen.MethodSourceCode(handler)
+    @("\r\n")
+</text>
+
+        }
+        else
+        {
+            <text>
+                @($"// {DateTime.Now} : Method [{handler.Name}] Exists in {region.ToString().Remove("#")}, so not overwritten by the Code Generator.".OnlyWhen(CodeGenHints))
+            </text>
+        }
+    }
+    else
+    {
+        <text>
+
+            @($"// {DateTime.Now} : Generated code.".OnlyWhen(CodeGenHints))
+            @CodeTemplate?.Invoke(handler)
+        </text>
+    }
+
+}
+
+@code {
+    [CascadingParameter]
+    public required CodeGeneratorTemplate CodeGen { get; set; }
+
+    [CascadingParameter]
+    public required bool CodeGenHints { get; set; }
+    
+
+    [Parameter]
+    public RenderFragment<HandlerSettingItem>? CodeTemplate { get; set; }
+
+}

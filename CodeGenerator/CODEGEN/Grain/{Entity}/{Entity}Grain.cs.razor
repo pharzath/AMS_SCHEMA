@@ -1,0 +1,63 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using Elsa.Workflows.Activities;
+using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Commands"/>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Dtos"/>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Requests"/>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Results"/>
+<UsingCodeItem Type="ModuleTypeEnum.Grain" PostFix="Interface.{Entity}"/>
+using QOQNOS.SharedKernel;
+using QOQNOS.SharedKernel.ExtensionMethods;
+using System.Security.Cryptography;
+using System.Text;
+using Antlr4.Runtime.Misc;
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Events"/>
+	</UsingCode>
+
+<NamespaceCode  PostFix="{Entity}" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"   >
+<ClassDef>
+(IServiceProvider serviceProvider)
+</ClassDef>
+		<ClassInheritance>
+	: QJournaledGrain&lt;@(Entity)State>, I@(Entity)Grain
+		</ClassInheritance>
+		<ClassContent>
+
+			<RegionCode Name="Header Code" />
+
+			<RegionCode Name="Properties" />
+
+	/// &lt;summary>
+	/// On activation, ensure we are fully caught up with the latest version
+	/// &lt;/summary>
+	public override async Task OnActivateAsync(CancellationToken cancellationToken)
+	{
+		await RefreshNow();
+		if (Version == 0)
+			await Refresh@(Entity)ProfileInfo();
+
+		if (Version > 0)
+			await Load@(Entity)AccessInfo();
+	}
+
+
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+
+@code {
+protected override string ClassNameFormat => "{Entity}Grain";
+
+
+}

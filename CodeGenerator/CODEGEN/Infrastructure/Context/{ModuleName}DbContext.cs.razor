@@ -1,0 +1,39 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="RequestInterfaces"/>
+<UsingCodeItem Type="ModuleTypeEnum.Infrastructure" PostFix="Identity"/>
+<UsingCodeItem Type="ModuleTypeEnum.Model" PostFix="Entity"/>
+	</UsingCode>
+
+<NamespaceCode  PostFix="Context" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"   >
+		<ClassInheritance>
+
+		</ClassInheritance>
+		<ClassContent>
+
+			<RegionCode Name="Header Code" />
+
+			<RegionCode Name="Properties" />
+
+
+
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+
+@code {
+protected override string ClassNameFormat => "@(Module.Microservice.Name)DbContext";
+
+
+}

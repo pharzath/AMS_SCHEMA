@@ -1,0 +1,263 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using System.Text.Json.Serialization;
+using Elsa.EntityFrameworkCore.Common;
+using Elsa.EntityFrameworkCore.Extensions;
+using Elsa.EntityFrameworkCore.Modules.Management;
+using Elsa.EntityFrameworkCore.Modules.Runtime;
+using Elsa.Extensions;
+using Elsa.Identity.Options;
+using Elsa.Webhooks.Extensions;
+using MassTransit;
+<UsingCodeItem Type="ModuleTypeEnum.API_Endpoint" PostFix="User"/>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Commands"/>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Extensions"/>
+<UsingCodeItem Type="ModuleTypeEnum.Grain" PostFix="Interface.User"/>
+<UsingCodeItem Type="ModuleTypeEnum.UseCases" PostFix="Authentication.User.Action"/>
+using QOQNOS.Elsa.Activities.Masstransit;
+using QOQNOS.Elsa.Activities.Utils;
+using QOQNOS.Elsa.Orleans.Extensions;
+using QOQNOS.SharedKernel.ExtensionMethods;
+using QOQNOS.SharedKernel.Serializer;
+using Serilog;
+	</UsingCode>
+
+<NamespaceCode  />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"  IsStatic="true"  >
+		<ClassInheritance>
+
+		</ClassInheritance>
+		<ClassContent>
+			<RegionCode Name="Header Code" />
+	public static IServiceCollection ConfigureElsaServer(this IServiceCollection Services,IConfiguration configuration)
+	{
+		Services.Configure&lt;IdentityTokenOptions>(options =>
+		{
+			options.SigningKey = "a2dc81876a782e502084762fa322429fca015940eac90ce8ca7ad95fc8752031";
+			options.AccessTokenLifetime = TimeSpan.FromDays(1);
+		});
+
+		Services.AddElsa(elsa =>
+		{
+			elsa.AddActivity&lt;QBeepActivity>();
+			elsa.AddActivity&lt;QCommandResultResolverActivity>();
+
+			// Default Identity features for authentication/authorization.
+			/*elsa.UseIdentity(identity =>
+			{
+				identity.UseConfigurationBasedUserProvider(options =>
+				{
+					options.Users = new List&lt;User>()
+					{
+						new User()
+						{
+							Id = "admin",
+							Name = "admin",
+							Roles = new List&lt;string>() { "admin" },
+						}
+					};
+				});
+
+				identity.UserProvider = serviceProvider => new ElsaUserProvider(serviceProvider);
+				identity.RoleProvider = serviceProvider => new ElsaRoleProvider(serviceProvider);
+				identity.ApplicationProvider = serviceProvider => new ElsaApplicationProvider(serviceProvider);
+
+				identity.TokenOptions = options =>
+				{
+					options.SigningKey = "a2dc81876a782e502084762fa322429fca015940eac90ce8ca7ad95fc8752031";
+					options.AccessTokenLifetime = TimeSpan.FromDays(1);
+				}; // This key needs to be at least 256 bits long.
+				//identity.UseAdminUserProvider();
+			});*/
+
+			// Configure Management layer to use EF Core.
+			var dbContextOptions = new ElsaDbContextOptions();
+			var sqlConnectionString = configuration.GetConnectionString("AuthWfConnection")!;
+			elsa.UseWorkflowManagement(management =>
+			{
+				management.UseEntityFrameworkCore(ef =>
+				{
+					ef.UseSqlServer(sqlConnectionString, dbContextOptions);
+				});
+			});
+
+
+			// Configure Runtime layer to use EF Core.
+			elsa.UseWorkflowRuntime(runtime =>
+			{
+				runtime.UseMassTransitDispatcher();
+				runtime.UseEntityFrameworkCore(ef => { ef.UseSqlServer(sqlConnectionString, dbContextOptions); });
+			});
+
+			// Configure ASP.NET authentication/authorization.
+			elsa.UseDefaultAuthentication(auth => auth.UseAdminApiKey());
+
+			// Expose Elsa API endpoints.
+			elsa.UseWorkflowsApi(x =>
+			{
+				var module = x.Module;
+				//module.AddFastEndpointsAssembly&lt;Program>();
+				module.AddFastEndpointsAssembly&lt;Login>();
+
+			});
+
+			// Setup a SignalR hub for real-time updates from the server.
+			elsa.UseRealTimeWorkflows();
+
+			// Enable HTTP activities.
+			elsa.UseHttp(options =>
+				options.ConfigureHttpOptions = httpOptions =>
+					httpOptions.BaseUrl = new Uri(configuration["Backend:BaseUrl"]!));
+
+			// Use timer activities.
+			elsa.UseScheduling();
+
+			// Register custom activities from the application, if any.
+			elsa.AddActivitiesFrom&lt;Program>();
+
+			// Register custom workflows from the application, if any.
+			elsa.AddWorkflowsFrom&lt;Program>();
+
+			// Register custom webhook definitions from the application, if any.
+			elsa.UseWebhooks(webhooks =>
+				webhooks.WebhookOptions = options =>
+					configuration.GetSection("Webhooks").Bind(options));
+
+			// Uses QOQNOS Orleans Module
+			elsa.UseOrleans(feature =>
+			{
+				feature.ExtractGrainTypesFromAssembly&lt;IUserGrain>();
+
+				feature.SimpleMessageProviderName = "SMS";
+				feature.ClusterClientConfigurator = _ =>
+				{
+
+				};
+
+			});
+
+
+
+			var types = new[] { typeof(LoginCommandConsumer) };
+			//var types = new Type[]{};
+
+			elsa.UseMassTransit(massTransit =>
+			{
+				massTransit.Services.AddMediator(cfg =>
+				{
+					cfg.RegisterQoqnosClientRequestsAndConsumers(types, Log.Logger);
+				});
+
+				massTransit.RegisterMasstransitQoqnosAuthEvents();
+
+				//massTransit.AddConsumer(typeof(MyWorkflowMessageConsumer&lt;SuccessfullLoginEvent>));
+				massTransit.BusConfigurator = busConfig =>
+				{
+					busConfig.RegisterQoqnosClientRequestsAndConsumers(types, Log.Logger);
+				};
+
+				massTransit.UseRabbitMq(
+					rabbitMqFeature =>
+						rabbitMqFeature.ConfigureServiceBus = cfg =>
+						{
+							cfg.ConfigureJsonSerializerOptions();
+
+							cfg.ConfigureJsonSerializerOptions(options =>
+							{
+								options.Converters.Add(new TypeJsonConverter());
+								options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+								return options;
+							});
+							cfg.Host("localhost", "/", h =>
+							{
+								h.Username("guest");
+								h.Password("guest");
+							});
+
+
+						}
+				);
+
+
+			});
+
+
+			// Use C#.
+			elsa.UseCSharp(csharp =>
+			{
+				csharp.Assemblies.Add(typeof(LoginCommand).Assembly);
+				csharp.Namespaces.Add(typeof(LoginCommand).Namespace!);
+			});
+
+			// Enable JavaScript workflow expressions
+			elsa.UseJavaScript(options => options.AllowClrAccess = true);
+
+			// Use Liquid.
+			elsa.UseLiquid();
+
+			elsa.AddSwagger();
+
+
+		});
+
+
+		#region MassTransit
+
+		// var types = new[] { typeof(LoginCommandConsumer) };
+		//
+		// Services.AddMediator(cfg =>
+		// {
+		// 	cfg.RegisterQoqnosClientRequestsAndConsumers(types, Log.Logger);
+		// });
+		//
+		// Services.AddMassTransit(x =>
+		// {
+		// 	x.RegisterQoqnosClientRequestsAndConsumers(types, Log.Logger);
+		//
+		// 	x.UsingRabbitMq((context, cfg) =>
+		// 	{
+		//
+		// 		cfg.ConfigureJsonSerializerOptions(options =>
+		// 		{
+		// 			options.Converters.Add(new TypeJsonConverter());
+		// 			options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+		// 			return options;
+		// 		});
+		// 		cfg.Host("localhost", "/", h =>
+		// 		{
+		// 			h.Username("guest");
+		// 			h.Password("guest");
+		// 		});
+		//
+		// 		cfg.ConfigureEndpoints(context);
+		// 	});
+		//
+		// })
+		// .ConfigureHttpJsonOptions(jsonOptions =>
+		// {
+		// 	jsonOptions.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+		// 	jsonOptions.SerializerOptions.Converters.Add(new TypeJsonConverter());
+		//
+		// })
+		;
+
+		#endregion
+
+
+		return Services;
+	}
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+
+@code {
+protected override string ClassNameFormat => "ElsaServerConfigExtension";
+}

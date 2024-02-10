@@ -34,7 +34,22 @@
 			<MudMenuItem OnClick="@(()=>AddEmptyLine("before"))" Icon="@Icons.Material.Filled.NavigateBefore">Add Empty Line Before</MudMenuItem>
 			<MudMenuItem OnClick="@(()=>AddEmptyLine("after"))" Icon="@Icons.Material.Filled.NavigateNext">Add Empty Line After</MudMenuItem>
 			<MudDivider />
+			<MudMenuItem OnClick="@(()=>DuplicateLine())" Icon="@Icons.Material.Filled.LooksTwo">Duplicate Line</MudMenuItem>
+			<MudDivider />
+			@{
+				var ItemsTag = GetCodeBundles(LineItem.CodeGenSection);
+				@foreach (var item in ItemsTag)
+				{
+					<MudMenuItem OnClick="() => AddLines(item.Codes)">@item.Title</MudMenuItem>
+				}
+				<MudDivider />
+			}
 			<MudMenuItem OnClick="CopySourceLines" Icon="@Icons.Material.Filled.CopyAll">Copy Selected GenLines Here</MudMenuItem>
+			<MudDivider />
+			@if (LineItem.CodeGenSection != CodeGenSectionEnum.None)
+			{
+				<MudMenuItem OnClick="ClearContent" Icon="@Icons.Material.Filled.Delete">Clear Content</MudMenuItem>
+			}
 			<MudDivider />
 			<MudMenuItem OnClick="DeleteFromSource" Icon="@Icons.Material.Filled.Delete">Delete</MudMenuItem>
 		</ChildContent>
@@ -73,6 +88,39 @@
 
 	[Parameter] public CodeGenLineItem LineItem { get; set; }
 	[Parameter] public int LineNumber { get; set; }
+
+
+	RenderFragment AddNewItems => __builder =>
+	{
+		var ItemsTag = GetCodeBundles(LineItem.CodeGenSection);
+		var ItemsScope = GetCodeBundles(LineItem.Scope);
+
+		@foreach (var item in ItemsTag.Union(ItemsScope))
+		{
+			<MudMenuItem OnClick="()=>AddLines(item.Codes)">@item.Title</MudMenuItem>
+		}
+	};
+
+	private void AddLines(IEnumerable<string> itemCodes)
+	{
+		var line = LineItem;
+		foreach (var itemCode in itemCodes)
+		{
+			line = GeneratorContext.InsertNewLine(line, "after", itemCode);
+		}
+	}
+
+	public class CodeBundle
+	{
+		public string Title { get; }
+		public IEnumerable<string> Codes { get; }
+
+		public CodeBundle(string title, IEnumerable<string> codes)
+		{
+			Title = title;
+			Codes = codes;
+		}
+	}
 
 	RenderFragment StatusIcon => __builder =>
 	{
@@ -201,6 +249,63 @@
 	{
 		GeneratorContext.CopySelectedSourceLinesHere(LineItem);
 	}
+
+	private List<CodeBundle> GetCodeBundles(CodeGenSectionEnum section)
+	{
+		List<CodeBundle> Items = [];
+		switch (section)
+		{
+			case CodeGenSectionEnum.None:
+				break;
+			case CodeGenSectionEnum.CodeSection:
+				break;
+			case CodeGenSectionEnum.GeneratorCode:
+				break;
+			case CodeGenSectionEnum.UsingCode:
+				break;
+			case CodeGenSectionEnum.UsingCodeItem:
+				break;
+			case CodeGenSectionEnum.NamespaceCode:
+				break;
+			case CodeGenSectionEnum.ClassCode:
+				Items.AddRange([
+					new("Class Definition Extension", ["<ClassDef>", "</ClassDef>"]),
+					new("Class Inheritance", ["<ClassInheritance>", "</ClassInheritance>"]),
+					new("Class Body", ["<ClassContent>", "</ClassContent>"]),
+				]);
+				break;
+			case CodeGenSectionEnum.ClassInheritance:
+				break;
+			case CodeGenSectionEnum.ClassContent:
+				Items.AddRange([
+					new("User Custom Region", [@$"<RegionCode Name=""Region {Guid.NewGuid().ToString("N").Substring(1,5)}"">"]),
+				]);
+				break;
+			case CodeGenSectionEnum.RegionCode:
+				break;
+			case CodeGenSectionEnum.MethodsCode:
+				break;
+			case CodeGenSectionEnum.CodeTemplate:
+				break;
+			default:
+				throw new ArgumentOutOfRangeException();
+		}
+
+		return Items;
+	}
+
+	private void DuplicateLine()
+	{
+		GeneratorContext.InsertNewLine(LineItem, "after", LineItem.Content);
+	}
+
+	private void ClearContent()
+	{
+		GeneratorContext.ClearContentFrom(LineItem);
+	}
 }
+
+
+
 
 

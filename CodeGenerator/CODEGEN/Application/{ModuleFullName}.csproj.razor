@@ -1,0 +1,19 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\@(Module.Microservice.Fullname).Domain\@(Module.Microservice.Fullname).Domain.csproj" />
+    <ProjectReference Include="..\@(Module.Microservice.Fullname).UseCases\@(Module.Microservice.Fullname).UseCases.csproj" />
+  </ItemGroup>
+</Project>
+</GeneratorCode>

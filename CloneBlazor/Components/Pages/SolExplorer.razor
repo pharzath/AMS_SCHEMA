@@ -1,0 +1,65 @@
+﻿@page "/explorer"
+@using CloneBlazor.Classes
+@using CloneBlazor.Components.Dialogs
+@using AMS.Model
+@using AMS.Model.Models
+
+<MudToolBar>
+	<MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.NewReleases" OnClick="NewMicroservice">
+		New Microservice
+	</MudButton>
+
+</MudToolBar>
+
+<MudPaper Elevation="1">
+	<MudTreeView Items="Provider.Solution.Root.Items.ToHashSet()"
+				 Hover="true"
+				 MultiSelection="false"
+				 @bind-ActivatedValue="ActivatedValue"
+				 @bind-SelectedValues="SelectedValues">
+		<ItemTemplate>
+			<MudTreeViewItem @bind-Expanded="@context.IsExpanded"
+							 Items="@context.Items?.ToHashSet()"
+							 Value="@context"
+							 Icon="@context.Icon"
+							 Text="@context.Name"
+							 EndText="@(context is IHaveStringId itm ? itm.Id : "")"
+							 EndTextTypo="@Typo.caption" />
+		</ItemTemplate>
+	</MudTreeView>
+</MudPaper>
+
+@code {
+	private SolutionProvider Provider;
+	private SolutionItem ActivatedValue { get; set; }
+	private HashSet<SolutionItem> SelectedValues { get; set; }
+
+	[Inject] public MyDbContext DbContext { get; set; }
+
+	protected override void OnInitialized()
+	{
+		Provider = new SolutionProvider(@"D:\PROJ\Clean\Q\QOQNOS.APP.sln", DbContext);
+	}
+
+	private async Task NewMicroservice()
+	{
+		var dialogResult = await _dialogService.ShowAsync<CreateNewMicroserviceDialog>("New Microservice",
+			new DialogParameters(),
+			new DialogOptions()
+				{
+					MaxWidth = MaxWidth.Medium
+				});
+
+		var result = await dialogResult.Result;
+		if (!result.Canceled)
+		{
+			var microservice = (AmsNeo4JMicroservice?)result.Data;
+			if (microservice != null)
+			{
+				Provider.GenerateMicroservice(microservice);
+				StateHasChanged();
+			}
+		}
+	}
+
+}

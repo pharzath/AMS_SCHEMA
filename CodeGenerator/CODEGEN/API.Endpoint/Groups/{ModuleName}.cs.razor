@@ -1,0 +1,42 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using FastEndpoints;
+using Microsoft.AspNetCore.Http;
+	</UsingCode>
+
+<NamespaceCode  PostFix="Groups" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"   >
+		<ClassInheritance>
+ : Group
+		</ClassInheritance>
+		<ClassContent>
+			<RegionCode Name="Header Code" />
+			<RegionCode Name="Properties" />
+	public @(Module.Name)()
+	{
+		Configure("@Module.Name", ep => 
+		{
+			ep.Description(x => x
+				.Produces(401)
+				.WithTags("0.@Module.Name"));
+		});
+
+	}
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+@code {
+protected override string ClassNameFormat => "{ModuleName}";
+}

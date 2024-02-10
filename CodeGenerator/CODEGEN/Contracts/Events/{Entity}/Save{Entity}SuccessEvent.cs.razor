@@ -1,0 +1,27 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Commands.{Entity}"/>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Results.{Entity}"/>
+using QOQNOS.SharedKernel;
+	</UsingCode>
+
+<NamespaceCode  PostFix="Events.{Entity}" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"   >
+<ClassDef>
+(Save@(Entity)Command command, Save@(Entity)CommandResult result)
+</ClassDef>
+		<ClassInheritance>
+	: QEventAbstract&lt;Save@(Entity)Command, Save@(Entity)CommandResult>(command, result);
+		</ClassInheritance>
+	</ClassCode>
+</GeneratorCode>
+@code {
+protected override string ClassNameFormat => "Save{Entity}SuccessEvent";
+}

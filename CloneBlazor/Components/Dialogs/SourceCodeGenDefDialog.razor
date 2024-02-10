@@ -1,6 +1,9 @@
 ﻿@using CloneBlazor.Components.File
 @using AMS.Model
+@using AMS.Model.Models
 @using CloneBlazor.Components.File.Gen
+@using Olive
+@using File = System.IO.File
 
 <MudDialog ContentStyle="max-height:800px;">
 	<DialogContent>
@@ -35,7 +38,7 @@
 					</MudToolBar>
 					<MudGrid>
 						<MudItem sm="6">
-							<SourceFileContentComponent />
+							<SourceFileContentComponent Highlight="false" />
 						</MudItem>
 						<MudItem sm="6">
 							<CodeGenContentComponent />
@@ -54,7 +57,7 @@
 </MudDialog>
 
 @code {
-	int SelectSourceFrom { get; set; }
+	int SelectSourceFrom { get; set; } = 1;
 	int SelectSourceTo { get; set; }
 	bool DebugStatus;
 
@@ -65,11 +68,23 @@
 
 	[CascadingParameter] MudDialogInstance DialogInstance { get; set; }
 
+	[Inject] MyDbContext DbContext { get; set; }
+
 	GeneratorContext _generatorContext;
 
 	protected override void OnInitialized()
 	{
 		_generatorContext = new GeneratorContext(Module, FileSystemItem);
+		SelectSourceTo = _generatorContext.SourceLines.Count;
+		if (FileSystemItem.Config != null && 
+		    FileSystemItem.Config.GeneratorTemplatePath.IsEmpty()) 
+		{
+			FileSystemItem.Config.GeneratorTemplatePath = _generatorContext.GeneratorPath;
+			var path = FileSystemItem.FullPath.RemoveBeforeAndIncluding(Module.GetFullname());
+			DbContext.AmsNeo4JMicroserviceModuleItemTemplateConfigs.Update(FileSystemItem.Config);
+			DbContext.SaveChanges();
+		}
+
 		base.OnInitialized();
 	}
 
@@ -103,12 +118,17 @@
 		foreach (var sourceLine in _generatorContext.SourceLines)
 		{
 			var suggestions = sourceLine.GetSuggestions();
-			if(suggestions.Any())
-			{
-				var suggestion = suggestions.First();
-				sourceLine.DoSuggestion(suggestion);
-			}
+			if (!suggestions.Any()) 
+				continue;
+
+			var suggestion = suggestions.First();
+			sourceLine.DoSuggestion(suggestion);
+
+			if(suggestions.Any(x=>x.ForceMultiSuggestion))
+				foreach (var suggestionForce in suggestions.Where(x => x.ForceMultiSuggestion))
+					sourceLine.DoSuggestion(suggestionForce);
 		}
+		_generatorContext.OnUpdate();
 	}
 
 

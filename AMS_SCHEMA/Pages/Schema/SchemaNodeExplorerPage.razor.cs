@@ -2,7 +2,6 @@
 using AMS.Model.Models;
 using AMS.Model.Services;
 using AMS_SCHEMA.Class;
-using AMS_SCHEMA.CodeGenerator;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using AMS_SCHEMA.Pages.Schema.Node;
@@ -16,6 +15,7 @@ using AMS_SCHEMA.Pages.Project;
 using AMS_SCHEMA.Pages.Schema.Label.CodeGen;
 using AMS_SCHEMA.Pages.Schema.Relation;
 using AMS_SCHEMA.Pages.Schema.TestData;
+using CodeGenerator.Gens;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Extensions;
@@ -604,8 +604,8 @@ foreach (var n in _nodes)
 
     void GenerateEntityRelatedFilesClick(AmsNeo4JNode context)
     {
-        CodeGeneratorService.GenerateEntityRelatedFiles(context);
-        Snackbar.Add("Generate completed ", Severity.Success);
+        //CodeGeneratorService.GenerateEntityRelatedFiles(context);
+        Snackbar.Add("SHOULD IMPLENENT AGAIN !", Severity.Error);
     }
 
     async Task OpenDataSampleDialogClick(AmsNeo4JNodeLabel context)

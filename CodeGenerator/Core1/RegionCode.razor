@@ -1,0 +1,17 @@
+﻿@{
+<text>
+        #region @CodeGen.Prepare(Name)
+    @ChildContent
+        #endregion @CodeGen.Prepare(Name)
+</text>
+}
+@code {
+	[CascadingParameter]
+	public required CodeGeneratorTemplate CodeGen { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public string Name { get; set; }
+}

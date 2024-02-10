@@ -1,0 +1,29 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="RequestInterfaces.{Entity}"/>
+	</UsingCode>
+
+<NamespaceCode  PostFix="RequestValidators.{Entity}" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public"   >
+		<ClassInheritance>
+: ISave@(Entity)Request
+		</ClassInheritance>
+		<ClassContent>
+			<RegionCode Name="Header Code" />
+			<RegionCode Name="Properties" />
+
+	public string Id { get; set; }
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+@code {
+protected override string ClassNameFormat => "Save{Entity}Request";
+}

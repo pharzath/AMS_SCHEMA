@@ -9,7 +9,7 @@
 	<MudCheckBox @bind-Value="SourceLineItem.Selected" />
 	@if (Highlight)
 	{
-		<CodeHighlight Code="@EncodeContent" CodeLanguage="cs" Indent="false" />
+		<CodeHighlight Code="@EncodeContent" CodeLanguage="text" Indent="false" />
 	}
 	else
 	{

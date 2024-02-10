@@ -1,0 +1,20 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+<NamespaceCode  PostFix="RequestInterfaces.{Entity}" />
+<ClassCode Type="ClassCode.ClassTypeEnum.Interface" Accessor="public"   >
+		<ClassContent>
+			<RegionCode Name="Header Code" />
+			<RegionCode Name="Properties" />
+	public string Id { get; set; }
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+@code {
+protected override string ClassNameFormat => "ISave{Entity}Request";
+}

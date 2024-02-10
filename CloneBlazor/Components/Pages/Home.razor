@@ -7,11 +7,11 @@
 
 <PageTitle>Home</PageTitle>
 <MudTabs @ref="tabs">
-	<MudTabPanel Text="@SourceMicroservice?.Fullname">
-		<MicroserviceSelectorList Title="Select Source Microservice" @bind-SelectedMicroservice="SourceMicroservice"></MicroserviceSelectorList>
+	<MudTabPanel Text="@(SourceMicroservice?.Fullname?? "MICROSERVICE" )">
+		<MicroserviceSelectorList @bind-SelectedMicroservice="SourceMicroservice"></MicroserviceSelectorList>
 	</MudTabPanel>
-	<MudTabPanel Text="@(SelectedModule?.Name)">
-		<ModuleSelectorList SourceMicroservice="SourceMicroservice" @bind-SelectedModule="SelectedModule"></ModuleSelectorList>
+	<MudTabPanel Text="@(SelectedModule?.Name ?? "SELECT MODULE")">
+		<ModuleSelectorList SourceMicroservice="@SourceMicroservice" @bind-SelectedModule="SelectedModule"></ModuleSelectorList>
 	</MudTabPanel>
 	<MudTabPanel Text="@(SelectedModule?.GetFullname() + " Directory Structure")">
 		<CascadingValue Value="SelectedModule">

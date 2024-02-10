@@ -1,0 +1,41 @@
+﻿@using AMS.Model
+@using AMS.Model.Models
+@using AMS.Model.Services
+@using CodeGenerator.Core1
+@using Olive
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate;
+
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+
+    <BPFunctionalIdsCode />
+
+    @foreach (var lbl in Labels
+    .OrderByDescending(x => x.IsVirtual)
+    .ThenByDescending(x => x.IsAbstract)
+    .ThenBy(x => x.Id == 1168 ? -100 : x.ParentLabelId)
+    .ThenBy(x => x.Id)
+
+    )
+    {
+    <BPRegisterEntityCode Label="lbl"></BPRegisterEntityCode>
+    <text>
+        //-----------------------------
+    </text>
+    }
+    @foreach (var rel in DataService.GetRelations())
+            {
+    <BPRegisterRelationCode Relation="rel" DataService="DataService"></BPRegisterRelationCode>
+            }
+
+</GeneratorCode>
+
+@code {
+
+    [Inject]
+    public DataService DataService { get; set; }
+
+    [Parameter]
+    public IEnumerable<AmsNeo4JNodeLabel> Labels { get; set; }
+
+
+}

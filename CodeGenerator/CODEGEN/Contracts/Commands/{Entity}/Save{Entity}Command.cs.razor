@@ -1,0 +1,34 @@
+@using AMS.Model
+@using AMS_SCHEMA.Class
+
+@inherits CodeGenerator.Core1.CodeGeneratorTemplate
+<GeneratorCode CodeGen="this" CodeGenHints="true">
+	// CodeGenHints=@_codeGenHint
+	<UsingCode>
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Results"/>
+using QOQNOS.SharedKernel;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+<UsingCodeItem Type="ModuleTypeEnum.Contracts" PostFix="Dtos"/>
+	</UsingCode>
+
+<NamespaceCode  PostFix="Commands.{Entity}" />
+
+<ClassCode Type="ClassCode.ClassTypeEnum.Class" Accessor="public" ><ClassDef>(@(Entity)Dto @(entity)Dto)</ClassDef>
+		<ClassInheritance>
+	: IQCommand
+		</ClassInheritance>
+		<ClassContent>
+			<RegionCode Name="Header Code" />
+			<RegionCode Name="Properties" />
+	public @(Entity)Dto @(Entity)Dto { get; } = @(entity)Dto;
+			<RegionCode Name="Footer Code"/>
+		</ClassContent>
+	</ClassCode>
+</GeneratorCode>
+@code {
+protected override string ClassNameFormat => "Save{Entity}Command";
+}

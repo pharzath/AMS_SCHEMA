@@ -69,7 +69,17 @@ public class SourceLineItem(string content, int lineNumber, GeneratorContext gen
         );
         suggestions.Add(suggestion);
 
-        return suggestions;
+        var suggestion2 = new Suggestion("Add/Update Class Name Format to Code Section",
+			"string ClassNameFormat",
+	        CodeGenSectionEnum.CodeSection,
+	        $@"protected override string ClassNameFormat => ""{name}"";",
+	        SuggestionActionTypeEnum.Update,
+			forceMultiSuggestion: true
+        );
+        suggestions.Add(suggestion2);
+
+
+		return suggestions;
 	}
 
 	private List<Suggestion> NamespaceSuggestions()
@@ -77,7 +87,7 @@ public class SourceLineItem(string content, int lineNumber, GeneratorContext gen
 		List<Suggestion> suggestions = [];
 
 		var @namespace = Content.TrimEnd(';').RemoveBeforeAndIncluding("namespace").Trim();
-		var msFullName = GeneratorContext.Module.Microservice.Fullname;
+		var msFullName = generatorContext.Module.Microservice.Fullname;
 		if (@namespace.StartsWith(msFullName))
 		{
 			var moduleTypes = Enum.GetValues<ModuleTypeEnum>();
@@ -88,6 +98,7 @@ public class SourceLineItem(string content, int lineNumber, GeneratorContext gen
 				if (@namespace.StartsWith(module))
 				{
 					var postfix = @namespace.RemoveBeforeAndIncluding(module).Trim('.').WithWrappers(" PostFix=\"", "\"");
+					postfix = generatorContext.PrepareContent(postfix);
 					var cmd = @$"<NamespaceCode {postfix} />";
 					if (!generatorContext.GenCodeContains(cmd))
 						suggestions.Add(
@@ -125,6 +136,7 @@ public class SourceLineItem(string content, int lineNumber, GeneratorContext gen
 				if (@namespace.StartsWith(module))
 				{
 					var postfix = @namespace.RemoveBeforeAndIncluding(module).Trim('.').WithWrappers(" PostFix=\"" , "\"");
+					postfix = generatorContext.PrepareContent(postfix);
 					var cmd = @$"<UsingCodeItem Type=""ModuleTypeEnum.{moduleTyp}""{postfix}/>";
 					if(!generatorContext.GenCodeContains(cmd))
 						suggestions.Add(new Suggestion(
@@ -140,19 +152,25 @@ public class SourceLineItem(string content, int lineNumber, GeneratorContext gen
 		}
 
 		if (!generatorContext.GenCodeContains(Content))
-			suggestions.Add(new Suggestion("Add to Usings", @namespace, CodeGenSectionEnum.UsingCode , Content));
+			suggestions.Add(new Suggestion("Add to Usings", @namespace, CodeGenSectionEnum.UsingCode , generatorContext.PrepareContent(Content)));
 
 		return suggestions;
 	}
 
 	public void DoSuggestion(Suggestion suggestion)
 	{
-		GeneratorContext.DoCommand(suggestion.Section , suggestion.Code , suggestion.ActionType);
+		GeneratorContext.DoCommand(suggestion.Section , suggestion.Code , suggestion.Parameter , suggestion.ActionType);
 		suggestion.Complete = true;
 	}
 }
 
-public class Suggestion(string title, string parameter, CodeGenSectionEnum section, string content , SuggestionActionTypeEnum actionType = SuggestionActionTypeEnum.Insert)
+public class Suggestion(
+	string title,
+	string parameter,
+	CodeGenSectionEnum section,
+	string content,
+	SuggestionActionTypeEnum actionType = SuggestionActionTypeEnum.Insert,
+	bool forceMultiSuggestion = false)
 {
 	public string Title { get; } = title;
 	public string Parameter { get; } = parameter;
@@ -160,6 +178,7 @@ public class Suggestion(string title, string parameter, CodeGenSectionEnum secti
 
 	public string Code { get; } = content;
 	public SuggestionActionTypeEnum ActionType { get; } = actionType;
+	public bool ForceMultiSuggestion { get; } = forceMultiSuggestion;
 	public bool Complete { get; set; }
 }
 
